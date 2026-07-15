@@ -15,8 +15,7 @@
         "title": "tauri-app",
         "width": 800,
         "height": 600,
-        "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {
