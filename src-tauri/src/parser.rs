@@ -2,7 +2,14 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use std::sync::LazyLock;
 use walkdir::WalkDir;
+
+static RE_QUESTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\*\*(?:Q)?(\d+)[\.\:]\s*(.+?)\*\*.*$").unwrap());
+static RE_OPTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:[\-\*]\s*)?([A-D])[\.\)]\s*(.+)$").unwrap());
+static RE_SOLUTION1: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\*\*(?:Q)?(\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap());
+static RE_SOLUTION2: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:Q)?(\d+)[\.\:\-\s]+(?:\*\*)?\b([A-D])\b(?:\*\*)?\s*(.*)$").unwrap());
+static RE_EXPLANATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:[\-\*]\s*)?(?:\*\*)?(?i)explanation(?:[\:\-])?(?:\*\*)?(?:[\:\-])?\s*(.*)$").unwrap());
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QuizOption {
@@ -38,12 +45,6 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
         questions: Vec::new(),
     };
 
-    let re_question = Regex::new(r"^\*\*(?:Q)?(\d+)[\.\:]\s*(.+?)\*\*.*$").unwrap();
-    let re_option = Regex::new(r"^(?:[\-\*]\s*)?([A-D])[\.\)]\s*(.+)$").unwrap();
-    let re_solution1 = Regex::new(r"^\*\*(?:Q)?(\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap();
-    let re_solution2 = Regex::new(r"^(?:Q)?(\d+)[\.\:\-\s]+(?:\*\*)?\b([A-D])\b(?:\*\*)?\s*(.*)$").unwrap();
-    let re_explanation = Regex::new(r"^(?:[\-\*]\s*)?(?:\*\*)?(?i)explanation(?:[\:\-])?(?:\*\*)?(?:[\:\-])?\s*(.*)$").unwrap();
-
     let mut parsing_solutions = false;
     let mut current_solution_id: Option<String> = None;
 
@@ -62,7 +63,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
 
 
             // Parse Question
-            if let Some(caps) = re_question.captures(trimmed) {
+            if let Some(caps) = RE_QUESTION.captures(trimmed) {
                 quiz.questions.push(QuizQuestion {
                     id: caps[1].to_string(),
                     text: caps[2].to_string(),
@@ -74,7 +75,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             }
 
             // Parse Option
-            if let Some(caps) = re_option.captures(trimmed) {
+            if let Some(caps) = RE_OPTION.captures(trimmed) {
                 if let Some(last_q) = quiz.questions.last_mut() {
                     last_q.options.push(QuizOption {
                         letter: caps[1].to_string(),
@@ -90,12 +91,12 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             let mut correct_letter_val = String::new();
             let mut trailing_text_val = String::new();
 
-            if let Some(caps) = re_solution1.captures(trimmed) {
+            if let Some(caps) = RE_SOLUTION1.captures(trimmed) {
                 q_id_val = caps[1].to_string();
                 correct_letter_val = caps[2].to_string();
                 trailing_text_val = caps[3].trim().to_string();
                 matched = true;
-            } else if let Some(caps) = re_solution2.captures(trimmed) {
+            } else if let Some(caps) = RE_SOLUTION2.captures(trimmed) {
                 q_id_val = caps[1].to_string();
                 correct_letter_val = caps[2].to_string();
                 trailing_text_val = caps[3].trim().to_string();
@@ -114,7 +115,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             }
 
             // Parse Explanation
-            if let Some(caps) = re_explanation.captures(trimmed) {
+            if let Some(caps) = RE_EXPLANATION.captures(trimmed) {
                 if let Some(ref q_id) = current_solution_id {
                     if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == *q_id) {
                         let new_text = caps[1].trim().to_string();
