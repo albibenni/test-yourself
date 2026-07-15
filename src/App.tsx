@@ -223,7 +223,7 @@ function App() {
         </div>
       </aside>
 
-      <main className="main-content">
+      <main className={`main-content ${isSidebarOpen ? "" : "sidebar-closed"}`}>
         {selectedQuiz ? (
           <div className="quiz-viewer">
             <div className="quiz-header">
