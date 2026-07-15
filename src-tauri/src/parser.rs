@@ -38,10 +38,11 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
         questions: Vec::new(),
     };
 
-    let re_question = Regex::new(r"^\*\*(Q\d+)[\.\:]\s*(.+)\*\*$").unwrap();
-    let re_option = Regex::new(r"^([A-D])[\.\)]\s*(.+)$").unwrap();
-    let re_solution = Regex::new(r"^\*\*(Q\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap();
-    let re_explanation = Regex::new(r"^(?i)\*?\*?explanation\*?\*?[:\-]\s*(.*)$").unwrap();
+    let re_question = Regex::new(r"^\*\*(?:Q)?(\d+)[\.\:]\s*(.+?)\*\*.*$").unwrap();
+    let re_option = Regex::new(r"^(?:[\-\*]\s*)?([A-D])[\.\)]\s*(.+)$").unwrap();
+    let re_solution1 = Regex::new(r"^\*\*(?:Q)?(\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap();
+    let re_solution2 = Regex::new(r"^(?:Q)?(\d+)[\.\:\-\s]+(?:\*\*)?\b([A-D])\b(?:\*\*)?\s*(.*)$").unwrap();
+    let re_explanation = Regex::new(r"^(?:[\-\*]\s*)?(?:\*\*)?(?i)explanation(?:\*\*)?[:\-]\s*(.*)$").unwrap();
 
     let mut parsing_solutions = false;
     let mut current_solution_id: Option<String> = None;
@@ -52,7 +53,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             continue;
         }
 
-        if trimmed.to_lowercase().contains("## solutions") || trimmed.to_lowercase().contains("answer key") {
+        if trimmed.to_lowercase().starts_with("## solutions") || trimmed.to_lowercase().starts_with("## answer key") || trimmed.to_lowercase().starts_with("### answer key") {
             parsing_solutions = true;
             continue;
         }
@@ -88,18 +89,31 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             }
         } else {
             // Parse Solution
-            if let Some(caps) = re_solution.captures(trimmed) {
-                let q_id = caps[1].to_string();
-                let correct_letter = caps[2].to_string();
-                let trailing_text = caps[3].trim().to_string();
-                
-                if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == q_id) {
-                    q.correct_answer = Some(correct_letter);
-                    if !trailing_text.is_empty() {
-                        q.explanation = Some(trailing_text);
+            let mut matched = false;
+            let mut q_id_val = String::new();
+            let mut correct_letter_val = String::new();
+            let mut trailing_text_val = String::new();
+
+            if let Some(caps) = re_solution1.captures(trimmed) {
+                q_id_val = caps[1].to_string();
+                correct_letter_val = caps[2].to_string();
+                trailing_text_val = caps[3].trim().to_string();
+                matched = true;
+            } else if let Some(caps) = re_solution2.captures(trimmed) {
+                q_id_val = caps[1].to_string();
+                correct_letter_val = caps[2].to_string();
+                trailing_text_val = caps[3].trim().to_string();
+                matched = true;
+            }
+
+            if matched {
+                if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == q_id_val) {
+                    q.correct_answer = Some(correct_letter_val);
+                    if !trailing_text_val.is_empty() {
+                        q.explanation = Some(trailing_text_val);
                     }
                 }
-                current_solution_id = Some(q_id);
+                current_solution_id = Some(q_id_val);
                 continue;
             }
 
@@ -119,7 +133,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                 continue;
             } else if let Some(ref q_id) = current_solution_id {
                 // Continuation of explanation if it doesn't match other known tags
-                if !trimmed.starts_with("**Q") {
+                if !trimmed.starts_with("**Q") && !trimmed.starts_with("**1") {
                     if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == *q_id) {
                         if let Some(ref mut expl) = q.explanation {
                             expl.push_str(" ");
@@ -153,7 +167,7 @@ pub fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
         let path = entry.path();
         if path.is_file() {
             let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-            if ext == "md" && path.file_stem().unwrap_or_default().to_string_lossy().contains("quiz") {
+            if ext == "md" {
                 // Determine topic based on folder structure relative to base_dir
                 let relative = path.strip_prefix(base_path).unwrap_or(path);
                 let topic = relative
