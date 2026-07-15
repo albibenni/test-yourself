@@ -1,38 +1,16 @@
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use std::sync::LazyLock;
 use walkdir::WalkDir;
+
+use crate::models::{Quiz, QuizOption, QuizQuestion};
 
 static RE_QUESTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\*\*(?:Q)?(\d+)[\.\:]\s*(.+?)\*\*.*$").unwrap());
 static RE_OPTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:[\-\*]\s*)?([A-D])[\.\)]\s*(.+)$").unwrap());
 static RE_SOLUTION1: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\*\*(?:Q)?(\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap());
 static RE_SOLUTION2: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:Q)?(\d+)[\.\:\-\s]+(?:\*\*)?\b([A-D])\b(?:\*\*)?\s*(.*)$").unwrap());
 static RE_EXPLANATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:[\-\*]\s*)?(?:\*\*)?(?i)explanation(?:[\:\-])?(?:\*\*)?(?:[\:\-])?\s*(.*)$").unwrap());
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct QuizOption {
-    pub letter: String,
-    pub text: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct QuizQuestion {
-    pub id: String,
-    pub text: String,
-    pub options: Vec<QuizOption>,
-    pub correct_answer: Option<String>,
-    pub explanation: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Quiz {
-    pub title: String,
-    pub path: String,
-    pub topic: String,
-    pub questions: Vec<QuizQuestion>,
-}
 
 pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let content = fs::read_to_string(filepath).ok()?;

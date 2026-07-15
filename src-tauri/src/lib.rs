@@ -1,3 +1,4 @@
+pub mod models;
 pub mod parser;
 
 #[tauri::command]
@@ -6,7 +7,7 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-async fn get_quizzes(base_path: String) -> Result<Vec<parser::Quiz>, String> {
+async fn get_quizzes(base_path: String) -> Result<Vec<models::Quiz>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         parser::get_all_quizzes(&base_path)
     })
