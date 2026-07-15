@@ -87,6 +87,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     async function loadQuizzes() {
       try {
@@ -107,8 +109,14 @@ function App() {
     void loadQuizzes();
   }, []);
 
-  // Group quizzes by topic
-  const groupedQuizzes = quizzes.reduce(
+  // Filter quizzes by search query
+  const filteredQuizzes = quizzes.filter((quiz) =>
+    quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    quiz.topic.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Group filtered quizzes by topic
+  const groupedQuizzes = filteredQuizzes.reduce(
     (acc, quiz) => {
       if (!acc[quiz.topic]) acc[quiz.topic] = [];
       acc[quiz.topic].push(quiz);
@@ -121,6 +129,15 @@ function App() {
     <div className="app-container">
       <aside className="sidebar">
         <h2>Brain Test</h2>
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search quizzes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         {loading ? (
           <div className="loading">Loading quizzes...</div>
         ) : (
