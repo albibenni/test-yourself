@@ -84,3 +84,30 @@ fn test_roadmap_false_positive() {
     let quiz = parse_string(md);
     assert!(quiz.is_none());
 }
+
+#[test]
+fn test_ignores_internal_headers() {
+    let md = "
+**Q1. What is Java?**
+A. A language
+B. A coffee
+
+# WHICH IS WHICH QUIZ
+**Q2. Another question?**
+A. Yes
+B. No
+";
+    // We create a file with a specific known name to test title extraction
+    use std::fs::File;
+    use tempfile::tempdir;
+    let dir = tempdir().unwrap();
+    let file_path = dir.path().join("Exception Quiz.md");
+    let mut file = File::create(&file_path).unwrap();
+    writeln!(file, "{}", md).unwrap();
+    
+    let quiz = parse_quiz_file(&file_path, "TestTopic").unwrap();
+    
+    // The title should be the filename, NOT 'WHICH IS WHICH QUIZ'
+    assert_eq!(quiz.title, "Exception Quiz");
+    assert_eq!(quiz.questions.len(), 2);
+}
