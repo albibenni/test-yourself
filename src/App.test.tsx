@@ -35,7 +35,7 @@ describe('App Component', () => {
     });
 
     // Find the search input
-    const searchInput = screen.getByPlaceholderText('Search quizzes...');
+    const searchInput = screen.getByPlaceholderText('Search by topic or title...');
     expect(searchInput).toBeInTheDocument();
 
     // Type in the search input to filter by title
