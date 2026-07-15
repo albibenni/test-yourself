@@ -1,50 +1,171 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+interface QuizOption {
+  letter: string;
+  text: string;
+}
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+interface QuizQuestion {
+  id: string;
+  text: string;
+  options: QuizOption[];
+  correct_answer?: string;
+  explanation?: string;
+}
+
+interface Quiz {
+  title: string;
+  path: string;
+  topic: string;
+  questions: QuizQuestion[];
+}
+
+function QuestionCard({ question }: { question: QuizQuestion }) {
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+
+  const isAnswered = selectedLetter !== null;
+  const isCorrect = selectedLetter === question.correct_answer;
+
+  const handleSelect = (letter: string) => {
+    if (isAnswered) return;
+    setSelectedLetter(letter);
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <div className="question-card">
+      <h3 className="question-title">
+        {question.id}. {question.text}
+      </h3>
+      <div className="options-list">
+        {question.options.map((opt) => {
+          let className = "option-button";
+          if (isAnswered) {
+            if (opt.letter === question.correct_answer) {
+              className += " correct";
+            } else if (opt.letter === selectedLetter) {
+              className += " incorrect";
+            }
+          }
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank" rel="noreferrer">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+          return (
+            <button
+              key={opt.letter}
+              className={className}
+              onClick={() => handleSelect(opt.letter)}
+              disabled={isAnswered}
+            >
+              <span className="option-letter">{opt.letter}.</span>
+              <span className="option-text">{opt.text}</span>
+            </button>
+          );
+        })}
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      {isAnswered && (
+        <div className={`feedback-block ${isCorrect ? "success" : "error"}`}>
+          <div className="feedback-title">
+            {isCorrect ? "✨ Correct!" : "❌ Incorrect"}
+          </div>
+          {question.explanation && (
+            <div className="feedback-explanation">{question.explanation}</div>
+          )}
+          {!isCorrect && !question.explanation && (
+            <div className="feedback-explanation">
+              The correct answer is {question.correct_answer}.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+
+  useEffect(() => {
+    async function loadQuizzes() {
+      try {
+        // We use the absolute path to SecondBrain for now.
+        // In a real app, this might be configurable via a settings dialog.
+        const basePath =
+          "/Users/benni/benni-projects/SecondBrain/Computer Science";
+        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", {
+          basePath,
+        });
+        setQuizzes(fetchedQuizzes);
+      } catch (error) {
+        console.error("Failed to load quizzes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadQuizzes();
+  }, []);
+
+  // Group quizzes by topic
+  const groupedQuizzes = quizzes.reduce(
+    (acc, quiz) => {
+      if (!acc[quiz.topic]) acc[quiz.topic] = [];
+      acc[quiz.topic].push(quiz);
+      return acc;
+    },
+    {} as Record<string, Quiz[]>,
+  );
+
+  return (
+    <div className="app-container">
+      <aside className="sidebar">
+        <h2>Brain Test</h2>
+        {loading ? (
+          <div className="loading">Loading quizzes...</div>
+        ) : (
+          Object.entries(groupedQuizzes)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([topic, topicQuizzes]) => (
+              <div key={topic} className="topic-group">
+                <div className="topic-title">{topic || "General"}</div>
+                {topicQuizzes.map((quiz) => (
+                  <div
+                    key={quiz.path}
+                    className={`quiz-item ${selectedQuiz?.path === quiz.path ? "active" : ""}`}
+                    onClick={() => setSelectedQuiz(quiz)}
+                  >
+                    {quiz.title}
+                  </div>
+                ))}
+              </div>
+            ))
+        )}
+      </aside>
+
+      <main className="main-content">
+        {selectedQuiz ? (
+          <div className="quiz-viewer">
+            <div className="quiz-header">
+              <h1>{selectedQuiz.title}</h1>
+              <p>Topic: {selectedQuiz.topic || "General"}</p>
+            </div>
+            <div className="questions-container">
+              {selectedQuiz.questions.map((q) => (
+                <QuestionCard key={q.id} question={q} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <h2>Select a Quiz</h2>
+            <p>
+              Choose a topic from the sidebar to begin testing your knowledge.
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
 
