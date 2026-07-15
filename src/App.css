@@ -93,14 +93,6 @@ body {
   z-index: 100;
 }
 
-.top-bar-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  pointer-events: none;
-  margin-top: 1px; /* Optical alignment */
-}
-
 .top-bar-btn {
   background: transparent;
   border: none;
@@ -114,11 +106,29 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  margin-top: 2px; /* Optical vertical alignment with traffic lights */
 }
 
 .top-bar-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
+}
+
+.top-bar-separator {
+  width: 1px;
+  height: 14px;
+  background: var(--glass-border);
+  margin: 0 0.25rem;
+  margin-top: 2px;
+}
+
+.top-bar-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  opacity: 0.5;
+  margin-top: 2px;
 }
 
 .app-container {
@@ -166,9 +176,11 @@ body {
 
 .sidebar-divider {
   border: none;
-  border-bottom: 1px solid var(--glass-border);
+  height: 1px;
+  background: var(--glass-border);
   margin: 0;
 }
+
 
 .search-container {
   position: relative;

@@ -139,6 +139,7 @@ function App() {
             <line x1="9" y1="3" x2="9" y2="21"></line>
           </svg>
         </button>
+        <div className="top-bar-separator"></div>
         <div className="top-bar-title" data-tauri-drag-region>tauri-app</div>
       </div>
       <div className="app-container">
@@ -146,31 +147,31 @@ function App() {
           <div className="sidebar-header">
             <h2>Brain Test</h2>
           </div>
-        <hr className="sidebar-divider" />
-        <div className="search-container">
-          <svg
-            className="search-icon"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search by topic or title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <hr className="sidebar-divider" />
-        <div className="sidebar-content">
+          <hr className="sidebar-divider" />
+          <div className="search-container">
+            <svg
+              className="search-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search by topic or title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <hr className="sidebar-divider" />
+          <div className="sidebar-content">
           {loading ? (
           <div className="loading">Loading quizzes...</div>
         ) : (
