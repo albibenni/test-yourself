@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QuizOption {
@@ -18,7 +19,7 @@ pub struct QuizQuestion {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Quiz {
     pub title: String,
-    pub path: String,
+    pub path: PathBuf,
     pub topic: String,
     pub questions: Vec<QuizQuestion>,
 }

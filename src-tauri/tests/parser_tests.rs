@@ -1,5 +1,6 @@
 use std::io::Write;
-use tauri_app_lib::parser::{parse_quiz_file, Quiz};
+use tauri_app_lib::parser::parse_quiz_file;
+use tauri_app_lib::models::Quiz;
 use tempfile::NamedTempFile;
 
 fn parse_string(content: &str) -> Option<Quiz> {
