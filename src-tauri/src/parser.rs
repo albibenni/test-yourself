@@ -59,11 +59,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
         }
 
         if !parsing_solutions {
-            // Title
-            if trimmed.starts_with("# ") {
-                quiz.title = trimmed.replace("# ", "").trim().to_string();
-                continue;
-            }
+
 
             // Parse Question
             if let Some(caps) = re_question.captures(trimmed) {
