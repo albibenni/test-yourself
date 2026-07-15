@@ -30,6 +30,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let mut current_solution_id: Option<String> = None;
     let mut in_code_block = false;
     let mut current_list_index: Option<u64> = None;
+    let mut pending_list_prefix = String::new();
 
     for event in parser {
         match event {
@@ -43,11 +44,16 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             Event::End(TagEnd::CodeBlock) => in_code_block = false,
             Event::Start(Tag::Paragraph | Tag::Heading { .. }) => {
                 current_text.clear();
+                if !pending_list_prefix.is_empty() {
+                    current_text.push_str(&pending_list_prefix);
+                    pending_list_prefix.clear();
+                }
             }
             Event::Start(Tag::Item) => {
                 current_text.clear();
+                pending_list_prefix.clear();
                 if let Some(ref mut idx) = current_list_index {
-                    current_text.push_str(&format!("{}. ", idx));
+                    pending_list_prefix = format!("{}. ", idx);
                     *idx += 1;
                 }
             }
@@ -58,11 +64,16 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             }
             Event::Text(text) | Event::Code(text) => {
                 if !in_code_block {
+                    if !pending_list_prefix.is_empty() {
+                        current_text.push_str(&pending_list_prefix);
+                        pending_list_prefix.clear();
+                    }
                     current_text.push_str(&text);
                 }
             }
             Event::End(TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item) => {
                 let paragraph_text = current_text.trim();
+
                 if paragraph_text.is_empty() {
                     continue;
                 }
@@ -192,6 +203,15 @@ mod tests {
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse Kafka SAGA quiz");
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+    }
+
+    #[test]
+    fn test_parse_jvm_quiz() {
+        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/JVM - Compiler Quiz.md");
+        let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse JVM quiz");
+        assert_eq!(quiz.questions.len(), 40);
+        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
+        assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("B"));
     }
 }
 
