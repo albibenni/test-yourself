@@ -111,9 +111,10 @@ function App() {
   }, []);
 
   // Filter quizzes by search query
-  const filteredQuizzes = quizzes.filter((quiz) =>
-    quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    quiz.topic.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredQuizzes = quizzes.filter(
+    (quiz) =>
+      quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quiz.topic.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Group filtered quizzes by topic
@@ -134,13 +135,25 @@ function App() {
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           title="Toggle Sidebar"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="9" y1="3" x2="9" y2="21"></line>
           </svg>
         </button>
         <div className="top-bar-separator"></div>
-        <div className="top-bar-title" data-tauri-drag-region>tauri-app</div>
+        <div className="top-bar-title" data-tauri-drag-region>
+          tauri-app
+        </div>
       </div>
       <div className="app-container">
         <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
@@ -172,56 +185,64 @@ function App() {
           </div>
           <hr className="sidebar-divider" />
           <div className="sidebar-content">
-          {loading ? (
-          <div className="loading">Loading quizzes...</div>
-        ) : (
-          Object.entries(groupedQuizzes)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([topic, topicQuizzes]) => (
-              <div key={topic} className="topic-group">
-                <div className="topic-title">{topic || "General"}</div>
-                {topicQuizzes.map((quiz) => (
-                  <div
-                    key={quiz.path}
-                    className={`quiz-item ${selectedQuiz?.path === quiz.path ? "active" : ""}`}
-                    onClick={() => setSelectedQuiz(quiz)}
-                  >
-                    {quiz.title}
+            {loading ? (
+              <div className="loading">Loading quizzes...</div>
+            ) : (
+              Object.entries(groupedQuizzes)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([topic, topicQuizzes]) => (
+                  <div key={topic} className="topic-group">
+                    <div className="topic-title">{topic || "General"}</div>
+                    {topicQuizzes.map((quiz) => (
+                      <div
+                        key={quiz.path}
+                        className={`quiz-item ${selectedQuiz?.path === quiz.path ? "active" : ""}`}
+                        onClick={() => setSelectedQuiz(quiz)}
+                      >
+                        {quiz.title}
+                      </div>
+                    ))}
                   </div>
+                ))
+            )}
+          </div>
+        </aside>
+
+        <main className="main-content">
+          {selectedQuiz ? (
+            <div className="quiz-viewer">
+              <div className="quiz-header">
+                <div className="header-title-row">
+                  <h1>{selectedQuiz.title}</h1>
+                </div>
+                <p>Topic: {selectedQuiz.topic || "General"}</p>
+              </div>
+              <div className="questions-container">
+                {selectedQuiz.questions.map((q) => (
+                  <QuestionCard
+                    key={`${selectedQuiz.path}-${q.id}`}
+                    question={q}
+                  />
                 ))}
               </div>
-            ))
-        )}
-        </div>
-      </aside>
-
-      <main className="main-content">
-        {selectedQuiz ? (
-          <div className="quiz-viewer">
-            <div className="quiz-header">
-              <div className="header-title-row">
-                <h1>{selectedQuiz.title}</h1>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div
+                className="header-title-row"
+                style={{ justifyContent: "center" }}
+              >
+                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 600 }}>
+                  Select a Quiz
+                </h2>
               </div>
-              <p>Topic: {selectedQuiz.topic || "General"}</p>
+              <p>
+                Choose a topic from the sidebar to begin testing your knowledge.
+              </p>
             </div>
-            <div className="questions-container">
-              {selectedQuiz.questions.map((q) => (
-                <QuestionCard key={`${selectedQuiz.path}-${q.id}`} question={q} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="empty-state">
-            <div className="header-title-row" style={{ justifyContent: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>Select a Quiz</h2>
-            </div>
-            <p>
-              Choose a topic from the sidebar to begin testing your knowledge.
-            </p>
-          </div>
-        )}
-      </main>
-    </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
