@@ -139,6 +139,7 @@ function App() {
             <line x1="9" y1="3" x2="9" y2="21"></line>
           </svg>
         </button>
+        <div className="top-bar-title" data-tauri-drag-region>tauri-app</div>
       </div>
       <div className="app-container">
         <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
