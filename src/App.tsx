@@ -152,7 +152,7 @@ function App() {
             </div>
             <div className="questions-container">
               {selectedQuiz.questions.map((q) => (
-                <QuestionCard key={q.id} question={q} />
+                <QuestionCard key={`${selectedQuiz.path}-${q.id}`} question={q} />
               ))}
             </div>
           </div>

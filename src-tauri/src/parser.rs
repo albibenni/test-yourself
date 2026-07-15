@@ -39,9 +39,9 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     };
 
     let re_question = Regex::new(r"^\*\*(Q\d+)[\.\:]\s*(.+)\*\*$").unwrap();
-    let re_option = Regex::new(r"^([A-D])\.\s*(.+)$").unwrap();
-    let re_solution = Regex::new(r"^\*\*(Q\d+)[^\w]+([A-D]).*?\*\*\s*(.*)$").unwrap();
-    let re_explanation = Regex::new(r"^\*\*Explanation:\*\*\s*(.*)$").unwrap();
+    let re_option = Regex::new(r"^([A-D])[\.\)]\s*(.+)$").unwrap();
+    let re_solution = Regex::new(r"^\*\*(Q\d+)[^\*]*\b([A-D])\b[^\*]*\*\*\s*(.*)$").unwrap();
+    let re_explanation = Regex::new(r"^(?i)\*?\*?explanation\*?\*?[:\-]\s*(.*)$").unwrap();
 
     let mut parsing_solutions = false;
     let mut current_solution_id: Option<String> = None;
