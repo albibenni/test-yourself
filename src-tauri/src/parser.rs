@@ -159,6 +159,14 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
 
 pub fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     let mut quizzes = Vec::new();
+
+    // SECURITY: Prevent basic path traversal and null-byte injection.
+    // In a fully generalized app, this should be enforced via Tauri's `fs::Scope`.
+    if base_dir.contains("..") || base_dir.contains('\0') {
+        eprintln!("Security Warning: Attempted path traversal or invalid characters detected.");
+        return quizzes;
+    }
+
     let base_path = Path::new(base_dir);
 
     if !base_path.exists() {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { clsx } from "clsx";
 import "./App.css";
 
 interface QuizOption {
@@ -40,19 +41,14 @@ function QuestionCard({ question }: { question: QuizQuestion }) {
       </h3>
       <div className="options-list">
         {question.options.map((opt) => {
-          let className = "option-button";
-          if (isAnswered) {
-            if (opt.letter === question.correct_answer) {
-              className += " correct";
-            } else if (opt.letter === selectedLetter) {
-              className += " incorrect";
-            }
-          }
-
           return (
             <button
               key={opt.letter}
-              className={className}
+              className={clsx(
+                "option-button",
+                isAnswered && opt.letter === question.correct_answer && "correct",
+                isAnswered && opt.letter === selectedLetter && opt.letter !== question.correct_answer && "incorrect"
+              )}
               onClick={() => handleSelect(opt.letter)}
               disabled={isAnswered}
             >
@@ -64,7 +60,7 @@ function QuestionCard({ question }: { question: QuizQuestion }) {
       </div>
 
       {isAnswered && (
-        <div className={`feedback-block ${isCorrect ? "success" : "error"}`}>
+        <div className={clsx("feedback-block", isCorrect ? "success" : "error")}>
           <div className="feedback-title">
             {isCorrect ? "✨ Correct!" : "❌ Incorrect"}
           </div>
@@ -156,7 +152,7 @@ function App() {
         </div>
       </div>
       <div className="app-container">
-        <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
+        <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
           <div className="sidebar-header">
             <h2>Brain Test</h2>
           </div>
@@ -196,7 +192,7 @@ function App() {
                     {topicQuizzes.map((quiz) => (
                       <div
                         key={quiz.path}
-                        className={`quiz-item ${selectedQuiz?.path === quiz.path ? "active" : ""}`}
+                        className={clsx("quiz-item", selectedQuiz?.path === quiz.path && "active")}
                         onClick={() => setSelectedQuiz(quiz)}
                       >
                         {quiz.title}
