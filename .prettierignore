@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+src-tauri/target
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+coverage
