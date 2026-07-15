@@ -40,7 +40,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
 
     let re_question = Regex::new(r"^\*\*(Q\d+)[\.\:]\s*(.+)\*\*$").unwrap();
     let re_option = Regex::new(r"^([A-D])\.\s*(.+)$").unwrap();
-    let re_solution = Regex::new(r"^\*\*(Q\d+)[\.\:]\s*([A-D])\..*$").unwrap();
+    let re_solution = Regex::new(r"^\*\*(Q\d+)[^\w]+([A-D]).*?\*\*\s*(.*)$").unwrap();
     let re_explanation = Regex::new(r"^\*\*Explanation:\*\*\s*(.*)$").unwrap();
 
     let mut parsing_solutions = false;
@@ -52,7 +52,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             continue;
         }
 
-        if trimmed.to_lowercase().contains("## solutions") {
+        if trimmed.to_lowercase().contains("## solutions") || trimmed.to_lowercase().contains("answer key") {
             parsing_solutions = true;
             continue;
         }
@@ -91,8 +91,13 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             if let Some(caps) = re_solution.captures(trimmed) {
                 let q_id = caps[1].to_string();
                 let correct_letter = caps[2].to_string();
+                let trailing_text = caps[3].trim().to_string();
+                
                 if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == q_id) {
                     q.correct_answer = Some(correct_letter);
+                    if !trailing_text.is_empty() {
+                        q.explanation = Some(trailing_text);
+                    }
                 }
                 current_solution_id = Some(q_id);
                 continue;
@@ -102,7 +107,13 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             if let Some(caps) = re_explanation.captures(trimmed) {
                 if let Some(ref q_id) = current_solution_id {
                     if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == *q_id) {
-                        q.explanation = Some(caps[1].to_string());
+                        let new_text = caps[1].trim().to_string();
+                        if let Some(ref mut expl) = q.explanation {
+                            expl.push_str(" ");
+                            expl.push_str(&new_text);
+                        } else {
+                            q.explanation = Some(new_text);
+                        }
                     }
                 }
                 continue;
@@ -113,6 +124,8 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         if let Some(ref mut expl) = q.explanation {
                             expl.push_str(" ");
                             expl.push_str(trimmed);
+                        } else {
+                            q.explanation = Some(trimmed.to_string());
                         }
                     }
                 }
