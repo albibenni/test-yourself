@@ -128,8 +128,53 @@ function App() {
 
   return (
     <div className="app-container">
-      <aside className={`sidebar ${isSidebarOpen ? '' : 'closed'}`}>
-        <h2>Brain Test</h2>
+      {!isSidebarOpen && (
+        <button
+          className="toggle-sidebar-btn standalone-btn"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      )}
+
+      <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
+        <div className="sidebar-header">
+          <h2>Brain Test</h2>
+          <button
+            className="toggle-sidebar-btn integrated-btn"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
         <hr className="sidebar-divider" />
         <div className="search-container">
           <svg
@@ -179,15 +224,6 @@ function App() {
       </aside>
 
       <main className="main-content">
-        <div className="top-nav">
-          <button className="toggle-sidebar-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-        </div>
         {selectedQuiz ? (
           <div className="quiz-viewer">
             <div className="quiz-header">
