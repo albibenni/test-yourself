@@ -127,54 +127,24 @@ function App() {
   );
 
   return (
-    <div className="app-container">
-      {!isSidebarOpen && (
+    <div className="app-wrapper">
+      <div className="top-bar" data-tauri-drag-region>
         <button
-          className="toggle-sidebar-btn standalone-btn"
-          onClick={() => setIsSidebarOpen(true)}
+          className="top-bar-btn"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          title="Toggle Sidebar"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
           </svg>
         </button>
-      )}
-
-      <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
-        <div className="sidebar-header">
-          <h2>Brain Test</h2>
-          <button
-            className="toggle-sidebar-btn integrated-btn"
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-        </div>
+      </div>
+      <div className="app-container">
+        <aside className={`sidebar ${isSidebarOpen ? "" : "closed"}`}>
+          <div className="sidebar-header">
+            <h2>Brain Test</h2>
+          </div>
         <hr className="sidebar-divider" />
         <div className="search-container">
           <svg
@@ -223,11 +193,13 @@ function App() {
         </div>
       </aside>
 
-      <main className={`main-content ${isSidebarOpen ? "" : "sidebar-closed"}`}>
+      <main className="main-content">
         {selectedQuiz ? (
           <div className="quiz-viewer">
             <div className="quiz-header">
-              <h1>{selectedQuiz.title}</h1>
+              <div className="header-title-row">
+                <h1>{selectedQuiz.title}</h1>
+              </div>
               <p>Topic: {selectedQuiz.topic || "General"}</p>
             </div>
             <div className="questions-container">
@@ -238,13 +210,16 @@ function App() {
           </div>
         ) : (
           <div className="empty-state">
-            <h2>Select a Quiz</h2>
+            <div className="header-title-row" style={{ justifyContent: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>Select a Quiz</h2>
+            </div>
             <p>
               Choose a topic from the sidebar to begin testing your knowledge.
             </p>
           </div>
         )}
       </main>
+    </div>
     </div>
   );
 }
