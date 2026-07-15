@@ -1,55 +1,182 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import App from './App';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import App from "./App";
+import { invoke } from "@tauri-apps/api/core";
 
 // Mock Tauri invoke
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn().mockResolvedValue([
-    {
-      title: 'React Basics',
-      path: '/path/react.md',
-      topic: 'Frontend',
-      questions: []
-    },
-    {
-      title: 'Rust Basics',
-      path: '/path/rust.md',
-      topic: 'Backend',
-      questions: []
-    }
-  ])
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
 }));
 
-describe('App Component', () => {
+const mockQuizzes = [
+  {
+    title: "React Basics",
+    path: "/path/react.md",
+    topic: "Frontend",
+    questions: [
+      {
+        id: "1",
+        text: "What is React?",
+        options: [
+          { letter: "A", text: "A library" },
+          { letter: "B", text: "A framework" },
+        ],
+        correct_answer: "A",
+        explanation: "React is a UI library.",
+      },
+      {
+        id: "2",
+        text: "Who made React?",
+        options: [
+          { letter: "A", text: "Google" },
+          { letter: "B", text: "Facebook" },
+        ],
+        correct_answer: "B",
+      },
+    ],
+  },
+  {
+    title: "Rust Basics",
+    path: "/path/rust.md",
+    topic: "Backend",
+    questions: [],
+  },
+];
+
+describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (invoke as any).mockResolvedValue(mockQuizzes);
   });
 
-  it('renders search bar and filters quizzes correctly', async () => {
+  it("shows loading state initially", async () => {
+    // We mock a pending promise to see the loading state
+    let resolvePromise: any;
+    (invoke as any).mockReturnValue(
+      new Promise((resolve) => {
+        resolvePromise = resolve;
+      }),
+    );
+    render(<App />);
+    expect(screen.getByText("Loading quizzes...")).toBeInTheDocument();
+
+    await act(async () => {
+      resolvePromise(mockQuizzes);
+    });
+  });
+
+  it("renders search bar and filters quizzes correctly", async () => {
     render(<App />);
 
     // Wait for the quizzes to load
     await waitFor(() => {
-      expect(screen.getByText('React Basics')).toBeInTheDocument();
-      expect(screen.getByText('Rust Basics')).toBeInTheDocument();
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+      expect(screen.getByText("Rust Basics")).toBeInTheDocument();
     });
 
     // Find the search input
-    const searchInput = screen.getByPlaceholderText('Search by topic or title...');
+    const searchInput = screen.getByPlaceholderText(
+      "Search by topic or title...",
+    );
     expect(searchInput).toBeInTheDocument();
 
     // Type in the search input to filter by title
-    fireEvent.change(searchInput, { target: { value: 'React' } });
+    fireEvent.change(searchInput, { target: { value: "React" } });
 
     // React Basics should be there, Rust Basics should be gone
-    expect(screen.getByText('React Basics')).toBeInTheDocument();
-    expect(screen.queryByText('Rust Basics')).not.toBeInTheDocument();
+    expect(screen.getByText("React Basics")).toBeInTheDocument();
+    expect(screen.queryByText("Rust Basics")).not.toBeInTheDocument();
 
     // Type in the search input to filter by topic
-    fireEvent.change(searchInput, { target: { value: 'Backend' } });
+    fireEvent.change(searchInput, { target: { value: "Backend" } });
 
     // Rust Basics should be there, React Basics should be gone
-    expect(screen.queryByText('React Basics')).not.toBeInTheDocument();
-    expect(screen.getByText('Rust Basics')).toBeInTheDocument();
+    expect(screen.queryByText("React Basics")).not.toBeInTheDocument();
+    expect(screen.getByText("Rust Basics")).toBeInTheDocument();
+
+    // Edge case: No results
+    fireEvent.change(searchInput, { target: { value: "NonExistent" } });
+    expect(screen.queryByText("React Basics")).not.toBeInTheDocument();
+    expect(screen.queryByText("Rust Basics")).not.toBeInTheDocument();
+  });
+
+  it("toggles sidebar visibility", async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    const toggleButton = screen.getByTitle("Toggle Sidebar");
+    // The aside has role="complementary" implicitly
+    const sidebar = screen.getByRole("complementary");
+
+    // Initially open (no 'closed' class)
+    expect(sidebar).not.toHaveClass("closed");
+
+    // Click to close
+    fireEvent.click(toggleButton);
+    expect(sidebar).toHaveClass("closed");
+
+    // Click to open
+    fireEvent.click(toggleButton);
+    expect(sidebar).not.toHaveClass("closed");
+  });
+
+  it("selects a quiz and answers questions", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    // Select the quiz
+    fireEvent.click(screen.getByText("React Basics"));
+
+    // Check quiz header
+    expect(
+      screen.getByRole("heading", { name: "React Basics", level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1. What is React?")).toBeInTheDocument();
+
+    // Answer correctly (Question 1)
+    const btnA = screen.getByText("A library").closest("button")!;
+    fireEvent.click(btnA);
+
+    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(screen.getByText("React is a UI library.")).toBeInTheDocument();
+
+    // Buttons should be disabled
+    expect(btnA).toBeDisabled();
+
+    // Answer incorrectly (Question 2)
+    const btnA2 = screen.getByText("Google").closest("button")!;
+    fireEvent.click(btnA2);
+
+    expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
+    // Fallback explanation when no explanation is provided
+    expect(screen.getByText("The correct answer is B.")).toBeInTheDocument();
+  });
+
+  it("handles invoke errors gracefully", async () => {
+    (invoke as any).mockRejectedValue(new Error("Failed to load"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading quizzes...")).not.toBeInTheDocument();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Failed to load quizzes:",
+      expect.any(Error),
+    );
+    consoleSpy.mockRestore();
   });
 });
