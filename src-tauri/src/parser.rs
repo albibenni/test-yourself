@@ -29,6 +29,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let mut current_text = String::new();
     let mut current_solution_id: Option<String> = None;
     let mut in_code_block = false;
+    let mut in_heading = false;
     let mut current_list_index: Option<u64> = None;
     let mut pending_list_prefix = String::new();
 
@@ -42,7 +43,16 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             }
             Event::Start(Tag::CodeBlock(_)) => in_code_block = true,
             Event::End(TagEnd::CodeBlock) => in_code_block = false,
-            Event::Start(Tag::Paragraph | Tag::Heading { .. }) => {
+            Event::Start(Tag::Heading { .. }) => {
+                in_heading = true;
+                current_text.clear();
+                if !pending_list_prefix.is_empty() {
+                    current_text.push_str(&pending_list_prefix);
+                    pending_list_prefix.clear();
+                }
+            }
+            Event::Start(Tag::Paragraph) => {
+                in_heading = false;
                 current_text.clear();
                 if !pending_list_prefix.is_empty() {
                     current_text.push_str(&pending_list_prefix);
@@ -85,7 +95,19 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         continue;
                     }
 
-                    if trimmed.to_lowercase().contains("solutions") || trimmed.to_lowercase().contains("answer key") {
+                    let trimmed_lower = trimmed.to_lowercase();
+                    
+                    if in_heading && trimmed_lower.contains("quiz") {
+                        if !trimmed_lower.contains("answer") && 
+                           !trimmed_lower.contains("solution") && 
+                           !trimmed_lower.contains("soluzioni") {
+                            in_solutions = false;
+                        }
+                    }
+
+                    if trimmed_lower.contains("solutions") || 
+                       trimmed_lower.contains("answer key") || 
+                       trimmed_lower.contains("soluzioni") {
                         in_solutions = true;
                         continue;
                     }
@@ -99,7 +121,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
 
                             current_solution_id = Some(q_id_val.to_string());
 
-                            if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == q_id_val) {
+                            if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == q_id_val && !q.options.is_empty()) {
                                 q.correct_answer = Some(correct_letter_val);
                                 if !trailing_text_val.is_empty() {
                                     q.explanation = Some(trailing_text_val);
@@ -111,7 +133,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         // Parse Explanation
                         if let Some(caps) = RE_EXPLANATION.captures(trimmed) {
                             if let Some(ref q_id) = current_solution_id {
-                                if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == *q_id) {
+                                if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
                                     let new_text = caps[1].trim().to_string();
                                     if let Some(ref mut expl) = q.explanation {
                                         expl.push_str("\n\n");
@@ -125,7 +147,7 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         } else if let Some(ref q_id) = current_solution_id {
                             // Continuation of explanation
                             if !RE_SOLUTION.is_match(trimmed) {
-                                if let Some(q) = quiz.questions.iter_mut().find(|q| q.id == *q_id) {
+                                if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
                                     if let Some(ref mut expl) = q.explanation {
                                         expl.push_str("\n\n");
                                         expl.push_str(trimmed);
@@ -139,11 +161,62 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         // Parse Question
                         if let Some(caps) = RE_QUESTION.captures(trimmed) {
                             let q_id = caps[1].to_string();
-                            let text = caps[2].to_string();
+                            let raw_text = caps[2].to_string();
+                            let mut text = raw_text.clone();
+                            let mut options = Vec::new();
+
+                            // Look for inline options, e.g. " A) " or " A. "
+                            let re_inline_a = regex::Regex::new(r"(?:\s+|^)A[\.\)]\s+").unwrap();
+                            if let Some(mat_a) = re_inline_a.find(&raw_text) {
+                                text = raw_text[..mat_a.start()].trim().to_string();
+                                
+                                let re_inline_b = regex::Regex::new(r"\s+B[\.\)]\s+").unwrap();
+                                let re_inline_c = regex::Regex::new(r"\s+C[\.\)]\s+").unwrap();
+                                let re_inline_d = regex::Regex::new(r"\s+D[\.\)]\s+").unwrap();
+                                
+                                let start_a = mat_a.end();
+                                let mut start_b = raw_text.len();
+                                let mut start_c = raw_text.len();
+                                let mut start_d = raw_text.len();
+                                
+                                let mut mat_b_end = raw_text.len();
+                                let mut mat_c_end = raw_text.len();
+                                let mut mat_d_end = raw_text.len();
+
+                                if let Some(mat) = re_inline_b.find(&raw_text) {
+                                    start_b = mat.start();
+                                    mat_b_end = mat.end();
+                                }
+                                if let Some(mat) = re_inline_c.find(&raw_text) {
+                                    start_c = mat.start();
+                                    mat_c_end = mat.end();
+                                }
+                                if let Some(mat) = re_inline_d.find(&raw_text) {
+                                    start_d = mat.start();
+                                    mat_d_end = mat.end();
+                                }
+                                
+                                let opt_a = raw_text[start_a..start_b].trim().to_string();
+                                options.push(QuizOption { letter: "A".to_string(), text: opt_a });
+                                
+                                if start_b < raw_text.len() {
+                                    let opt_b = raw_text[mat_b_end..start_c].trim().to_string();
+                                    options.push(QuizOption { letter: "B".to_string(), text: opt_b });
+                                }
+                                if start_c < raw_text.len() {
+                                    let opt_c = raw_text[mat_c_end..start_d].trim().to_string();
+                                    options.push(QuizOption { letter: "C".to_string(), text: opt_c });
+                                }
+                                if start_d < raw_text.len() {
+                                    let opt_d = raw_text[mat_d_end..].trim().to_string();
+                                    options.push(QuizOption { letter: "D".to_string(), text: opt_d });
+                                }
+                            }
+
                             let new_q = QuizQuestion {
-                                id: q_id,
+                                id: q_id.clone(),
                                 text,
-                                options: Vec::new(),
+                                options,
                                 correct_answer: None,
                                 explanation: None,
                             };
@@ -160,6 +233,11 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                             }
                         }
                     }
+                }
+                
+                // Clear in_heading if this was a heading
+                if in_heading {
+                    in_heading = false;
                 }
             }
             _ => {}
@@ -193,6 +271,7 @@ mod tests {
     fn test_parse_saga_quiz() {
         let path = PathBuf::from("../../SecondBrain/Computer Science/Design and Systems/Design Pattern/Exercises and quizes/SAGA exercises-quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse SAGA quiz");
+        println!("SAGA quiz parsed {} questions", quiz.questions.len());
         assert!(!quiz.questions.is_empty());
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
     }
@@ -212,6 +291,26 @@ mod tests {
         assert_eq!(quiz.questions.len(), 40);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
         assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("B"));
+    }
+
+    #[test]
+    fn test_parse_exception_quiz() {
+        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/Exception Quiz.md");
+        let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse Exception quiz");
+        // Due to the second quiz in the same file, the questions vector will contain both.
+        // The first quiz has 20 questions, the second has 10. Total 30.
+        assert_eq!(quiz.questions.len(), 30);
+        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+        assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("C"));
+    }
+
+    #[test]
+    fn test_parse_static_ex_quiz() {
+        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/static ex.md");
+        let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse static ex quiz");
+        assert_eq!(quiz.questions.len(), 8);
+        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+        assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("C"));
     }
 }
 
