@@ -129,16 +129,32 @@ function App() {
     <div className="app-container">
       <aside className="sidebar">
         <h2>Brain Test</h2>
+        <hr className="sidebar-divider" />
         <div className="search-container">
+          <svg
+            className="search-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             type="text"
             className="search-input"
-            placeholder="Search quizzes..."
+            placeholder="Search by topic or title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {loading ? (
+        <hr className="sidebar-divider" />
+        <div className="sidebar-content">
+          {loading ? (
           <div className="loading">Loading quizzes...</div>
         ) : (
           Object.entries(groupedQuizzes)
@@ -158,6 +174,7 @@ function App() {
               </div>
             ))
         )}
+        </div>
       </aside>
 
       <main className="main-content">
