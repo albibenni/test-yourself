@@ -410,6 +410,12 @@ body {
   transform: translateX(4px);
 }
 
+.quiz-item.focused {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(4px);
+}
+
 .quiz-item.active {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.3);

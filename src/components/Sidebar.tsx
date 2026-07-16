@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { clsx } from "clsx";
 import type { Quiz } from "../types";
@@ -26,6 +27,49 @@ export function Sidebar({
   handleSync,
   isSyncing,
 }: SidebarProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
+
+  const flatQuizzes = useMemo(() => {
+    return Object.entries(groupedQuizzes)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .flatMap(([_, quizzes]) => quizzes);
+  }, [groupedQuizzes]);
+
+  useEffect(() => {
+    setFocusedQuizIndex(0);
+  }, [searchQuery]);
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (flatQuizzes.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedQuizIndex((prev) => Math.min(prev + 1, flatQuizzes.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedQuizIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const quizToOpen = flatQuizzes[focusedQuizIndex];
+      if (quizToOpen) {
+        setSelectedQuiz(quizToOpen);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
       <div className="sidebar-header">
@@ -70,11 +114,13 @@ export function Sidebar({
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
+          ref={searchInputRef}
           type="text"
           className="search-input"
           placeholder="Search by topic or title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleInputKeyDown}
         />
       </div>
       <hr className="sidebar-divider" />
@@ -99,6 +145,7 @@ export function Sidebar({
                     className={clsx(
                       "quiz-item",
                       selectedQuiz?.path === quiz.path && "active",
+                      flatQuizzes[focusedQuizIndex]?.path === quiz.path && "focused"
                     )}
                     onClick={() => setSelectedQuiz(quiz)}
                   >
