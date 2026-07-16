@@ -16,4 +16,5 @@ export interface Quiz {
   path: string;
   topic: string;
   questions: QuizQuestion[];
+  last_modified: number;
 }

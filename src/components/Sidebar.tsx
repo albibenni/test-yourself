@@ -10,6 +10,8 @@ interface SidebarProps {
   groupedQuizzes: Record<string, Quiz[]>;
   selectedQuiz: Quiz | null;
   setSelectedQuiz: Dispatch<SetStateAction<Quiz | null>>;
+  handleSync: () => void;
+  isSyncing: boolean;
 }
 
 export function Sidebar({
@@ -20,11 +22,29 @@ export function Sidebar({
   groupedQuizzes,
   selectedQuiz,
   setSelectedQuiz,
+  handleSync,
+  isSyncing,
 }: SidebarProps) {
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
-      <div className="sidebar-header">
+      <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Brain Test</h2>
+        <button 
+          className="sync-button"
+          onClick={handleSync} 
+          disabled={isSyncing}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0.25rem' }}
+          title="Sync Quizzes"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="20" height="20" viewBox="0 0 24 24" 
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }}
+          >
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-3.34 3.34" />
+          </svg>
+        </button>
       </div>
       <hr className="sidebar-divider" />
       <div className="search-container">

@@ -10,6 +10,7 @@ import { QuestionCard } from "./components/QuestionCard";
 function App() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,13 +19,8 @@ function App() {
   useEffect(() => {
     async function loadQuizzes() {
       try {
-        // We use the absolute path to SecondBrain for now.
-        // In a real app, this might be configurable via a settings dialog.
-        const basePath =
-          "/Users/benni/benni-projects/SecondBrain/Computer Science";
-        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", {
-          basePath,
-        });
+        const basePath = "/Users/benni/benni-projects/SecondBrain/Computer Science";
+        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -34,6 +30,40 @@ function App() {
     }
     void loadQuizzes();
   }, []);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const basePath = "/Users/benni/benni-projects/SecondBrain/Computer Science";
+      const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
+      
+      setQuizzes(prevQuizzes => {
+        // Create a map of existing quizzes for quick lookup
+        const prevQuizMap = new Map(prevQuizzes.map(q => [q.path, q]));
+        
+        const mergedQuizzes = fetchedQuizzes.map(fetched => {
+          const existing = prevQuizMap.get(fetched.path);
+          if (existing && existing.last_modified === fetched.last_modified) {
+            return existing;
+          }
+          return fetched;
+        });
+        
+        // Ensure selectedQuiz gets updated to the latest reference if it was modified
+        if (selectedQuiz) {
+          const updatedSelected = mergedQuizzes.find(q => q.path === selectedQuiz.path);
+          setSelectedQuiz(updatedSelected || null);
+        }
+        
+        return mergedQuizzes;
+      });
+      
+    } catch (error) {
+      console.error("Failed to sync quizzes:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Filter quizzes by search query
   const filteredQuizzes = quizzes.filter(
@@ -68,6 +98,8 @@ function App() {
           groupedQuizzes={groupedQuizzes}
           selectedQuiz={selectedQuiz}
           setSelectedQuiz={setSelectedQuiz}
+          handleSync={handleSync}
+          isSyncing={isSyncing}
         />
 
         <main className="main-content">

@@ -22,4 +22,5 @@ pub struct Quiz {
     pub path: PathBuf,
     pub topic: String,
     pub questions: Vec<QuizQuestion>,
+    pub last_modified: u64,
 }

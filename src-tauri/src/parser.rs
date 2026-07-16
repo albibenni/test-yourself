@@ -17,11 +17,20 @@ static RE_EXPLANATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)^(?i)
 pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let content = fs::read_to_string(filepath).ok()?;
 
+    let metadata = fs::metadata(filepath).ok()?;
+    let last_modified = metadata
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+
     let mut quiz = Quiz {
         title: filepath.file_stem()?.to_string_lossy().to_string(),
         path: filepath.to_path_buf(),
         topic: topic.to_string(),
         questions: Vec::new(),
+        last_modified,
     };
 
     let parser = Parser::new(&content);
