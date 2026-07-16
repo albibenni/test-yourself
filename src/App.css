@@ -661,14 +661,16 @@ body {
   margin-bottom: 0.5rem;
 }
 .quick-add-modal {
-  padding: 0;
-  border-radius: 12px;
-  background-color: #202020;
-  border: 1px solid #3d3d3d;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-  max-width: 500px;
-  width: 100%;
-  gap: 0;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  background-color: #202020 !important;
+  border: 1px solid #3d3d3d !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+  max-width: 550px !important;
+  width: 100% !important;
+  gap: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
 }
 
 .quick-add-input-wrapper {
@@ -680,13 +682,16 @@ body {
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
   outline: none;
+  padding: 4px 0;
+  line-height: 1.5;
 }
 
 .quick-add-input::placeholder {
   color: #8f8f8f;
+  font-weight: 400;
 }
 
 .quick-add-actions {
@@ -696,31 +701,38 @@ body {
 
 .quick-add-action-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 16px 12px 16px;
+  padding: 8px 16px 16px 16px;
 }
 
 .action-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   background-color: transparent;
   border: 1px solid #3d3d3d;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: 5px;
+  color: #f5f5f5;
   font-size: 13px;
-  padding: 4px 8px;
+  font-weight: 500;
+  padding: 4px 10px;
   cursor: pointer;
-  transition: background-color 0.15s;
+  height: 28px;
+  transition: all 0.15s ease;
 }
 
 .action-pill:hover {
-  background-color: #2a2a2a;
+  background-color: #363636;
 }
 
 .date-pill {
   color: #058527;
-  border-color: rgba(5, 133, 39, 0.4);
+  border-color: rgba(5, 133, 39, 0.3);
+}
+
+.date-pill:hover {
+  background-color: rgba(5, 133, 39, 0.1);
 }
 
 .custom-select-wrapper {
@@ -745,12 +757,44 @@ body {
 .quick-add-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
   padding: 12px 16px;
   border-top: 1px solid #3d3d3d;
   background-color: #1a1a1a;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
+}
+
+.quick-add-footer .button-primary {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.quick-add-footer .button-primary:hover {
+  opacity: 0.9;
+}
+
+.quick-add-footer .button-secondary {
+  background-color: #363636;
+  color: #f5f5f5;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 6px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.quick-add-footer .button-secondary:hover {
+  background-color: #454545;
 }
 
 .calendar-popover {

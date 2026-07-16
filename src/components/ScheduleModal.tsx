@@ -19,6 +19,7 @@ interface TaskCountMap {
 
 export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   const [taskContent, setTaskContent] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
   const [dueDateString, setDueDateString] = useState("tomorrow");
   const [dueDateText, setDueDateText] = useState("Tomorrow");
   const [priority, setPriority] = useState<number>(4); // 4=P1, 1=P4
@@ -127,11 +128,12 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     const encodedFile = encodeURIComponent(relativePath);
     
     const obsidianLink = `obsidian://open?vault=${encodedVault}&file=${encodedFile}`;
-    const fullContent = `${taskContent} [Open in Obsidian](${obsidianLink})`;
+    const finalDescription = taskDescription.trim() ? `${taskDescription}\n\n[Open in Obsidian](${obsidianLink})` : `[Open in Obsidian](${obsidianLink})`;
 
     try {
       await api.addTask({
-        content: fullContent,
+        content: taskContent,
+        description: finalDescription,
         dueString: dueDateString,
         priority: priority,
         projectId: selectedProjectId || undefined,
@@ -318,6 +320,14 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
             value={taskContent} 
             onChange={handleContentChange}
             placeholder="Task name"
+          />
+          <textarea
+            className="quick-add-input quick-add-desc"
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
+            placeholder="Description"
+            rows={1}
+            style={{ fontSize: '13px', color: '#ccc', resize: 'none' }}
           />
           {showProjectDropdown && filteredProjects.length > 0 && (
             <div className="project-dropdown">
