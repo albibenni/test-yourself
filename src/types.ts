@@ -1,20 +1,25 @@
-export interface QuizOption {
-  letter: string;
-  text: string;
-}
+import { z } from "zod";
 
-export interface QuizQuestion {
-  id: string;
-  text: string;
-  options: QuizOption[];
-  correct_answer?: string;
-  explanation?: string;
-}
+export const QuizOptionSchema = z.object({
+  letter: z.string(),
+  text: z.string(),
+});
+export type QuizOption = z.infer<typeof QuizOptionSchema>;
 
-export interface Quiz {
-  title: string;
-  path: string;
-  topic: string;
-  questions: QuizQuestion[];
-  last_modified: number;
-}
+export const QuizQuestionSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  options: z.array(QuizOptionSchema),
+  correct_answer: z.string().optional(),
+  explanation: z.string().optional(),
+});
+export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+
+export const QuizSchema = z.object({
+  title: z.string(),
+  path: z.string(),
+  topic: z.string(),
+  questions: z.array(QuizQuestionSchema),
+  last_modified: z.number(),
+});
+export type Quiz = z.infer<typeof QuizSchema>;

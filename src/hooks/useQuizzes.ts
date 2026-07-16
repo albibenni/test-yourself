@@ -3,7 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { Store } from "@tauri-apps/plugin-store";
 import { load } from "@tauri-apps/plugin-store";
-import type { Quiz } from "../types";
+import { z } from "zod";
+import { QuizSchema, type Quiz } from "../types";
 import {
   STORE_FILENAME,
   STORE_KEY_BASE_PATH,
@@ -53,7 +54,8 @@ export function useQuizzes() {
       }
       setLoading(true);
       try {
-        const fetchedQuizzes = await invoke<Quiz[]>(TAURI_COMMAND_GET_QUIZZES);
+        const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
+        const fetchedQuizzes = z.array(QuizSchema).parse(rawData);
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -83,7 +85,8 @@ export function useQuizzes() {
     if (!basePath) return;
     setIsSyncing(true);
     try {
-      const fetchedQuizzes = await invoke<Quiz[]>(TAURI_COMMAND_GET_QUIZZES);
+      const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
+      const fetchedQuizzes = z.array(QuizSchema).parse(rawData);
 
       setQuizzes((prevQuizzes) => {
         const prevQuizMap = new Map(prevQuizzes.map((q) => [q.path, q]));
