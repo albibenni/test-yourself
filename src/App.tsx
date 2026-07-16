@@ -19,8 +19,11 @@ function App() {
   useEffect(() => {
     async function loadQuizzes() {
       try {
-        const basePath = "/Users/benni/benni-projects/SecondBrain/Computer Science";
-        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
+        const basePath =
+          "/Users/benni/benni-projects/SecondBrain/Computer Science";
+        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", {
+          basePath,
+        });
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -34,30 +37,32 @@ function App() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      const basePath = "/Users/benni/benni-projects/SecondBrain/Computer Science";
+      const basePath =
+        "/Users/benni/benni-projects/SecondBrain/Computer Science";
       const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
-      
-      setQuizzes(prevQuizzes => {
+
+      setQuizzes((prevQuizzes) => {
         // Create a map of existing quizzes for quick lookup
-        const prevQuizMap = new Map(prevQuizzes.map(q => [q.path, q]));
-        
-        const mergedQuizzes = fetchedQuizzes.map(fetched => {
+        const prevQuizMap = new Map(prevQuizzes.map((q) => [q.path, q]));
+
+        const mergedQuizzes = fetchedQuizzes.map((fetched) => {
           const existing = prevQuizMap.get(fetched.path);
           if (existing && existing.last_modified === fetched.last_modified) {
             return existing;
           }
           return fetched;
         });
-        
+
         // Ensure selectedQuiz gets updated to the latest reference if it was modified
         if (selectedQuiz) {
-          const updatedSelected = mergedQuizzes.find(q => q.path === selectedQuiz.path);
+          const updatedSelected = mergedQuizzes.find(
+            (q) => q.path === selectedQuiz.path,
+          );
           setSelectedQuiz(updatedSelected || null);
         }
-        
+
         return mergedQuizzes;
       });
-      
     } catch (error) {
       console.error("Failed to sync quizzes:", error);
     } finally {
@@ -88,7 +93,7 @@ function App() {
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
       />
-      
+
       <div className="app-container">
         <Sidebar
           isSidebarOpen={isSidebarOpen}

@@ -1,8 +1,8 @@
-use std::path::Path;
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
+use std::path::Path;
 
-use crate::models::Quiz;
 use super::core::QuizParser;
+use crate::models::Quiz;
 
 pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let content = tokio::fs::read_to_string(filepath).await.ok()?;
@@ -24,7 +24,7 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     };
 
     let parser = Parser::new(&content);
-    
+
     let mut quiz_parser = QuizParser::new(&mut quiz);
     let mut current_text = String::new();
     let mut in_code_block = false;

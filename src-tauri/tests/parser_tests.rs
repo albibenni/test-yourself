@@ -118,7 +118,9 @@ use std::path::PathBuf;
 #[tokio::test]
 async fn test_parse_acid_quiz() {
     let path = PathBuf::from("test_data/ACID_quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse ACID quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse ACID quiz");
     assert_eq!(quiz.questions.len(), 8);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("D"));
@@ -127,7 +129,9 @@ async fn test_parse_acid_quiz() {
 #[tokio::test]
 async fn test_parse_saga_quiz() {
     let path = PathBuf::from("test_data/SAGA exercises-quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse SAGA quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse SAGA quiz");
     println!("SAGA quiz parsed {} questions", quiz.questions.len());
     assert!(!quiz.questions.is_empty());
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
@@ -136,7 +140,9 @@ async fn test_parse_saga_quiz() {
 #[tokio::test]
 async fn test_parse_kafka_saga_quiz() {
     let path = PathBuf::from("test_data/Kafka and SAGA vs choreography quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse Kafka SAGA quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse Kafka SAGA quiz");
     assert_eq!(quiz.questions.len(), 8);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
 }
@@ -144,7 +150,9 @@ async fn test_parse_kafka_saga_quiz() {
 #[tokio::test]
 async fn test_parse_jvm_quiz() {
     let path = PathBuf::from("test_data/JVM - Compiler Quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse JVM quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse JVM quiz");
     assert_eq!(quiz.questions.len(), 40);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("B"));
@@ -153,7 +161,9 @@ async fn test_parse_jvm_quiz() {
 #[tokio::test]
 async fn test_parse_exception_quiz() {
     let path = PathBuf::from("test_data/Exception Quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse Exception quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse Exception quiz");
     // Due to the second quiz in the same file, the questions vector will contain both.
     // The first quiz has 20 questions, the second has 10. Total 30.
     assert_eq!(quiz.questions.len(), 30);
@@ -164,7 +174,9 @@ async fn test_parse_exception_quiz() {
 #[tokio::test]
 async fn test_parse_static_ex_quiz() {
     let path = PathBuf::from("test_data/static ex.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse static ex quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse static ex quiz");
     assert_eq!(quiz.questions.len(), 8);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("C"));
@@ -173,7 +185,9 @@ async fn test_parse_static_ex_quiz() {
 #[tokio::test]
 async fn test_parse_iframe_quiz() {
     let path = PathBuf::from("test_data/iFrame_quiz.md");
-    let quiz = parse_quiz_file(&path, "Testing").await.expect("Failed to parse iframe quiz");
+    let quiz = parse_quiz_file(&path, "Testing")
+        .await
+        .expect("Failed to parse iframe quiz");
     assert_eq!(quiz.questions.len(), 8);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
     assert_eq!(quiz.questions[0].options.len(), 4);

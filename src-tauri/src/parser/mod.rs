@@ -1,7 +1,7 @@
-pub mod regexes;
 pub mod core;
-pub mod markdown;
 pub mod discovery;
+pub mod markdown;
+pub mod regexes;
 
-pub use markdown::parse_quiz_file;
 pub use discovery::get_all_quizzes;
+pub use markdown::parse_quiz_file;

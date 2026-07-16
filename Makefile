@@ -27,9 +27,10 @@ test-rust:
 lint:
 	pnpm lint
 
-# Run Prettier to format all files
+# Run Prettier and rustfmt to format all files
 format:
 	pnpm indent:write
+	cd src-tauri && cargo fmt
 
 # Clean all generated files, caches, and node_modules
 clean:
