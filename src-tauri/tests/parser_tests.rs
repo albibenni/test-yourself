@@ -97,6 +97,12 @@ B. A coffee
 **Q2. Another question?**
 A. Yes
 B. No
+
+## Solutions
+**Q1. Answer: A**
+Explanation: Yes.
+**Q2. Answer: A**
+Explanation: Yes.
 ";
     // We create a file with a specific known name to test title extraction
     use std::fs::File;
@@ -200,6 +206,7 @@ async fn test_inline_options_parsing() {
 
 ## Solutions
 1. Answer: C
+Explanation: This is C.
 ";
     let quiz = parse_string(md).await.unwrap();
     assert_eq!(quiz.questions.len(), 1);
@@ -222,6 +229,7 @@ D) Option D
 
 ## Answers
 1. Answer: B
+Explanation: Because.
 ";
     let quiz = parse_string(md).await.unwrap();
     // Because it's a tight/loose list in Markdown, it might trigger multiple TagEnds.
@@ -240,6 +248,7 @@ B) No
 
 ## Solutions
 2. Answer: A
+Explanation: A.
 ";
     let quiz = parse_string(md).await.unwrap();
     // Question 1 should be dropped because it has no options.
@@ -257,6 +266,7 @@ B) Option B
 
 ## Solutions
 1. Answer: B
+Explanation: B.
 ";
     let quiz = parse_string(md).await.unwrap();
     assert_eq!(quiz.questions.len(), 1);
@@ -284,6 +294,7 @@ B) B
 
 {}
 1. C
+Explanation: C.
 ",
             header
         );
@@ -335,9 +346,35 @@ Where should a business object be placed in clean architecture?
 And what is the exact layer?
 A. Interface Adapters (Green Layer)
 B. Use Cases / Interactors (Red Layer)
+
+## Solutions
+1. Answer: B
+Explanation: Red Layer.
     ";
     let quiz = parse_string(md).await.unwrap();
     assert_eq!(quiz.questions.len(), 1);
     assert_eq!(quiz.questions[0].text, "Placing a Business Object (Foundational)\nWhere should a business object be placed in clean architecture?\nAnd what is the exact layer?");
     assert_eq!(quiz.questions[0].options.len(), 2);
+}
+
+#[tokio::test]
+async fn test_separated_answer_and_explanation() {
+    let md = "
+1. What is a socket?
+A. Endpoint
+B. Startpoint
+
+### Answer Key
+1. A
+
+### Explanations
+1. What is a socket?
+Correct: A. It is an endpoint.
+    ";
+    let quiz = parse_string(md).await.unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("A"));
+    let expl = quiz.questions[0].explanation.as_deref().expect("Explanation should be parsed");
+    assert!(expl.contains("What is a socket?"));
+    assert!(expl.contains("Correct: A. It is an endpoint."));
 }

@@ -160,7 +160,32 @@ pub fn process_solution_line(
             }
         }
         return;
-    } else if let Some(ref q_id) = current_solution_id {
+    }
+
+    if let Some(caps) = RE_QUESTION.captures(trimmed) {
+        let q_id_val = caps[1].to_string();
+        *current_solution_id = Some(q_id_val.clone());
+        let new_text = caps[2].trim().to_string();
+
+        if !new_text.is_empty() {
+            if let Some(q) = quiz
+                .questions
+                .iter_mut()
+                .rev()
+                .find(|q| q.id == q_id_val && !q.options.is_empty())
+            {
+                if let Some(ref mut expl) = q.explanation {
+                    expl.push_str("\n\n");
+                    expl.push_str(&new_text);
+                } else {
+                    q.explanation = Some(new_text);
+                }
+            }
+        }
+        return;
+    }
+
+    if let Some(ref q_id) = current_solution_id {
         if !RE_SOLUTION.is_match(trimmed) {
             if let Some(q) = quiz
                 .questions

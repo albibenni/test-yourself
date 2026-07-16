@@ -91,6 +91,10 @@ mod tests {
 1. Question?
 A. Opt A
 B. Opt B
+
+Answers
+1. A
+Explanation: Because.
 ").unwrap();
 
         // Also add a non-markdown file, should be ignored
