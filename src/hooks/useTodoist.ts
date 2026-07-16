@@ -13,11 +13,10 @@ export const ProjectSchema = z
 
 export type Project = z.infer<typeof ProjectSchema>;
 
-const ProjectsResponseSchema = z
-  .object({
-    results: z.array(ProjectSchema),
-  })
-  .passthrough();
+const ProjectsResponseSchema = z.union([
+  z.object({ results: z.array(ProjectSchema) }).transform(val => val.results),
+  z.array(ProjectSchema)
+]);
 
 export const TaskSchema = z
   .object({
@@ -34,11 +33,10 @@ export const TaskSchema = z
 
 export type Task = z.infer<typeof TaskSchema>;
 
-const TasksResponseSchema = z
-  .object({
-    results: z.array(TaskSchema),
-  })
-  .passthrough();
+const TasksResponseSchema = z.union([
+  z.object({ results: z.array(TaskSchema) }).transform(val => val.results),
+  z.array(TaskSchema)
+]);
 
 export function useTodoist() {
   const [loading, setLoading] = useState(false);
@@ -73,7 +71,7 @@ export function useTodoist() {
       const api = await getApi();
       const response = await api.getProjects();
       const parsed = ProjectsResponseSchema.parse(response);
-      return parsed.results;
+      return parsed;
     } catch (err: unknown) {
       setError("Failed to fetch Todoist projects. Check your token.");
       throw err;
@@ -89,7 +87,7 @@ export function useTodoist() {
       const api = await getApi();
       const response = await api.getTasks();
       const parsed = TasksResponseSchema.parse(response);
-      return parsed.results;
+      return parsed;
     } catch (err: unknown) {
       setError("Failed to fetch Todoist tasks.");
       throw err;

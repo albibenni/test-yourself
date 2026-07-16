@@ -236,8 +236,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             options={[
               { label: "Today", value: "today" },
               { label: "Tomorrow", value: "tomorrow" },
-              { label: "Next Week", value: "next week" },
-              { label: "In 2 Weeks", value: "in 2 weeks" },
+              { label: "Next Week (7 days)", value: "in 7 days" },
+              { label: "In 2 Weeks (14 days)", value: "in 14 days" },
             ]}
           />
         </div>

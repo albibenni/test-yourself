@@ -52,6 +52,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
   const priRef = useRef<HTMLDivElement>(null);
   const projRef = useRef<HTMLDivElement>(null);
   const hashProjRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -85,7 +86,22 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       setShowProjectSelectDropdown(false);
       
       void getDefaultSettings().then(({ defaultDate, defaultPriority, defaultProject }) => {
-        setDueDateString(defaultDate);
+        let exactDate = defaultDate;
+        const d = new Date();
+        if (defaultDate === "tomorrow") {
+          d.setDate(d.getDate() + 1);
+          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        } else if (defaultDate === "in 7 days" || defaultDate === "next week") {
+          d.setDate(d.getDate() + 7);
+          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        } else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks") {
+          d.setDate(d.getDate() + 14);
+          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        } else if (defaultDate === "today") {
+          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        }
+        
+        setDueDateString(exactDate);
         setPriority(defaultPriority);
         if (defaultProject) {
           setSelectedProjectId(defaultProject);
@@ -93,9 +109,15 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
 
         if (defaultDate === "today") setDueDateText("Today");
         else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
-        else if (defaultDate === "next week") setDueDateText("Next Week");
-        else if (defaultDate === "in 2 weeks") setDueDateText("In 2 Weeks");
+        else if (defaultDate === "in 7 days" || defaultDate === "next week") setDueDateText("Next Week");
+        else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks") setDueDateText("In 2 Weeks");
         else setDueDateText(defaultDate);
+
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 50);
       });
     }
   }, [isOpen, quiz]);
@@ -362,6 +384,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
           ref={hashProjRef}
         >
           <input
+            ref={inputRef}
             type="text"
             className="quick-add-input"
             value={taskContent}
