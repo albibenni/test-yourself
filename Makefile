@@ -1,4 +1,4 @@
-.PHONY: install dev build test lint format clean
+.PHONY: install dev build test test-ui test-rust lint format clean
 
 # Install dependencies
 install:
@@ -12,9 +12,16 @@ dev:
 build:
 	pnpm tauri build
 
-# Run the Vitest testing suite
-test:
+# Run all tests (Frontend and Backend)
+test: test-ui test-rust
+
+# Run the Vitest testing suite (Frontend)
+test-ui:
 	pnpm test
+
+# Run the Cargo testing suite (Backend)
+test-rust:
+	cd src-tauri && cargo test
 
 # Run ESLint to check for code issues
 lint:

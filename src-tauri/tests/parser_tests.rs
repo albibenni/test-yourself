@@ -1,6 +1,6 @@
 use std::io::Write;
-use tauri_app_lib::parser::parse_quiz_file;
 use tauri_app_lib::models::Quiz;
+use tauri_app_lib::parser::parse_quiz_file;
 use tempfile::NamedTempFile;
 
 fn parse_string(content: &str) -> Option<Quiz> {
@@ -105,9 +105,9 @@ B. No
     let file_path = dir.path().join("Exception Quiz.md");
     let mut file = File::create(&file_path).unwrap();
     writeln!(file, "{}", md).unwrap();
-    
+
     let quiz = parse_quiz_file(&file_path, "TestTopic").unwrap();
-    
+
     // The title should be the filename, NOT 'WHICH IS WHICH QUIZ'
     assert_eq!(quiz.title, "Exception Quiz");
     assert_eq!(quiz.questions.len(), 2);
@@ -258,20 +258,28 @@ fn test_mixed_solution_headers() {
         "### Solutions",
         "## Risposte e Spiegazioni",
         "# soluzioni",
-        "#### Answers and Explanations"
+        "#### Answers and Explanations",
     ];
 
     for header in headers {
-        let md = format!("
+        let md = format!(
+            "
 1. Test question?
 A) A
 B) B
 
 {}
 1. C
-", header);
+",
+            header
+        );
         let quiz = parse_string(&md).unwrap();
         assert_eq!(quiz.questions.len(), 1, "Failed for header: {}", header);
-        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"), "Failed for header: {}", header);
+        assert_eq!(
+            quiz.questions[0].correct_answer.as_deref(),
+            Some("C"),
+            "Failed for header: {}",
+            header
+        );
     }
 }
