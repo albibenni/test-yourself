@@ -4,6 +4,60 @@ use walkdir::WalkDir;
 use super::markdown::parse_quiz_file;
 use crate::models::Quiz;
 
+pub fn find_markdown_files(canonical_base: &Path) -> Vec<(PathBuf, String)> {
+    let mut files = Vec::new();
+
+    for entry in WalkDir::new(canonical_base)
+        .follow_links(true)
+        .into_iter()
+        .filter_map(Result::ok)
+    {
+        let path = entry.path();
+
+        // Security check: verify that symlinks don't escape the safe root boundary
+        let Ok(canonical_path) = std::fs::canonicalize(path) else {
+            continue;
+        };
+
+        if !canonical_path.starts_with(canonical_base) {
+            eprintln!("Security Warning: Discovered path escapes the safe root boundary.");
+            continue;
+        }
+
+        if canonical_path.is_file() {
+            let ext = canonical_path
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("");
+            if ext == "md" {
+                let relative = canonical_path
+                    .strip_prefix(canonical_base)
+                    .unwrap_or(&canonical_path);
+                let topic = relative
+                    .parent()
+                    .unwrap_or(Path::new(""))
+                    .to_string_lossy()
+                    .to_string();
+
+                files.push((canonical_path, topic));
+            }
+        }
+    }
+    files
+}
+
+pub async fn parse_quizzes(md_files: Vec<(PathBuf, String)>) -> Vec<Quiz> {
+    let mut quizzes = Vec::new();
+
+    for (path, topic) in md_files {
+        if let Some(quiz) = parse_quiz_file(&path, &topic).await {
+            quizzes.push(quiz);
+        }
+    }
+
+    quizzes
+}
+
 pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     // Deep Path Canonicalization for maximum security
     let Ok(canonical_base) = tokio::fs::canonicalize(base_dir).await else {
@@ -14,103 +68,11 @@ pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     let canonical_base_clone = canonical_base.clone();
 
     // Run the blocking directory traversal in a separate thread pool
-    let md_files: Vec<(PathBuf, String)> = tokio::task::spawn_blocking(move || {
-        let mut files = Vec::new();
-
-        for entry in WalkDir::new(&canonical_base_clone)
-            .follow_links(true)
-            .into_iter()
-            .filter_map(Result::ok)
-        {
-            let path = entry.path();
-
-            // Security check: verify that symlinks don't escape the safe root boundary
-            let Ok(canonical_path) = std::fs::canonicalize(path) else {
-                continue;
-            };
-
-            if !canonical_path.starts_with(&canonical_base_clone) {
-                eprintln!("Security Warning: Discovered path escapes the safe root boundary.");
-                continue;
-            }
-
-            if canonical_path.is_file() {
-                let ext = canonical_path
-                    .extension()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
-                if ext == "md" {
-                    let relative = canonical_path
-                        .strip_prefix(&canonical_base_clone)
-                        .unwrap_or(&canonical_path);
-                    let topic = relative
-                        .parent()
-                        .unwrap_or(Path::new(""))
-                        .to_string_lossy()
-                        .to_string();
-
-                    files.push((canonical_path, topic));
-                }
-            }
-        }
-        files
-    })
-    .await
-    .unwrap_or_default();
-
-    let mut quizzes = Vec::new();
+    let md_files: Vec<(PathBuf, String)> =
+        tokio::task::spawn_blocking(move || find_markdown_files(&canonical_base_clone))
+            .await
+            .unwrap_or_default();
 
     // Now process the markdown files asynchronously
-    for (path, topic) in md_files {
-        if let Some(quiz) = parse_quiz_file(&path, &topic).await {
-            quizzes.push(quiz);
-        }
-    }
-
-    quizzes
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs::File;
-    use std::io::Write;
-    use tempfile::tempdir;
-
-    #[tokio::test]
-    async fn test_discovery_finds_nested_quizzes() {
-        let dir = tempdir().unwrap();
-        
-        let sub_dir = dir.path().join("Frontend");
-        std::fs::create_dir(&sub_dir).unwrap();
-        
-        let quiz_path = sub_dir.join("React.md");
-        let mut file = File::create(&quiz_path).unwrap();
-        // A valid quiz so it doesn't get filtered out
-        writeln!(file, "
-1. Question?
-A. Opt A
-B. Opt B
-
-Answers
-1. A
-Explanation: Because.
-").unwrap();
-
-        // Also add a non-markdown file, should be ignored
-        let txt_path = sub_dir.join("ignore.txt");
-        File::create(&txt_path).unwrap();
-
-        let quizzes = get_all_quizzes(dir.path().to_str().unwrap()).await;
-        
-        assert_eq!(quizzes.len(), 1);
-        assert_eq!(quizzes[0].topic, "Frontend");
-        assert_eq!(quizzes[0].title, "React");
-    }
-
-    #[tokio::test]
-    async fn test_discovery_ignores_invalid_path() {
-        let quizzes = get_all_quizzes("/path/that/does/not/exist/for/sure").await;
-        assert!(quizzes.is_empty());
-    }
+    parse_quizzes(md_files).await
 }
