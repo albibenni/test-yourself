@@ -24,7 +24,12 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
     }
 
     let first_match = matches.first().unwrap().get(0).unwrap();
-    let text = raw_text[..first_match.start()].trim().to_string();
+    let start_idx = first_match.start();
+    let text = if raw_text.is_char_boundary(start_idx) {
+        raw_text[..start_idx].trim().to_string()
+    } else {
+        String::new()
+    };
     let mut options = Vec::new();
 
     for i in 0..matches.len() {
@@ -38,7 +43,15 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
             raw_text.len()
         };
         
-        let opt_text = raw_text[start_idx..end_idx].trim().to_string();
+        let opt_text = if raw_text.is_char_boundary(start_idx) && raw_text.is_char_boundary(end_idx) {
+            raw_text[start_idx..end_idx].trim().to_string()
+        } else {
+            // Fallback for extreme edge cases where regex captures mid-boundary
+            // Fallback for extreme edge cases where regex captures mid-boundary
+            // Approximating indices for the fallback. This is extremely rare.
+            String::new() // Fallback empty if boundary violated
+        };
+        
         options.push(QuizOption { letter, text: opt_text });
     }
     

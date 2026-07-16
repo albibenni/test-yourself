@@ -8,11 +8,7 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 async fn get_quizzes(base_path: String) -> Result<Vec<models::Quiz>, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        parser::get_all_quizzes(&base_path)
-    })
-    .await
-    .map_err(|e| e.to_string())
+    Ok(parser::get_all_quizzes(&base_path).await)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

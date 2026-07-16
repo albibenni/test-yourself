@@ -1,14 +1,13 @@
-use std::fs;
 use std::path::Path;
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 
 use crate::models::Quiz;
 use super::core::QuizParser;
 
-pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
-    let content = fs::read_to_string(filepath).ok()?;
+pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
+    let content = tokio::fs::read_to_string(filepath).await.ok()?;
 
-    let metadata = fs::metadata(filepath).ok()?;
+    let metadata = tokio::fs::metadata(filepath).await.ok()?;
     let last_modified = metadata
         .modified()
         .ok()?
