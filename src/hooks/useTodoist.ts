@@ -116,11 +116,21 @@ export function useTodoist() {
     [],
   );
 
+  const getDefaultSettings = async () => {
+    const store = await load(STORE_FILENAME, { autoSave: false });
+    return {
+      defaultDate: (await store.get<string>("default_todoist_date")) || "tomorrow",
+      defaultPriority: (await store.get<number>("default_todoist_priority")) || 4,
+      defaultProject: (await store.get<string>("default_todoist_project")) || "",
+    };
+  };
+
   return {
     getProjects,
     getTasks,
     addTask,
     getVaultName,
+    getDefaultSettings,
     loading,
     error,
     setError,

@@ -1,16 +1,99 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { load } from "@tauri-apps/plugin-store";
+import { TodoistApi } from "@doist/todoist-sdk";
 import { STORE_FILENAME } from "../constants";
+
+interface Project {
+  id: string;
+  name: string;
+}
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface CustomSelectProps {
+  value: string | number;
+  options: { label: string; value: string | number }[];
+  onChange: (value: any) => void;
+  disabled?: boolean;
+}
+
+function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === value);
+
+  return (
+    <div style={{ position: "relative", width: "100%" }} ref={containerRef}>
+      <button
+        type="button"
+        className="custom-select-button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "pointer" }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {selectedOption ? selectedOption.label : "Select..."}
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {isOpen && !disabled && (
+        <div className="project-dropdown" style={{ top: "calc(100% + 4px)", left: 0, right: 0, width: "100%", zIndex: 10, position: "absolute", maxHeight: "200px", overflowY: "auto" }}>
+          {options.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              className="project-dropdown-item"
+              onClick={() => {
+                onChange(o.value);
+                setIsOpen(false);
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
+  
+  const [defaultDate, setDefaultDate] = useState("tomorrow");
+  const [defaultPriority, setDefaultPriority] = useState<number>(4);
+  const [defaultProject, setDefaultProject] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -22,10 +105,39 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         // Fallback to localStorage for backward compatibility initially
         setTodoistToken(token || localStorage.getItem("todoist_token") || "");
         setVaultName(vault || localStorage.getItem("obsidian_vault") || "");
+        
+        const defDate = await store.get<string>("default_todoist_date");
+        const defPri = await store.get<number>("default_todoist_priority");
+        const defProj = await store.get<string>("default_todoist_project");
+        if (defDate) setDefaultDate(defDate);
+        if (defPri) setDefaultPriority(defPri);
+        if (defProj) setDefaultProject(defProj);
       }
     }
     void fetchSettings();
   }, [isOpen]);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      if (!todoistToken || !isOpen) return;
+      setLoadingProjects(true);
+      try {
+        const api = new TodoistApi(todoistToken);
+        const response = await api.getProjects();
+        // The API might return { results: Project[] } or Project[] directly depending on the SDK version
+        const projs = (response as any).results || response;
+        setProjects(projs as Project[]);
+      } catch (err) {
+        console.error("Failed to fetch projects for settings", err);
+      } finally {
+        setLoadingProjects(false);
+      }
+    }
+    const timeout = setTimeout(() => {
+      void fetchProjects();
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [todoistToken, isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,6 +155,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const store = await load(STORE_FILENAME, { autoSave: false });
     await store.set("todoist_token", todoistToken);
     await store.set("obsidian_vault", vaultName);
+    await store.set("default_todoist_date", defaultDate);
+    await store.set("default_todoist_priority", defaultPriority);
+    await store.set("default_todoist_project", defaultProject);
     await store.save();
 
     // Clean up old unencrypted localStorage if present
@@ -110,6 +225,50 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
           <small>Used to generate obsidian://open links.</small>
         </div>
+        
+        <h3 style={{ marginTop: "0.5rem", fontSize: "1rem", color: "var(--text-primary)" }}>Todoist Presets</h3>
+        
+        <div className="form-group">
+          <label>Default Schedule Date</label>
+          <CustomSelect
+            value={defaultDate}
+            onChange={setDefaultDate}
+            options={[
+              { label: "Today", value: "today" },
+              { label: "Tomorrow", value: "tomorrow" },
+              { label: "Next Week", value: "next week" },
+            ]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Default Priority</label>
+          <CustomSelect
+            value={defaultPriority}
+            onChange={(val) => setDefaultPriority(Number(val))}
+            options={[
+              { label: "Priority 1 (Red)", value: 4 },
+              { label: "Priority 2 (Orange)", value: 3 },
+              { label: "Priority 3 (Blue)", value: 2 },
+              { label: "Priority 4 (Normal)", value: 1 },
+            ]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Default Project</label>
+          <CustomSelect
+            value={defaultProject}
+            onChange={setDefaultProject}
+            disabled={loadingProjects}
+            options={[
+              { label: "Inbox (Default)", value: "" },
+              ...projects.map((p) => ({ label: p.name, value: p.id })),
+            ]}
+          />
+          {loadingProjects && <small>Loading projects...</small>}
+        </div>
+
         <div className="modal-actions">
           <button className="button-secondary" onClick={onClose}>
             Cancel

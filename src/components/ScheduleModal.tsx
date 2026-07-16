@@ -33,6 +33,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
     getTasks,
     addTask,
     getVaultName,
+    getDefaultSettings,
     loading,
     error,
     setError,
@@ -78,13 +79,23 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
     if (isOpen && quiz) {
       setTaskContent(`Review Quiz: ${quiz.title}`);
       setTaskDescription("");
-      setDueDateString("tomorrow");
-      setDueDateText("Tomorrow");
-      setPriority(4);
       setShowCalendar(false);
       setShowPriorityDropdown(false);
       setShowProjectDropdown(false);
       setShowProjectSelectDropdown(false);
+      
+      void getDefaultSettings().then(({ defaultDate, defaultPriority, defaultProject }) => {
+        setDueDateString(defaultDate);
+        setPriority(defaultPriority);
+        if (defaultProject) {
+          setSelectedProjectId(defaultProject);
+        }
+
+        if (defaultDate === "today") setDueDateText("Today");
+        else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
+        else if (defaultDate === "next week") setDueDateText("Next Week");
+        else setDueDateText(defaultDate);
+      });
     }
   }, [isOpen, quiz]);
 
@@ -107,8 +118,9 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       getProjects()
         .then((projs) => {
           setProjects(projs);
-          if (projs.length > 0 && !selectedProjectId) {
-            setSelectedProjectId(projs[0].id);
+          if (projs.length > 0) {
+            // Only set default to Inbox if we haven't already set it from presets
+            setSelectedProjectId((prev) => prev || projs[0].id);
           }
         })
         .catch(console.error);
