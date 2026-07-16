@@ -70,6 +70,18 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   }, [quiz, taskContent]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     if (isOpen) {
       setError("");
       setSuccess(false);
