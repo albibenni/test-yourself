@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import { APP_TITLE } from "../constants";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -57,7 +58,7 @@ export function TopBar({
       </button>
       <div className="top-bar-separator"></div>
       <div className="top-bar-title" data-tauri-drag-region>
-        Test Yourself
+        {APP_TITLE}
       </div>
     </div>
   );

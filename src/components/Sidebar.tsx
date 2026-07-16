@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { clsx } from "clsx";
 import type { Quiz } from "../types";
+import { APP_TITLE, DEFAULT_TOPIC } from "../constants";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -28,7 +29,7 @@ export function Sidebar({
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
       <div className="sidebar-header">
-        <h2>Test Yourself</h2>
+        <h2>{APP_TITLE}</h2>
         <button
           className="sync-button"
           onClick={handleSync}
@@ -85,7 +86,7 @@ export function Sidebar({
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([topic, topicQuizzes]) => (
               <div key={topic} className="topic-group">
-                <div className="topic-title">{topic || "General"}</div>
+                <div className="topic-title">{topic || DEFAULT_TOPIC}</div>
                 {topicQuizzes.map((quiz) => (
                   <div
                     key={quiz.path}

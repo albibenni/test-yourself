@@ -4,6 +4,7 @@ import "./App.css";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
+import { DEFAULT_TOPIC } from "./constants";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -62,7 +63,7 @@ function App() {
                 <div className="header-title-row">
                   <h1>{selectedQuiz.title}</h1>
                 </div>
-                <p>Topic: {selectedQuiz.topic || "General"}</p>
+                <p>Topic: {selectedQuiz.topic || DEFAULT_TOPIC}</p>
               </div>
               <div className="questions-container">
                 {selectedQuiz.questions.map((q) => (

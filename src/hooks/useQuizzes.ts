@@ -4,6 +4,11 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type { Store } from "@tauri-apps/plugin-store";
 import { load } from "@tauri-apps/plugin-store";
 import type { Quiz } from "../types";
+import {
+  STORE_FILENAME,
+  STORE_KEY_BASE_PATH,
+  TAURI_COMMAND_GET_QUIZZES,
+} from "../constants";
 
 export function useQuizzes() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -19,16 +24,16 @@ export function useQuizzes() {
   useEffect(() => {
     async function initStore() {
       try {
-        const store = await load("settings.json", { autoSave: false });
+        const store = await load(STORE_FILENAME, { autoSave: false });
         setStoreInstance(store);
 
-        const localPath = localStorage.getItem("quiz_base_path");
-        const savedPath = await store.get<string>("quiz_base_path");
+        const localPath = localStorage.getItem(STORE_KEY_BASE_PATH);
+        const savedPath = await store.get<string>(STORE_KEY_BASE_PATH);
 
         if (savedPath) {
           setBasePath(savedPath);
         } else if (localPath) {
-          await store.set("quiz_base_path", localPath);
+          await store.set(STORE_KEY_BASE_PATH, localPath);
           await store.save();
           setBasePath(localPath);
         }
@@ -48,7 +53,7 @@ export function useQuizzes() {
       }
       setLoading(true);
       try {
-        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes");
+        const fetchedQuizzes = await invoke<Quiz[]>(TAURI_COMMAND_GET_QUIZZES);
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -68,7 +73,7 @@ export function useQuizzes() {
       setBasePath(selected);
       setSelectedQuiz(null); // Clear the active quiz when changing directories
       if (storeInstance) {
-        await storeInstance.set("quiz_base_path", selected);
+        await storeInstance.set(STORE_KEY_BASE_PATH, selected);
         await storeInstance.save();
       }
     }
@@ -78,7 +83,7 @@ export function useQuizzes() {
     if (!basePath) return;
     setIsSyncing(true);
     try {
-      const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes");
+      const fetchedQuizzes = await invoke<Quiz[]>(TAURI_COMMAND_GET_QUIZZES);
 
       setQuizzes((prevQuizzes) => {
         const prevQuizMap = new Map(prevQuizzes.map((q) => [q.path, q]));
