@@ -75,11 +75,18 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   }, []);
 
   useEffect(() => {
-    if (quiz && !taskContent) {
-      // eslint-disable-next-line
+    if (isOpen && quiz) {
       setTaskContent(`Review Quiz: ${quiz.title}`);
+      setTaskDescription("");
+      setDueDateString("tomorrow");
+      setDueDateText("Tomorrow");
+      setPriority(4);
+      setShowCalendar(false);
+      setShowPriorityDropdown(false);
+      setShowProjectDropdown(false);
+      setShowProjectSelectDropdown(false);
     }
-  }, [quiz, taskContent]);
+  }, [isOpen, quiz]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
