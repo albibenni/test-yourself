@@ -103,7 +103,15 @@ function App() {
                     Schedule
                   </button>
                 </div>
-                <p>Topic: {selectedQuiz.topic || DEFAULT_TOPIC}</p>
+                <p>
+                  Topic:{" "}
+                  <a
+                    href={`obsidian://open?file=${encodeURIComponent(selectedQuiz.path)}`}
+                    style={{ color: "inherit", textDecoration: "underline" }}
+                  >
+                    {selectedQuiz.topic || DEFAULT_TOPIC}
+                  </a>
+                </p>
               </div>
               <div className="questions-container">
                 {selectedQuiz.questions.map((q) => (
