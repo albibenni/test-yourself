@@ -87,7 +87,7 @@ body {
   display: flex;
   align-items: center;
   padding: 0 1rem;
-  padding-left: 76px; /* Clear Mac traffic lights */
+  padding-left: 84px; /* Clear Mac traffic lights + extra breathing room */
   gap: 0.5rem;
   flex-shrink: 0;
   z-index: 100;
@@ -107,7 +107,6 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   margin-top: -5px; /* Move UP to align with traffic lights */
-  margin-left: 8px;
 }
 
 .top-bar-btn:hover {
@@ -149,7 +148,6 @@ body {
   width: 1px;
   height: 14px;
   background: var(--glass-border);
-  margin: 0 0.25rem;
   margin-top: -4px;
 }
 
