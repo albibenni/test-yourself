@@ -29,6 +29,7 @@ const mockQuizzes = [
     title: "React Basics",
     path: "/path/react.md",
     topic: "Frontend",
+    last_modified: 1234567890,
     questions: [
       {
         id: "1",
@@ -48,6 +49,7 @@ const mockQuizzes = [
           { letter: "B", text: "Facebook" },
         ],
         correct_answer: "B",
+        explanation: "Facebook made React.",
       },
     ],
   },
@@ -55,6 +57,7 @@ const mockQuizzes = [
     title: "Rust Basics",
     path: "/path/rust.md",
     topic: "Backend",
+    last_modified: 1234567890,
     questions: [],
   },
 ];
@@ -175,8 +178,7 @@ describe("App Component", () => {
     fireEvent.click(btnA2);
 
     expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
-    // Fallback explanation when no explanation is provided
-    expect(screen.getByText("The correct answer is B.")).toBeInTheDocument();
+    expect(screen.getByText("Facebook made React.")).toBeInTheDocument();
   });
 
   it("handles invoke errors gracefully", async () => {
