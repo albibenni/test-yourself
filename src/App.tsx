@@ -157,24 +157,13 @@ function App() {
         <main className="main-content">
           {!basePath ? (
             <div className="empty-state">
-              <div
-                className="header-title-row"
-                style={{ justifyContent: "center" }}
-              >
-                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 600 }}>
+              <div className="header-title-row empty-state-header">
+                <h2 className="empty-state-title">
                   Select Quiz Folder
                 </h2>
               </div>
               <p>Please select a directory containing your Markdown quizzes.</p>
-              <button
-                onClick={selectFolder}
-                style={{
-                  marginTop: "1rem",
-                  padding: "0.5rem 1rem",
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={selectFolder} className="primary-btn">
                 Choose Folder
               </button>
             </div>
@@ -197,11 +186,8 @@ function App() {
             </div>
           ) : (
             <div className="empty-state">
-              <div
-                className="header-title-row"
-                style={{ justifyContent: "center" }}
-              >
-                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 600 }}>
+              <div className="header-title-row empty-state-header">
+                <h2 className="empty-state-title">
                   Select a Quiz
                 </h2>
               </div>
