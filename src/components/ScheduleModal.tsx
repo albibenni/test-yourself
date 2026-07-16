@@ -94,6 +94,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
         if (defaultDate === "today") setDueDateText("Today");
         else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
         else if (defaultDate === "next week") setDueDateText("Next Week");
+        else if (defaultDate === "in 2 weeks") setDueDateText("In 2 Weeks");
         else setDueDateText(defaultDate);
       });
     }

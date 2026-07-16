@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { load } from "@tauri-apps/plugin-store";
 import { TodoistApi } from "@doist/todoist-sdk";
@@ -16,7 +16,7 @@ interface SettingsModalProps {
 
 interface CustomSelectProps {
   value: string | number;
-  options: { label: string; value: string | number }[];
+  options: { label: React.ReactNode; value: string | number }[];
   onChange: (value: any) => void;
   disabled?: boolean;
 }
@@ -66,7 +66,7 @@ function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps)
       </button>
       {isOpen && !disabled && (
         <div className="project-dropdown" style={{ top: "calc(100% + 4px)", left: 0, right: 0, width: "100%", zIndex: 10, position: "absolute", maxHeight: "200px", overflowY: "auto" }}>
-          {options.map((o) => (
+          {options.filter((o) => o.value !== value).map((o) => (
             <button
               key={o.value}
               type="button"
@@ -237,6 +237,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               { label: "Today", value: "today" },
               { label: "Tomorrow", value: "tomorrow" },
               { label: "Next Week", value: "next week" },
+              { label: "In 2 Weeks", value: "in 2 weeks" },
             ]}
           />
         </div>
@@ -247,10 +248,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             value={defaultPriority}
             onChange={(val) => setDefaultPriority(Number(val))}
             options={[
-              { label: "Priority 1 (Red)", value: 4 },
-              { label: "Priority 2 (Orange)", value: 3 },
-              { label: "Priority 3 (Blue)", value: 2 },
-              { label: "Priority 4 (Normal)", value: 1 },
+              { label: <span style={{ color: "#d1453b" }}>Priority 1</span>, value: 4 },
+              { label: <span style={{ color: "#eb8909" }}>Priority 2</span>, value: 3 },
+              { label: <span style={{ color: "#246fe0" }}>Priority 3</span>, value: 2 },
+              { label: <span>Priority 4</span>, value: 1 },
             ]}
           />
         </div>

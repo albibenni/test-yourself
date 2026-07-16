@@ -116,13 +116,13 @@
 
 .custom-select-button {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding: 8px 16px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
