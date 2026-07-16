@@ -81,6 +81,12 @@ export function Sidebar({
       <div className="sidebar-content">
         {loading ? (
           <div className="loading">Loading quizzes...</div>
+        ) : Object.keys(groupedQuizzes).length === 0 ? (
+          <div className="sidebar-empty" style={{ padding: "1rem", color: "var(--text-secondary)", textAlign: "center", fontSize: "0.9rem" }}>
+            {searchQuery
+              ? "No quizzes match your search."
+              : "No quizzes found in this folder."}
+          </div>
         ) : (
           Object.entries(groupedQuizzes)
             .sort(([a], [b]) => a.localeCompare(b))
