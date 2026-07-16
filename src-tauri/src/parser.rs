@@ -112,15 +112,18 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                     if in_heading && trimmed_lower.contains("quiz") {
                         if !trimmed_lower.contains("answer") && 
                            !trimmed_lower.contains("solution") && 
-                           !trimmed_lower.contains("soluzioni") {
-                            println!("in_solutions reset to false by heading: {}", trimmed_lower);
+                           !trimmed_lower.contains("soluzioni") &&
+                           !trimmed_lower.contains("risposte") {
                             in_solutions = false;
                         }
                     }
 
-                    if trimmed_lower.contains("solutions") || 
-                       trimmed_lower.contains("answer") || 
-                       trimmed_lower.contains("soluzioni") {
+                    let is_solution_header = 
+                        (in_heading && (trimmed_lower.contains("solution") || trimmed_lower.contains("answer") || trimmed_lower.contains("soluzioni") || trimmed_lower.contains("risposte")))
+                        ||
+                        (trimmed_lower.starts_with("answer key") || trimmed_lower.starts_with("answers") || trimmed_lower.starts_with("solutions") || trimmed_lower.starts_with("soluzioni") || trimmed_lower.starts_with("risposte"));
+
+                    if is_solution_header {
                         in_solutions = true;
                     }
 

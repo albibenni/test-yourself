@@ -178,3 +178,100 @@ fn test_parse_iframe_quiz() {
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
     assert_eq!(quiz.questions[0].options.len(), 4);
 }
+
+#[test]
+fn test_inline_options_parsing() {
+    let md = "
+1. This is a question with inline options? A) First option B) Second option C) Third option D) Fourth option
+
+## Solutions
+1. Answer: C
+";
+    let quiz = parse_string(md).unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].options.len(), 4);
+    assert_eq!(quiz.questions[0].options[0].text, "First option");
+    assert_eq!(quiz.questions[0].options[1].text, "Second option");
+    assert_eq!(quiz.questions[0].options[2].text, "Third option");
+    assert_eq!(quiz.questions[0].options[3].text, "Fourth option");
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
+}
+
+#[test]
+fn test_duplicate_question_prevention() {
+    let md = "
+1. This is a question inside a list.
+A) Option A
+B) Option B
+C) Option C
+D) Option D
+
+## Answers
+1. Answer: B
+";
+    let quiz = parse_string(md).unwrap();
+    // Because it's a tight/loose list in Markdown, it might trigger multiple TagEnds.
+    // We already fixed this by clearing the buffer, so length should be 1.
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+}
+
+#[test]
+fn test_question_without_options_is_dropped() {
+    let md = "
+1. This looks like a question but has no options.
+2. This is a real question?
+A) Yes
+B) No
+
+## Solutions
+2. Answer: A
+";
+    let quiz = parse_string(md).unwrap();
+    // Question 1 should be dropped because it has no options.
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].id, "2");
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("A"));
+}
+
+#[test]
+fn test_answer_in_question_text_prevention() {
+    let md = "
+1. What is the answer?
+A) Option A
+B) Option B
+
+## Solutions
+1. Answer: B
+";
+    let quiz = parse_string(md).unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    // Ensure that '1. Answer: B' wasn't parsed as a second question
+    assert_eq!(quiz.questions[0].id, "1");
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+}
+
+#[test]
+fn test_mixed_solution_headers() {
+    let headers = vec![
+        "## Answer Key",
+        "### Solutions",
+        "## Risposte e Spiegazioni",
+        "# soluzioni",
+        "#### Answers and Explanations"
+    ];
+
+    for header in headers {
+        let md = format!("
+1. Test question?
+A) A
+B) B
+
+{}
+1. C
+", header);
+        let quiz = parse_string(&md).unwrap();
+        assert_eq!(quiz.questions.len(), 1, "Failed for header: {}", header);
+        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"), "Failed for header: {}", header);
+    }
+}
