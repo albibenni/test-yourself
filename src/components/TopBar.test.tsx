@@ -12,15 +12,17 @@ describe("TopBar Component", () => {
         isSidebarOpen={true}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      />
+      />,
     );
 
     expect(screen.getByText("Test Yourself")).toBeInTheDocument();
-    
+
     const toggleBtn = screen.getByRole("button", { name: "Toggle Sidebar" });
     expect(toggleBtn).toBeInTheDocument();
-    
-    const changeFolderBtn = screen.getByRole("button", { name: "Change Folder" });
+
+    const changeFolderBtn = screen.getByRole("button", {
+      name: "Change Folder",
+    });
     expect(changeFolderBtn).toBeInTheDocument();
   });
 
@@ -33,7 +35,7 @@ describe("TopBar Component", () => {
         isSidebarOpen={true}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      />
+      />,
     );
 
     const toggleBtn = screen.getByRole("button", { name: "Toggle Sidebar" });
@@ -50,10 +52,12 @@ describe("TopBar Component", () => {
         isSidebarOpen={false}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      />
+      />,
     );
 
-    const changeFolderBtn = screen.getByRole("button", { name: "Change Folder" });
+    const changeFolderBtn = screen.getByRole("button", {
+      name: "Change Folder",
+    });
     fireEvent.click(changeFolderBtn);
     expect(selectFolder).toHaveBeenCalledOnce();
   });

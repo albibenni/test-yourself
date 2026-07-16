@@ -22,11 +22,13 @@ The app is highly optimized for keyboard usage to keep you in the flow:
 **Test Yourself** integrates seamlessly with **Todoist** and **Obsidian** to help you schedule follow-up reviews.
 
 ### Setup
+
 1. Open the **Settings** modal (click the gear icon in the top right).
-2. **Todoist API Token**: Enter your token. You can find this in Todoist by going to *Settings > Integrations > Developer*.
+2. **Todoist API Token**: Enter your token. You can find this in Todoist by going to _Settings > Integrations > Developer_.
 3. **Obsidian Vault Name**: Enter the exact name of your Obsidian vault (or use the "Browse" button to select the vault directory and automatically extract the name).
 
 ### Scheduling a Review
+
 Once your settings are configured, you can use the **Schedule** button inside any open quiz:
 
 1. Click **Schedule** at the top of a quiz.

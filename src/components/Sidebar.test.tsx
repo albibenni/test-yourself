@@ -4,12 +4,24 @@ import { Sidebar } from "./Sidebar";
 import type { Quiz } from "../types";
 
 const mockQuizzes: Record<string, Quiz[]> = {
-  "Frontend": [
-    { title: "React Basics", path: "/react.md", topic: "Frontend", questions: [], last_modified: 0 }
+  Frontend: [
+    {
+      title: "React Basics",
+      path: "/react.md",
+      topic: "Frontend",
+      questions: [],
+      last_modified: 0,
+    },
   ],
-  "Backend": [
-    { title: "Rust Basics", path: "/rust.md", topic: "Backend", questions: [], last_modified: 0 }
-  ]
+  Backend: [
+    {
+      title: "Rust Basics",
+      path: "/rust.md",
+      topic: "Backend",
+      questions: [],
+      last_modified: 0,
+    },
+  ],
 };
 
 describe("Sidebar Component", () => {
@@ -25,7 +37,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
     expect(screen.getByText("Frontend")).toBeInTheDocument();
@@ -46,7 +58,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
     expect(screen.getByText("Loading quizzes...")).toBeInTheDocument();
@@ -64,10 +76,12 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
-    expect(screen.getByText("No quizzes found in this folder.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No quizzes found in this folder."),
+    ).toBeInTheDocument();
   });
 
   it("shows empty state when search yields no results", () => {
@@ -82,10 +96,12 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
-    expect(screen.getByText("No quizzes match your search.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No quizzes match your search."),
+    ).toBeInTheDocument();
   });
 
   it("calls setSearchQuery on input change", () => {
@@ -101,7 +117,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText("Search by topic or title...");
@@ -122,7 +138,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={setSelectedQuiz}
         handleSync={vi.fn()}
         isSyncing={false}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText("React Basics"));
@@ -142,7 +158,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={handleSync}
         isSyncing={false}
-      />
+      />,
     );
 
     const syncBtn = screen.getByRole("button", { name: "Sync Quizzes" });

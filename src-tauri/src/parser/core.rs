@@ -28,7 +28,9 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
         return (raw_text.to_string(), Vec::new());
     }
 
-    let first_match = matches.first().unwrap().get(0).unwrap();
+    let Some(first_match) = matches.first().and_then(|m| m.get(0)) else {
+        return (raw_text.to_string(), Vec::new());
+    };
     let start_idx = first_match.start();
     let text = if raw_text.is_char_boundary(start_idx) {
         raw_text[..start_idx].trim().to_string()
@@ -38,12 +40,16 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
     let mut options = Vec::new();
 
     for i in 0..matches.len() {
-        let current_match = matches[i].get(0).unwrap();
-        let letter = matches[i].get(1).unwrap().as_str().to_string();
+        let Some(current_match) = matches[i].get(0) else { continue; };
+        let Some(letter_match) = matches[i].get(1) else { continue; };
+        let letter = letter_match.as_str().to_string();
 
         let start_idx = current_match.end();
         let end_idx = if i + 1 < matches.len() {
-            matches[i + 1].get(0).unwrap().start()
+            matches[i + 1]
+                .get(0)
+                .map(|m| m.start())
+                .unwrap_or(raw_text.len())
         } else {
             raw_text.len()
         };

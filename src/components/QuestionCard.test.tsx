@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QuestionCard } from "./QuestionCard";
 import type { QuizQuestion } from "../types";
@@ -19,7 +19,9 @@ const mockQuestion: QuizQuestion = {
 describe("QuestionCard Component", () => {
   it("renders the question and options correctly", () => {
     render(<QuestionCard question={mockQuestion} />);
-    expect(screen.getByText("1. What is the capital of France?")).toBeInTheDocument();
+    expect(
+      screen.getByText("1. What is the capital of France?"),
+    ).toBeInTheDocument();
     expect(screen.getByText("London")).toBeInTheDocument();
     expect(screen.getByText("Paris")).toBeInTheDocument();
   });
@@ -30,8 +32,10 @@ describe("QuestionCard Component", () => {
     fireEvent.click(btnB);
 
     expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
-    expect(screen.getByText("Paris is the capital of France.")).toBeInTheDocument();
-    
+    expect(
+      screen.getByText("Paris is the capital of France."),
+    ).toBeInTheDocument();
+
     // Check that button has correct class
     expect(btnB).toHaveClass("correct");
     // All buttons should be disabled
@@ -45,8 +49,10 @@ describe("QuestionCard Component", () => {
     fireEvent.click(btnA);
 
     expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
-    expect(screen.getByText("Paris is the capital of France.")).toBeInTheDocument();
-    
+    expect(
+      screen.getByText("Paris is the capital of France."),
+    ).toBeInTheDocument();
+
     // The clicked button should have 'incorrect' class
     expect(btnA).toHaveClass("incorrect");
     // The correct button should still show as 'correct'
@@ -67,10 +73,10 @@ describe("QuestionCard Component", () => {
     render(<QuestionCard question={mockQuestion} />);
     const btnA = screen.getByText("London").closest("button")!;
     const btnB = screen.getByText("Paris").closest("button")!;
-    
+
     fireEvent.click(btnA); // select incorrect
     expect(btnA).toHaveClass("incorrect");
-    
+
     fireEvent.click(btnB); // try to select correct afterwards
     // Should NOT change selected letter, so B should not be visually 'selected', it just shows 'correct' because it's the right answer, but the overall state is already answered.
     expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();

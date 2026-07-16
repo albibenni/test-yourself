@@ -31,12 +31,16 @@ export function Sidebar({
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
 
   const flatQuizzes = useMemo(() => {
-    return Object.entries(groupedQuizzes)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .flatMap(([_, quizzes]) => quizzes);
+    return (
+      Object.entries(groupedQuizzes)
+        .sort(([a], [b]) => a.localeCompare(b))
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .flatMap(([_, quizzes]) => quizzes)
+    );
   }, [groupedQuizzes]);
 
   useEffect(() => {
+    // eslint-disable-next-line
     setFocusedQuizIndex(0);
   }, [searchQuery]);
 
@@ -60,14 +64,14 @@ export function Sidebar({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
     };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   return (
@@ -128,7 +132,15 @@ export function Sidebar({
         {loading ? (
           <div className="loading">Loading quizzes...</div>
         ) : Object.keys(groupedQuizzes).length === 0 ? (
-          <div className="sidebar-empty" style={{ padding: "1rem", color: "var(--text-secondary)", textAlign: "center", fontSize: "0.9rem" }}>
+          <div
+            className="sidebar-empty"
+            style={{
+              padding: "1rem",
+              color: "var(--text-secondary)",
+              textAlign: "center",
+              fontSize: "0.9rem",
+            }}
+          >
             {searchQuery
               ? "No quizzes match your search."
               : "No quizzes found in this folder."}
@@ -145,7 +157,8 @@ export function Sidebar({
                     className={clsx(
                       "quiz-item",
                       selectedQuiz?.path === quiz.path && "active",
-                      flatQuizzes[focusedQuizIndex]?.path === quiz.path && "focused"
+                      flatQuizzes[focusedQuizIndex]?.path === quiz.path &&
+                        "focused",
                     )}
                     onClick={() => setSelectedQuiz(quiz)}
                   >

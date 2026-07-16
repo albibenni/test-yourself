@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { load } from "@tauri-apps/plugin-store";
+import { STORE_FILENAME } from "../constants";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,10 +13,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [vaultName, setVaultName] = useState("");
 
   useEffect(() => {
-    if (isOpen) {
-      setTodoistToken(localStorage.getItem("todoist_token") || "");
-      setVaultName(localStorage.getItem("obsidian_vault") || "");
+    async function fetchSettings() {
+      if (isOpen) {
+        const store = await load(STORE_FILENAME, { autoSave: false });
+        const token = await store.get<string>("todoist_token");
+        const vault = await store.get<string>("obsidian_vault");
+
+        // Fallback to localStorage for backward compatibility initially
+        setTodoistToken(token || localStorage.getItem("todoist_token") || "");
+        setVaultName(vault || localStorage.getItem("obsidian_vault") || "");
+      }
     }
+    void fetchSettings();
   }, [isOpen]);
 
   useEffect(() => {
@@ -29,9 +39,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSave = () => {
-    localStorage.setItem("todoist_token", todoistToken);
-    localStorage.setItem("obsidian_vault", vaultName);
+  const handleSave = async () => {
+    const store = await load(STORE_FILENAME, { autoSave: false });
+    await store.set("todoist_token", todoistToken);
+    await store.set("obsidian_vault", vaultName);
+    await store.save();
+
+    // Clean up old unencrypted localStorage if present
+    localStorage.removeItem("todoist_token");
+    localStorage.removeItem("obsidian_vault");
+
     onClose();
   };
 
@@ -70,12 +87,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             onChange={(e) => setTodoistToken(e.target.value)}
           />
           <small>
-            You can find this in Todoist Settings &gt; Integrations &gt; Developer.
+            You can find this in Todoist Settings &gt; Integrations &gt;
+            Developer.
           </small>
         </div>
         <div className="form-group">
           <label>Obsidian Vault Name</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             <input
               type="text"
               style={{ flex: 1 }}
@@ -83,7 +101,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               value={vaultName}
               onChange={(e) => setVaultName(e.target.value)}
             />
-            <button className="button-secondary" onClick={() => void selectVaultFolder()}>
+            <button
+              className="button-secondary"
+              onClick={() => void selectVaultFolder()}
+            >
               Browse...
             </button>
           </div>
@@ -93,7 +114,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button className="button-secondary" onClick={onClose}>
             Cancel
           </button>
-          <button className="button-primary" onClick={handleSave}>
+          <button className="button-primary" onClick={() => void handleSave()}>
             Save
           </button>
         </div>
