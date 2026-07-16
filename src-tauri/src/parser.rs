@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn test_parse_acid_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Design and Systems/Design Pattern/Exercises and quizes/ACID_quiz.md");
+        let path = PathBuf::from("test_fixtures/ACID_quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse ACID quiz");
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     fn test_parse_saga_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Design and Systems/Design Pattern/Exercises and quizes/SAGA exercises-quiz.md");
+        let path = PathBuf::from("test_fixtures/SAGA exercises-quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse SAGA quiz");
         println!("SAGA quiz parsed {} questions", quiz.questions.len());
         assert!(!quiz.questions.is_empty());
@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_parse_kafka_saga_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Design and Systems/Design Pattern/Exercises and quizes/Kafka and SAGA vs choreography quiz.md");
+        let path = PathBuf::from("test_fixtures/Kafka and SAGA vs choreography quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse Kafka SAGA quiz");
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
@@ -298,7 +298,7 @@ mod tests {
 
     #[test]
     fn test_parse_jvm_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/JVM - Compiler Quiz.md");
+        let path = PathBuf::from("test_fixtures/JVM - Compiler Quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse JVM quiz");
         assert_eq!(quiz.questions.len(), 40);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
@@ -307,7 +307,7 @@ mod tests {
 
     #[test]
     fn test_parse_exception_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/Exception Quiz.md");
+        let path = PathBuf::from("test_fixtures/Exception Quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse Exception quiz");
         // Due to the second quiz in the same file, the questions vector will contain both.
         // The first quiz has 20 questions, the second has 10. Total 30.
@@ -318,7 +318,7 @@ mod tests {
 
     #[test]
     fn test_parse_static_ex_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Languages/Java/Basic/Exercises - quiz/static ex.md");
+        let path = PathBuf::from("test_fixtures/static ex.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse static ex quiz");
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
@@ -327,7 +327,7 @@ mod tests {
 
     #[test]
     fn test_parse_iframe_quiz() {
-        let path = PathBuf::from("../../SecondBrain/Computer Science/Web/Exercises and Quiz/iFrame_quiz.md");
+        let path = PathBuf::from("test_fixtures/iFrame_quiz.md");
         let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse iframe quiz");
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
