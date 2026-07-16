@@ -7,12 +7,201 @@ use walkdir::WalkDir;
 
 use crate::models::{Quiz, QuizOption, QuizQuestion};
 
-// Since we use an AST parser, the extracted text is stripped of Markdown formatting (like **).
-// These Regexes now match plain text, making them vastly more robust!
-static RE_QUESTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:Q|q|Question\s*)?(\d+)[\.\:]\s*(.+)$").unwrap());
-static RE_OPTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^([A-D])[\.\)]\s*(.+)$").unwrap());
-static RE_SOLUTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)^(?:Q|q|Question\s*)?(\d+).*?\b([A-D])\b(.*)$").unwrap());
-static RE_EXPLANATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)^(?i)explanation(?:[\:\-])?\s*(.*)$").unwrap());
+static RE_QUESTION: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:Q|q|Question\s*)?(\d+)[\.\:]\s*(.+)$").unwrap());
+static RE_OPTION: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^([A-D])[\.\)]\s*(.+)$").unwrap());
+static RE_SOLUTION: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?s)^(?:Q|q|Question\s*)?(\d+).*?\b([A-D])\b(.*)$").unwrap());
+static RE_EXPLANATION: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?s)^(?i)explanation(?:[\:\-])?\s*(.*)$").unwrap());
+
+
+fn update_solution_mode(trimmed_lower: &str, in_heading: bool, in_solutions: &mut bool) {
+    let solution_keywords = ["solution", "answer", "soluzioni", "risposte"];
+    let contains_solution_kw = solution_keywords.iter().any(|&kw| trimmed_lower.contains(kw));
+    let starts_with_solution_kw = solution_keywords.iter().any(|&kw| trimmed_lower.starts_with(kw));
+
+    if in_heading && trimmed_lower.contains("quiz") && !contains_solution_kw {
+        *in_solutions = false;
+    }
+
+    if (in_heading && contains_solution_kw) || starts_with_solution_kw {
+        *in_solutions = true;
+    }
+}
+
+fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
+    let mut text = raw_text.to_string();
+    let mut options = Vec::new();
+
+    let re_inline_a = regex::Regex::new(r"(?:\s+|^)A[\.\)]\s+").unwrap();
+    if let Some(mat_a) = re_inline_a.find(raw_text) {
+        text = raw_text[..mat_a.start()].trim().to_string();
+
+        let re_inline_b = regex::Regex::new(r"\s+B[\.\)]\s+").unwrap();
+        let re_inline_c = regex::Regex::new(r"\s+C[\.\)]\s+").unwrap();
+        let re_inline_d = regex::Regex::new(r"\s+D[\.\)]\s+").unwrap();
+
+        let start_a = mat_a.end();
+        let mut start_b = raw_text.len();
+        let mut start_c = raw_text.len();
+        let mut start_d = raw_text.len();
+
+        let mut mat_b_end = raw_text.len();
+        let mut mat_c_end = raw_text.len();
+        let mut mat_d_end = raw_text.len();
+
+        if let Some(mat) = re_inline_b.find(raw_text) {
+            start_b = mat.start();
+            mat_b_end = mat.end();
+        }
+        if let Some(mat) = re_inline_c.find(raw_text) {
+            start_c = mat.start();
+            mat_c_end = mat.end();
+        }
+        if let Some(mat) = re_inline_d.find(raw_text) {
+            start_d = mat.start();
+            mat_d_end = mat.end();
+        }
+
+        let opt_a = raw_text[start_a..start_b].trim().to_string();
+        options.push(QuizOption { letter: "A".to_string(), text: opt_a });
+
+        if start_b < raw_text.len() {
+            let opt_b = raw_text[mat_b_end..start_c].trim().to_string();
+            options.push(QuizOption { letter: "B".to_string(), text: opt_b });
+        }
+        if start_c < raw_text.len() {
+            let opt_c = raw_text[mat_c_end..start_d].trim().to_string();
+            options.push(QuizOption { letter: "C".to_string(), text: opt_c });
+        }
+        if start_d < raw_text.len() {
+            let opt_d = raw_text[mat_d_end..].trim().to_string();
+            options.push(QuizOption { letter: "D".to_string(), text: opt_d });
+        }
+    }
+    
+    (text, options)
+}
+
+fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
+    if let Some(caps) = RE_QUESTION.captures(trimmed) {
+        let raw_text = caps[2].to_string();
+
+        let raw_lower = raw_text.to_lowercase();
+        let solution_keywords = ["solution", "answer", "soluzioni", "risposte"];
+        let is_actually_solution = solution_keywords.iter().any(|&kw| raw_lower.starts_with(kw));
+
+        // Prevent "1. Answer: B" from being parsed as a question
+        if !is_actually_solution {
+            let q_id = caps[1].to_string();
+            let (text, options) = parse_inline_options(&raw_text);
+
+            let new_q = QuizQuestion {
+                id: q_id,
+                text,
+                options,
+                correct_answer: None,
+                explanation: None,
+            };
+            quiz.questions.push(new_q);
+            return;
+        }
+    }
+
+    // Parse Option
+    if let Some(caps) = RE_OPTION.captures(trimmed) {
+        if let Some(last_q) = quiz.questions.last_mut() {
+            let letter = caps[1].to_string();
+            let text = caps[2].trim().to_string();
+            last_q.options.push(QuizOption { letter, text });
+        }
+    }
+}
+
+fn process_solution_line(trimmed: &str, quiz: &mut Quiz, current_solution_id: &mut Option<String>) {
+    // Parse Solution
+    if let Some(caps) = RE_SOLUTION.captures(trimmed) {
+        let q_id_val = &caps[1];
+        let correct_letter_val = caps[2].to_string();
+        let trailing_text_val = caps[3].trim().to_string();
+
+        *current_solution_id = Some(q_id_val.to_string());
+
+        if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == q_id_val && !q.options.is_empty()) {
+            q.correct_answer = Some(correct_letter_val);
+            if !trailing_text_val.is_empty() {
+                q.explanation = Some(trailing_text_val);
+            }
+        }
+        return;
+    }
+
+    // Parse Explanation
+    if let Some(caps) = RE_EXPLANATION.captures(trimmed) {
+        if let Some(ref q_id) = current_solution_id {
+            if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
+                let new_text = caps[1].trim().to_string();
+                if let Some(ref mut expl) = q.explanation {
+                    expl.push_str("\n\n");
+                    expl.push_str(&new_text);
+                } else {
+                    q.explanation = Some(new_text);
+                }
+            }
+        }
+        return;
+    } else if let Some(ref q_id) = current_solution_id {
+        // Continuation of explanation
+        if !RE_SOLUTION.is_match(trimmed) {
+            if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
+                if let Some(ref mut expl) = q.explanation {
+                    expl.push_str("\n\n");
+                    expl.push_str(trimmed);
+                } else {
+                    q.explanation = Some(trimmed.to_string());
+                }
+            }
+        }
+    }
+}
+
+
+struct QuizParser<'a> {
+    quiz: &'a mut Quiz,
+    in_solutions: bool,
+    current_solution_id: Option<String>,
+}
+
+impl<'a> QuizParser<'a> {
+    fn new(quiz: &'a mut Quiz) -> Self {
+        Self {
+            quiz,
+            in_solutions: false,
+            current_solution_id: None,
+        }
+    }
+
+    fn process_paragraph(&mut self, paragraph_text: &str, in_heading: bool) {
+        for line in paragraph_text.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+
+            let trimmed_lower = trimmed.to_lowercase();
+            update_solution_mode(&trimmed_lower, in_heading, &mut self.in_solutions);
+
+            if self.in_solutions {
+                process_solution_line(trimmed, self.quiz, &mut self.current_solution_id);
+            } else {
+                process_question_line(trimmed, self.quiz);
+            }
+        }
+    }
+}
+
 
 pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     let content = fs::read_to_string(filepath).ok()?;
@@ -34,9 +223,9 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     };
 
     let parser = Parser::new(&content);
-    let mut in_solutions = false;
+    
+    let mut quiz_parser = QuizParser::new(&mut quiz);
     let mut current_text = String::new();
-    let mut current_solution_id: Option<String> = None;
     let mut in_code_block = false;
     let mut in_heading = false;
     let mut current_list_index: Option<u64> = None;
@@ -90,176 +279,15 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                     current_text.push_str(&text);
                 }
             }
-            Event::End(ref end_tag @ (TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item)) => {
+            Event::End(TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item) => {
                 let paragraph_text_owned = current_text.trim().to_string();
                 current_text.clear();
-                
+
                 let paragraph_text = paragraph_text_owned.as_str();
-
-                if paragraph_text.is_empty() {
-                    continue;
+                if !paragraph_text.is_empty() {
+                    quiz_parser.process_paragraph(paragraph_text, in_heading);
                 }
 
-                // Process the paragraph line by line to handle items separated by SoftBreaks
-                for line in paragraph_text.lines() {
-                    let trimmed = line.trim();
-                    if trimmed.is_empty() {
-                        continue;
-                    }
-
-                    let trimmed_lower = trimmed.to_lowercase();
-                    
-                    if in_heading && trimmed_lower.contains("quiz") {
-                        if !trimmed_lower.contains("answer") && 
-                           !trimmed_lower.contains("solution") && 
-                           !trimmed_lower.contains("soluzioni") &&
-                           !trimmed_lower.contains("risposte") {
-                            in_solutions = false;
-                        }
-                    }
-
-                    let is_solution_header = 
-                        (in_heading && (trimmed_lower.contains("solution") || trimmed_lower.contains("answer") || trimmed_lower.contains("soluzioni") || trimmed_lower.contains("risposte")))
-                        ||
-                        (trimmed_lower.starts_with("answer key") || trimmed_lower.starts_with("answers") || trimmed_lower.starts_with("solutions") || trimmed_lower.starts_with("soluzioni") || trimmed_lower.starts_with("risposte"));
-
-                    if is_solution_header {
-                        in_solutions = true;
-                    }
-
-                    if in_solutions {
-                        // Parse Solution
-                        if let Some(caps) = RE_SOLUTION.captures(trimmed) {
-                            let q_id_val = &caps[1];
-                            let correct_letter_val = caps[2].to_string();
-                            let trailing_text_val = caps[3].trim().to_string();
-
-                            println!("FOUND SOLUTION FOR Q: {}, LETTER: {}", q_id_val, correct_letter_val);
-
-                            current_solution_id = Some(q_id_val.to_string());
-
-                            if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == q_id_val && !q.options.is_empty()) {
-                                q.correct_answer = Some(correct_letter_val);
-                                if !trailing_text_val.is_empty() {
-                                    q.explanation = Some(trailing_text_val);
-                                }
-                            }
-                            continue;
-                        }
-
-                        // Parse Explanation
-                        if let Some(caps) = RE_EXPLANATION.captures(trimmed) {
-                            if let Some(ref q_id) = current_solution_id {
-                                if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
-                                    let new_text = caps[1].trim().to_string();
-                                    if let Some(ref mut expl) = q.explanation {
-                                        expl.push_str("\n\n");
-                                        expl.push_str(&new_text);
-                                    } else {
-                                        q.explanation = Some(new_text);
-                                    }
-                                }
-                            }
-                            continue;
-                        } else if let Some(ref q_id) = current_solution_id {
-                            // Continuation of explanation
-                            if !RE_SOLUTION.is_match(trimmed) {
-                                if let Some(q) = quiz.questions.iter_mut().rev().find(|q| q.id == *q_id && !q.options.is_empty()) {
-                                    if let Some(ref mut expl) = q.explanation {
-                                        expl.push_str("\n\n");
-                                        expl.push_str(trimmed);
-                                    } else {
-                                        q.explanation = Some(trimmed.to_string());
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Parse Question
-                        if let Some(caps) = RE_QUESTION.captures(trimmed) {
-                            let raw_text = caps[2].to_string();
-                            
-                            // Prevent "1. Answer: B" from being parsed as a question
-                            if raw_text.to_lowercase().starts_with("answer") || 
-                               raw_text.to_lowercase().starts_with("soluzion") {
-                                // Let it fall through to RE_SOLUTION
-                            } else {
-                                let q_id = caps[1].to_string();
-                                let mut text = raw_text.clone();
-                                let mut options = Vec::new();
-
-                                // Look for inline options, e.g. " A) " or " A. "
-                                let re_inline_a = regex::Regex::new(r"(?:\s+|^)A[\.\)]\s+").unwrap();
-                                if let Some(mat_a) = re_inline_a.find(&raw_text) {
-                                    text = raw_text[..mat_a.start()].trim().to_string();
-                                    
-                                    let re_inline_b = regex::Regex::new(r"\s+B[\.\)]\s+").unwrap();
-                                    let re_inline_c = regex::Regex::new(r"\s+C[\.\)]\s+").unwrap();
-                                    let re_inline_d = regex::Regex::new(r"\s+D[\.\)]\s+").unwrap();
-                                    
-                                    let start_a = mat_a.end();
-                                    let mut start_b = raw_text.len();
-                                    let mut start_c = raw_text.len();
-                                    let mut start_d = raw_text.len();
-                                    
-                                    let mut mat_b_end = raw_text.len();
-                                    let mut mat_c_end = raw_text.len();
-                                    let mut mat_d_end = raw_text.len();
-
-                                    if let Some(mat) = re_inline_b.find(&raw_text) {
-                                        start_b = mat.start();
-                                        mat_b_end = mat.end();
-                                    }
-                                    if let Some(mat) = re_inline_c.find(&raw_text) {
-                                        start_c = mat.start();
-                                        mat_c_end = mat.end();
-                                    }
-                                    if let Some(mat) = re_inline_d.find(&raw_text) {
-                                        start_d = mat.start();
-                                        mat_d_end = mat.end();
-                                    }
-                                    
-                                    let opt_a = raw_text[start_a..start_b].trim().to_string();
-                                    options.push(QuizOption { letter: "A".to_string(), text: opt_a });
-                                    
-                                    if start_b < raw_text.len() {
-                                        let opt_b = raw_text[mat_b_end..start_c].trim().to_string();
-                                        options.push(QuizOption { letter: "B".to_string(), text: opt_b });
-                                    }
-                                    if start_c < raw_text.len() {
-                                        let opt_c = raw_text[mat_c_end..start_d].trim().to_string();
-                                        options.push(QuizOption { letter: "C".to_string(), text: opt_c });
-                                    }
-                                    if start_d < raw_text.len() {
-                                        let opt_d = raw_text[mat_d_end..].trim().to_string();
-                                        options.push(QuizOption { letter: "D".to_string(), text: opt_d });
-                                    }
-                                }
-
-                                let new_q = QuizQuestion {
-                                    id: q_id.clone(),
-                                    text,
-                                    options,
-                                    correct_answer: None,
-                                    explanation: None,
-                                };
-                                quiz.questions.push(new_q);
-                                continue;
-                            }
-                        }
-
-                        // Parse Option
-                        if let Some(caps) = RE_OPTION.captures(trimmed) {
-                            if let Some(last_q) = quiz.questions.last_mut() {
-                                let letter = caps[1].to_string();
-                                let text = caps[2].trim().to_string();
-                                last_q.options.push(QuizOption { letter, text });
-                            }
-                        }
-                    }
-                }
-                
-                // Clear in_heading if this was a heading
                 if in_heading {
                     in_heading = false;
                 }
@@ -277,22 +305,15 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     }
 }
 
-
-
-
-
 pub fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     let mut quizzes = Vec::new();
 
-    // SECURITY: Prevent basic path traversal and null-byte injection.
-    // In a fully generalized app, this should be enforced via Tauri's `fs::Scope`.
     if base_dir.contains("..") || base_dir.contains('\0') {
         eprintln!("Security Warning: Attempted path traversal or invalid characters detected.");
         return quizzes;
     }
 
     let base_path = Path::new(base_dir);
-
     if !base_path.exists() {
         return quizzes;
     }
@@ -302,7 +323,6 @@ pub fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
         if path.is_file() {
             let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
             if ext == "md" {
-                // Determine topic based on folder structure relative to base_dir
                 let relative = path.strip_prefix(base_path).unwrap_or(path);
                 let topic = relative
                     .parent()
