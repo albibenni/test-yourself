@@ -33,6 +33,35 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState("");
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+  const [showProjectSelectDropdown, setShowProjectSelectDropdown] = useState(false);
+
+  const calRef = useRef<HTMLDivElement>(null);
+  const priRef = useRef<HTMLDivElement>(null);
+  const projRef = useRef<HTMLDivElement>(null);
+  const hashProjRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (calRef.current && !calRef.current.contains(e.target as Node)) {
+        setShowCalendar(false);
+      }
+      if (priRef.current && !priRef.current.contains(e.target as Node)) {
+        setShowPriorityDropdown(false);
+      }
+      if (projRef.current && !projRef.current.contains(e.target as Node)) {
+        setShowProjectSelectDropdown(false);
+      }
+      if (hashProjRef.current && !hashProjRef.current.contains(e.target as Node)) {
+        setShowProjectDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (quiz && !taskContent) {
       setTaskContent(`Review Quiz: ${quiz.title}`);
@@ -157,7 +186,6 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     const firstDay = getFirstDayOfMonth(year, month);
     
     const days = [];
-    // Padding for first day
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="cal-day empty"></div>);
     }
@@ -216,6 +244,20 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let text = e.target.value;
     
+    // Autoclose logic on type
+    setShowCalendar(false);
+    setShowPriorityDropdown(false);
+    setShowProjectSelectDropdown(false);
+    
+    // Project hashtag parsing
+    const hashtagMatch = text.match(/#(\S*)$/);
+    if (hashtagMatch) {
+      setShowProjectDropdown(true);
+      setProjectSearchQuery(hashtagMatch[1].toLowerCase());
+    } else {
+      setShowProjectDropdown(false);
+    }
+
     // Date parsing
     const tomRegex = /(^|\s)(tom|tomorrow)(\s|$)/i;
     if (tomRegex.test(text)) {
@@ -251,6 +293,16 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     setTaskContent(text);
   };
 
+  const handleProjectSelect = (p: Project) => {
+    setSelectedProjectId(p.id);
+    setShowProjectDropdown(false);
+    setTaskContent((prev) => prev.replace(/#\S*$/, '').trim() + " ");
+  };
+
+  const filteredProjects = projects.filter(p => 
+    p.name.toLowerCase().includes(projectSearchQuery)
+  );
+
   if (!isOpen || !quiz) return null;
 
   return (
@@ -259,7 +311,7 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">Task created successfully!</div>}
         
-        <div className="quick-add-input-wrapper">
+        <div className="quick-add-input-wrapper" style={{ position: 'relative' }} ref={hashProjRef}>
           <input 
             type="text" 
             className="quick-add-input"
@@ -267,11 +319,25 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
             onChange={handleContentChange}
             placeholder="Task name"
           />
+          {showProjectDropdown && filteredProjects.length > 0 && (
+            <div className="project-dropdown">
+              {filteredProjects.map(p => (
+                <button 
+                  key={p.id} 
+                  className="project-dropdown-item"
+                  onClick={() => handleProjectSelect(p)}
+                >
+                  <span style={{ color: '#8f8f8f', marginRight: '8px' }}>#</span>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="quick-add-actions">
           <div className="quick-add-action-group">
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} ref={calRef}>
               <button 
                 className="action-pill date-pill" 
                 onClick={() => setShowCalendar(!showCalendar)}
@@ -282,34 +348,45 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
               {showCalendar && renderCalendar()}
             </div>
             
-            <div className="custom-select-wrapper">
-              <svg className="action-icon flag-icon" style={{ color: getPriorityColor(priority) }} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={priority > 1 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-              <select 
-                className="action-pill select-pill"
-                value={priority}
-                onChange={(e) => setPriority(Number(e.target.value))}
+            <div style={{ position: 'relative' }} ref={priRef}>
+              <button 
+                className="action-pill"
+                onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
               >
-                <option value={4}>Priority 1</option>
-                <option value={3}>Priority 2</option>
-                <option value={2}>Priority 3</option>
-                <option value={1}>Priority 4</option>
-              </select>
+                <svg className="action-icon flag-icon" style={{ color: getPriorityColor(priority) }} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={priority > 1 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                <span style={{ marginLeft: '16px' }}>Priority {5 - priority}</span>
+              </button>
+              {showPriorityDropdown && (
+                <div className="project-dropdown" style={{ minWidth: '120px' }}>
+                  {[4, 3, 2, 1].map(p => (
+                    <button key={p} className="project-dropdown-item" onClick={() => { setPriority(p); setShowPriorityDropdown(false); }}>
+                      <svg style={{ color: getPriorityColor(p), marginRight: '8px' }} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={p > 1 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                      Priority {5 - p}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             
-            <div className="custom-select-wrapper">
-              <svg className="action-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              <select 
-                className="action-pill select-pill"
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
+            <div style={{ position: 'relative' }} ref={projRef}>
+              <button 
+                className="action-pill"
+                onClick={() => setShowProjectSelectDropdown(!showProjectSelectDropdown)}
                 disabled={loading || projects.length === 0}
               >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                <svg className="action-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <span style={{ marginLeft: '16px' }}>{projects.find(p => p.id === selectedProjectId)?.name || "Inbox"}</span>
+              </button>
+              {showProjectSelectDropdown && (
+                <div className="project-dropdown">
+                  {projects.map((p) => (
+                    <button key={p.id} className="project-dropdown-item" onClick={() => { setSelectedProjectId(p.id); setShowProjectSelectDropdown(false); }}>
+                      <span style={{ color: '#8f8f8f', marginRight: '8px' }}>#</span>
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           
