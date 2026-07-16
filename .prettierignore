@@ -10,3 +10,4 @@ src-tauri/target
 *.sln
 *.sw?
 coverage
+src-tauri/test_data
