@@ -99,6 +99,14 @@ pub fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
             let text = caps[2].trim().to_string();
             last_q.options.push(QuizOption { letter, text });
         }
+        return;
+    }
+
+    if let Some(last_q) = quiz.questions.last_mut() {
+        if last_q.options.is_empty() {
+            last_q.text.push('\n');
+            last_q.text.push_str(trimmed);
+        }
     }
 }
 

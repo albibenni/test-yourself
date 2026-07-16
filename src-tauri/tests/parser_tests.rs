@@ -326,3 +326,18 @@ D) Option D
     // It has options B, C, D, but no A. It shouldn't be considered a valid question.
     assert!(quiz.is_none());
 }
+
+#[tokio::test]
+async fn test_multiline_question_text() {
+    let md = "
+1. Placing a Business Object (Foundational)
+Where should a business object be placed in clean architecture?
+And what is the exact layer?
+A. Interface Adapters (Green Layer)
+B. Use Cases / Interactors (Red Layer)
+    ";
+    let quiz = parse_string(md).await.unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].text, "Placing a Business Object (Foundational)\nWhere should a business object be placed in clean architecture?\nAnd what is the exact layer?");
+    assert_eq!(quiz.questions[0].options.len(), 2);
+}
