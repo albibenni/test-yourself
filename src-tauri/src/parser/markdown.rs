@@ -99,7 +99,6 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
 
                 let paragraph_text = paragraph_text_owned.as_str();
                 if !paragraph_text.is_empty() {
-                    println!("DEBUG PROCESS: {:?}", paragraph_text);
                     quiz_parser.process_paragraph(paragraph_text, in_heading);
                 }
 
