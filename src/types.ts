@@ -10,8 +10,8 @@ export const QuizQuestionSchema = z.object({
   id: z.string(),
   text: z.string(),
   options: z.array(QuizOptionSchema),
-  correct_answer: z.string().nullable().optional(),
-  explanation: z.string().nullable().optional(),
+  correct_answer: z.string(),
+  explanation: z.string(),
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 

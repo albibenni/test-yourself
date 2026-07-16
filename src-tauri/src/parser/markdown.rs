@@ -98,7 +98,34 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     }
 
     quiz.questions.retain(|q| {
-        q.options.len() >= 2 && q.options.iter().any(|opt| opt.letter.to_uppercase() == "A")
+        let has_valid_options =
+            q.options.len() >= 2 && q.options.iter().any(|opt| opt.letter.to_uppercase() == "A");
+
+        if has_valid_options {
+            let has_answer = q.correct_answer.is_some();
+            let has_explanation = q.explanation.is_some();
+
+            if !has_answer || !has_explanation {
+                let mut missing = Vec::new();
+                if !has_answer {
+                    missing.push("correct answer");
+                }
+                if !has_explanation {
+                    missing.push("explanation");
+                }
+                eprintln!(
+                    "Warning in quiz '{}': Question '{}' is missing: {}. This question will be skipped.",
+                    quiz.title,
+                    q.id,
+                    missing.join(" and ")
+                );
+                false
+            } else {
+                true
+            }
+        } else {
+            false
+        }
     });
 
     if quiz.questions.is_empty() {
