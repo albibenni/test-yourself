@@ -8,4 +8,6 @@ pub static RE_OPTION: LazyLock<Regex> =
 pub static RE_SOLUTION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?s)^(?:Q|q|Question\s*)?(\d+).*?\b([A-D])\b(.*)$").unwrap());
 pub static RE_EXPLANATION: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?s)^(?i)explanation(?:[\:\-])?\s*(.*)$").unwrap());
+    LazyLock::new(|| Regex::new(r"(?is)^(?:Explanation|Spiegazione|Motivazione)\s*[:\-]?\s*(.+)$").unwrap());
+pub static RE_INLINE_ANSWERS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(\d+)\s*[-:]\s*([A-D])").unwrap());

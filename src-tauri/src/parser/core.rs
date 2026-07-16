@@ -124,8 +124,22 @@ pub fn process_solution_line(
     if let Some(caps) = RE_SOLUTION.captures(trimmed) {
         let q_id_val = &caps[1];
         let correct_letter_val = caps[2].to_string();
-        let trailing_text_val = caps[3].trim().to_string();
-
+        
+        let mut trailing_text_val = caps[3].trim().to_string();
+        if trailing_text_val.starts_with('|') {
+            trailing_text_val = trailing_text_val[1..].trim().to_string();
+        }
+        
+        let lower_trailing = trailing_text_val.to_lowercase();
+        if lower_trailing.starts_with("explanation:") 
+            || lower_trailing.starts_with("**explanation:**") 
+            || lower_trailing.starts_with("- **explanation:**") 
+        {
+            if let Some(idx) = trailing_text_val.find(':') {
+                trailing_text_val = trailing_text_val[idx + 1..].trim().to_string();
+            }
+        }
+        
         *current_solution_id = Some(q_id_val.to_string());
 
         if let Some(q) = quiz
@@ -227,6 +241,27 @@ impl<'a> QuizParser<'a> {
             }
 
             let trimmed_lower = trimmed.to_lowercase();
+            
+            // Check for inline answers format e.g., "Answers: 1-B, 2-C"
+            if trimmed_lower.contains("answer") || trimmed_lower.contains("solution") || trimmed_lower.contains("rispost") || trimmed_lower.contains("soluzion") {
+                let mut found_inline = false;
+                for caps in crate::parser::regexes::RE_INLINE_ANSWERS.captures_iter(trimmed) {
+                    found_inline = true;
+                    let q_id_val = &caps[1];
+                    let correct_letter_val = caps[2].to_string();
+                    if let Some(q) = self.quiz.questions.iter_mut().rev().find(|q| q.id == q_id_val && !q.options.is_empty()) {
+                        q.correct_answer = Some(correct_letter_val);
+                        if q.explanation.is_none() {
+                            q.explanation = Some("Inline answer provided.".to_string());
+                        }
+                    }
+                }
+                if found_inline {
+                    // We extracted inline answers from this line, no need to process it further.
+                    continue;
+                }
+            }
+
             update_solution_mode(&trimmed_lower, in_heading, &mut self.in_solutions);
 
             if self.in_solutions {

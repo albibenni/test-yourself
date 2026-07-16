@@ -23,22 +23,24 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
         last_modified,
     };
 
-    let parser = Parser::new(&content);
+    let mut options = pulldown_cmark::Options::empty();
+    options.insert(pulldown_cmark::Options::ENABLE_TABLES);
+    let parser = Parser::new_ext(&content, options);
 
     let mut quiz_parser = QuizParser::new(&mut quiz);
     let mut current_text = String::new();
     let mut in_code_block = false;
     let mut in_heading = false;
-    let mut current_list_index: Option<u64> = None;
+    let mut list_index_stack: Vec<Option<u64>> = Vec::new();
     let mut pending_list_prefix = String::new();
 
     for event in parser {
         match event {
-            Event::Start(Tag::List(Some(start_num))) => {
-                current_list_index = Some(start_num);
+            Event::Start(Tag::List(start_num)) => {
+                list_index_stack.push(start_num);
             }
             Event::End(TagEnd::List(_)) => {
-                current_list_index = None;
+                list_index_stack.pop();
             }
             Event::Start(Tag::CodeBlock(_)) => in_code_block = true,
             Event::End(TagEnd::CodeBlock) => in_code_block = false,
@@ -61,7 +63,7 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
             Event::Start(Tag::Item) => {
                 current_text.clear();
                 pending_list_prefix.clear();
-                if let Some(ref mut idx) = current_list_index {
+                if let Some(Some(ref mut idx)) = list_index_stack.last_mut() {
                     pending_list_prefix = format!("{}. ", idx);
                     *idx += 1;
                 }
@@ -80,12 +82,24 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                     current_text.push_str(&text);
                 }
             }
-            Event::End(TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item) => {
-                let paragraph_text_owned = current_text.trim().to_string();
+            Event::End(TagEnd::TableCell) => {
+                if !in_code_block {
+                    current_text.push_str(" | ");
+                }
+            }
+            Event::End(
+                TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item | TagEnd::TableRow | TagEnd::TableHead,
+            ) => {
+                let mut paragraph_text_owned = current_text.trim().to_string();
+                if paragraph_text_owned.ends_with(" |") {
+                    paragraph_text_owned.truncate(paragraph_text_owned.len() - 2);
+                    paragraph_text_owned = paragraph_text_owned.trim().to_string();
+                }
                 current_text.clear();
 
                 let paragraph_text = paragraph_text_owned.as_str();
                 if !paragraph_text.is_empty() {
+                    println!("DEBUG PROCESS: {:?}", paragraph_text);
                     quiz_parser.process_paragraph(paragraph_text, in_heading);
                 }
 
