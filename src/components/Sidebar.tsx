@@ -27,26 +27,12 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
-      <div
-        className="sidebar-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className="sidebar-header">
         <h2>Brain Test</h2>
         <button
           className="sync-button"
           onClick={handleSync}
           disabled={isSyncing}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "inherit",
-            padding: "0.25rem",
-          }}
           title="Sync Quizzes"
         >
           <svg

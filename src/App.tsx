@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
-
-import { Quiz } from "./types";
+import { open } from "@tauri-apps/plugin-dialog";
+import "./App.css";import { Quiz } from "./types";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
@@ -15,12 +14,29 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [basePath, setBasePath] = useState<string | null>(
+    localStorage.getItem("quiz_base_path"),
+  );
+
+  const selectFolder = async () => {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+    });
+    if (selected && typeof selected === "string") {
+      setBasePath(selected);
+      localStorage.setItem("quiz_base_path", selected);
+    }
+  };
 
   useEffect(() => {
     async function loadQuizzes() {
+      if (!basePath) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
       try {
-        const basePath =
-          "/Users/benni/benni-projects/SecondBrain/Computer Science";
         const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", {
           basePath,
         });
@@ -32,13 +48,12 @@ function App() {
       }
     }
     void loadQuizzes();
-  }, []);
+  }, [basePath]);
 
   const handleSync = async () => {
+    if (!basePath) return;
     setIsSyncing(true);
     try {
-      const basePath =
-        "/Users/benni/benni-projects/SecondBrain/Computer Science";
       const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
 
       setQuizzes((prevQuizzes) => {
@@ -71,27 +86,33 @@ function App() {
   };
 
   // Filter quizzes by search query
-  const filteredQuizzes = quizzes.filter(
-    (quiz) =>
-      quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quiz.topic.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredQuizzes = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return quizzes.filter(
+      (quiz) =>
+        quiz.title.toLowerCase().includes(query) ||
+        quiz.topic.toLowerCase().includes(query),
+    );
+  }, [quizzes, searchQuery]);
 
   // Group filtered quizzes by topic
-  const groupedQuizzes = filteredQuizzes.reduce(
-    (acc, quiz) => {
-      if (!acc[quiz.topic]) acc[quiz.topic] = [];
-      acc[quiz.topic].push(quiz);
-      return acc;
-    },
-    {} as Record<string, Quiz[]>,
-  );
+  const groupedQuizzes = useMemo(() => {
+    return filteredQuizzes.reduce(
+      (acc, quiz) => {
+        if (!acc[quiz.topic]) acc[quiz.topic] = [];
+        acc[quiz.topic].push(quiz);
+        return acc;
+      },
+      {} as Record<string, Quiz[]>,
+    );
+  }, [filteredQuizzes]);
 
   return (
     <div className="app-wrapper">
       <TopBar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
+        selectFolder={selectFolder}
       />
 
       <div className="app-container">
@@ -108,7 +129,30 @@ function App() {
         />
 
         <main className="main-content">
-          {selectedQuiz ? (
+          {!basePath ? (
+            <div className="empty-state">
+              <div
+                className="header-title-row"
+                style={{ justifyContent: "center" }}
+              >
+                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 600 }}>
+                  Select Quiz Folder
+                </h2>
+              </div>
+              <p>Please select a directory containing your Markdown quizzes.</p>
+              <button
+                onClick={selectFolder}
+                style={{
+                  marginTop: "1rem",
+                  padding: "0.5rem 1rem",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                }}
+              >
+                Choose Folder
+              </button>
+            </div>
+          ) : selectedQuiz ? (
             <div className="quiz-viewer">
               <div className="quiz-header">
                 <div className="header-title-row">

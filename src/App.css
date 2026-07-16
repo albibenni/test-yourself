@@ -115,6 +115,36 @@ body {
   color: var(--text-primary);
 }
 
+/* Tooltips */
+[data-hint] {
+  position: relative;
+}
+
+[data-hint]::after {
+  content: attr(data-hint);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--glass-border);
+}
+
+[data-hint]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(8px);
+}
+
 .top-bar-separator {
   width: 1px;
   height: 14px;
@@ -160,7 +190,7 @@ body {
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 0.75rem;
   margin: 1.25rem 1.5rem 0.5rem 1.5rem;
 }
@@ -299,6 +329,13 @@ body {
 .toggle-sidebar-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
+}
+.sync-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0.25rem;
 }
 .sync-button:hover {
   color: #646cff;

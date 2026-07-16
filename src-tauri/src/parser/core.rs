@@ -20,8 +20,10 @@ pub fn update_solution_mode(trimmed_lower: &str, in_heading: bool, in_solutions:
 }
 
 pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
-    let re_inline = regex::Regex::new(r"(?:\s+|^)([A-D])[\.\)]\s+").unwrap();
-    let matches: Vec<_> = re_inline.captures_iter(raw_text).collect();
+    static RE_INLINE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+        regex::Regex::new(r"(?:\s+|^)([A-D])[\.\)]\s+").unwrap()
+    });
+    let matches: Vec<_> = RE_INLINE.captures_iter(raw_text).collect();
 
     if matches.is_empty() {
         return (raw_text.to_string(), Vec::new());
