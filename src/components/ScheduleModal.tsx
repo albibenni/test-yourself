@@ -241,6 +241,9 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       days.push(<div key={`empty-${i}`} className="cal-day empty"></div>);
     }
 
+    const todayDate = new Date();
+    const todayStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}`;
+
     for (let day = 1; day <= daysInMonth; day++) {
       const yyyy = year;
       const mm = String(month + 1).padStart(2, "0");
@@ -249,11 +252,12 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       const count = taskCounts[dateStr] || 0;
 
       const isSelected = dueDateString === dateStr;
+      const isToday = todayStr === dateStr;
 
       days.push(
         <button
           key={day}
-          className={`cal-day ${isSelected ? "selected" : ""}`}
+          className={`cal-day ${isSelected ? "selected" : ""} ${isToday && !isSelected ? "is-today" : ""}`}
           onClick={() => handleDateSelect(year, month, day)}
         >
           <span className="cal-date-num">{day}</span>
