@@ -297,3 +297,32 @@ B) B
         );
     }
 }
+
+#[tokio::test]
+async fn test_false_positive_math_formulas_not_parsed() {
+    let md = "
+1. **Indipendenza**: P(A ∩ B) = P(A) × P(B)
+2. **Complementare**: P(A^c) = 1 - P(A)
+3. **Unione**: P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
+4. **Leggi di De Morgan**: (A ∪ B)^c = A^c ∩ B^c
+    ";
+    let quiz = parse_string(md).await;
+    // Because this contains no real options starting with 'A', it should be skipped
+    assert!(quiz.is_none());
+}
+
+#[tokio::test]
+async fn test_question_must_have_option_a() {
+    let md = "
+1. Is this a question?
+B) Option B
+C) Option C
+D) Option D
+
+## Solutions
+1. Answer: B
+    ";
+    let quiz = parse_string(md).await;
+    // It has options B, C, D, but no A. It shouldn't be considered a valid question.
+    assert!(quiz.is_none());
+}

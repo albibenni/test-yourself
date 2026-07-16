@@ -97,7 +97,9 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
         }
     }
 
-    quiz.questions.retain(|q| !q.options.is_empty());
+    quiz.questions.retain(|q| {
+        q.options.len() >= 2 && q.options.iter().any(|opt| opt.letter.to_uppercase() == "A")
+    });
 
     if quiz.questions.is_empty() {
         None
