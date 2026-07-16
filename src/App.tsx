@@ -12,6 +12,12 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const {
     loading,
@@ -143,7 +149,18 @@ function App() {
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
         quiz={selectedQuiz}
+        onSuccess={() => showToast("Task created successfully!")}
       />
+      
+      {toastMessage && (
+        <div className="toast-notification">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }

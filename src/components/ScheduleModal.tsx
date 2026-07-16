@@ -6,6 +6,7 @@ interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   quiz: Quiz | null;
+  onSuccess?: () => void;
 }
 
 interface Project {
@@ -17,7 +18,7 @@ interface TaskCountMap {
   [dateString: string]: number; // YYYY-MM-DD -> count
 }
 
-export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
+export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModalProps) {
   const [taskContent, setTaskContent] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [dueDateString, setDueDateString] = useState("tomorrow");
@@ -36,7 +37,6 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     error,
     setError,
   } = useTodoist();
-  const [success, setSuccess] = useState(false);
 
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -103,8 +103,6 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
   useEffect(() => {
     if (isOpen) {
       setError("");
-      // eslint-disable-next-line
-      setSuccess(false);
 
       getProjects()
         .then((projs) => {
@@ -155,10 +153,8 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
         priority: priority,
         projectId: selectedProjectId || undefined,
       });
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      onSuccess?.();
+      onClose();
     } catch (err) {
       // Error is handled in the hook, but we can catch to prevent unhandled rejection
       console.error(err);
@@ -346,9 +342,6 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     <div className="modal-overlay">
       <div className="modal-content quick-add-modal">
         {error && <div className="error-message">{error}</div>}
-        {success && (
-          <div className="success-message">Task created successfully!</div>
-        )}
 
         <div
           className="quick-add-input-wrapper"
@@ -530,14 +523,14 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
             <button
               className="button-secondary"
               onClick={onClose}
-              disabled={loading || success}
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               className="button-primary"
               onClick={() => void handleSchedule()}
-              disabled={loading || !!error || success}
+              disabled={loading || !!error}
             >
               {loading ? "Adding..." : "Add Task"}
             </button>
@@ -547,3 +540,4 @@ export function ScheduleModal({ isOpen, onClose, quiz }: ScheduleModalProps) {
     </div>
   );
 }
+
