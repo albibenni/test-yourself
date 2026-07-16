@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { clsx } from "clsx";
-import { QuizQuestion } from "../types";
+import type { QuizQuestion } from "../types";
 
 interface QuestionCardProps {
   question: QuizQuestion;

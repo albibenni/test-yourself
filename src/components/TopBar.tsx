@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -6,7 +6,11 @@ interface TopBarProps {
   selectFolder: () => void;
 }
 
-export function TopBar({ isSidebarOpen, setIsSidebarOpen, selectFolder }: TopBarProps) {
+export function TopBar({
+  isSidebarOpen,
+  setIsSidebarOpen,
+  selectFolder,
+}: TopBarProps) {
   return (
     <div className="top-bar" data-tauri-drag-region>
       <button
@@ -53,7 +57,7 @@ export function TopBar({ isSidebarOpen, setIsSidebarOpen, selectFolder }: TopBar
       </button>
       <div className="top-bar-separator"></div>
       <div className="top-bar-title" data-tauri-drag-region>
-        Brain Test
+        Test Yourself
       </div>
     </div>
   );

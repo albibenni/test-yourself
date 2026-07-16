@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { load, Store } from "@tauri-apps/plugin-store";
-import { Quiz } from "../types";
+import type { Store } from "@tauri-apps/plugin-store";
+import { load } from "@tauri-apps/plugin-store";
+import type { Quiz } from "../types";
 
 export function useQuizzes() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -63,8 +64,9 @@ export function useQuizzes() {
       directory: true,
       multiple: false,
     });
-    if (selected && typeof selected === "string") {
+    if (selected && typeof selected === "string" && selected !== basePath) {
       setBasePath(selected);
+      setSelectedQuiz(null); // Clear the active quiz when changing directories
       if (storeInstance) {
         await storeInstance.set("quiz_base_path", selected);
         await storeInstance.save();

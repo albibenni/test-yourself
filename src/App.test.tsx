@@ -62,8 +62,8 @@ const mockQuizzes = [
 describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (invoke as any).mockResolvedValue(mockQuizzes);
-    (load as any).mockResolvedValue({
+    vi.mocked(invoke).mockResolvedValue(mockQuizzes);
+    vi.mocked(load).mockResolvedValue({
       get: vi.fn().mockResolvedValue("/mock/path"),
       set: vi.fn().mockResolvedValue(true),
       save: vi.fn().mockResolvedValue(true),
@@ -72,8 +72,8 @@ describe("App Component", () => {
 
   it("shows loading state initially", async () => {
     // We mock a pending promise to see the loading state
-    let resolvePromise: any;
-    (invoke as any).mockReturnValue(
+    let resolvePromise: (val: any) => void = () => {};
+    vi.mocked(invoke).mockReturnValue(
       new Promise((resolve) => {
         resolvePromise = resolve;
       }),
@@ -83,6 +83,7 @@ describe("App Component", () => {
 
     await act(async () => {
       resolvePromise(mockQuizzes);
+      await Promise.resolve(); // satisfy require-await
     });
   });
 
@@ -179,7 +180,7 @@ describe("App Component", () => {
   });
 
   it("handles invoke errors gracefully", async () => {
-    (invoke as any).mockRejectedValue(new Error("Failed to load"));
+    vi.mocked(invoke).mockRejectedValue(new Error("Failed to load"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     render(<App />);
@@ -194,29 +195,31 @@ describe("App Component", () => {
   });
 
   it("shows Select Quiz Folder when no directory is configured", async () => {
-    (load as any).mockResolvedValue({
+    vi.mocked(load).mockResolvedValue({
       get: vi.fn().mockResolvedValue(null),
       set: vi.fn().mockResolvedValue(true),
       save: vi.fn().mockResolvedValue(true),
     });
-    
+
     render(<App />);
-    
+
     await waitFor(() => {
       expect(screen.getByText("Select Quiz Folder")).toBeInTheDocument();
     });
   });
 
   it("allows selecting a new folder from TopBar", async () => {
-    (open as any).mockResolvedValue("/new/mock/path");
-    
+    vi.mocked(open).mockResolvedValue("/new/mock/path");
+
     render(<App />);
-    
+
     await waitFor(() => {
       expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
-    const changeFolderBtn = screen.getByRole("button", { name: "Change Folder" });
+    const changeFolderBtn = screen.getByRole("button", {
+      name: "Change Folder",
+    });
     fireEvent.click(changeFolderBtn);
 
     await waitFor(() => {

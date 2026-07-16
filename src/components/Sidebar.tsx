@@ -1,6 +1,6 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { clsx } from "clsx";
-import { Quiz } from "../types";
+import type { Quiz } from "../types";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -28,7 +28,7 @@ export function Sidebar({
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
       <div className="sidebar-header">
-        <h2>Brain Test</h2>
+        <h2>Test Yourself</h2>
         <button
           className="sync-button"
           onClick={handleSync}

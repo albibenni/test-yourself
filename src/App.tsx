@@ -26,7 +26,7 @@ function App() {
       <TopBar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        selectFolder={selectFolder}
+        selectFolder={() => void selectFolder()}
       />
 
       <div className="app-container">
@@ -38,7 +38,7 @@ function App() {
           groupedQuizzes={groupedQuizzes}
           selectedQuiz={selectedQuiz}
           setSelectedQuiz={setSelectedQuiz}
-          handleSync={handleSync}
+          handleSync={() => void handleSync()}
           isSyncing={isSyncing}
         />
 
@@ -46,12 +46,13 @@ function App() {
           {!basePath ? (
             <div className="empty-state">
               <div className="header-title-row empty-state-header">
-                <h2 className="empty-state-title">
-                  Select Quiz Folder
-                </h2>
+                <h2 className="empty-state-title">Select Quiz Folder</h2>
               </div>
               <p>Please select a directory containing your Markdown quizzes.</p>
-              <button onClick={selectFolder} className="primary-btn">
+              <button
+                onClick={() => void selectFolder()}
+                className="primary-btn"
+              >
                 Choose Folder
               </button>
             </div>
@@ -75,9 +76,7 @@ function App() {
           ) : (
             <div className="empty-state">
               <div className="header-title-row empty-state-header">
-                <h2 className="empty-state-title">
-                  Select a Quiz
-                </h2>
+                <h2 className="empty-state-title">Select a Quiz</h2>
               </div>
               <p>
                 Choose a topic from the sidebar to begin testing your knowledge.

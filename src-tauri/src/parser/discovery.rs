@@ -12,19 +12,23 @@ pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     };
 
     let canonical_base_clone = canonical_base.clone();
-    
+
     // Run the blocking directory traversal in a separate thread pool
     let md_files: Vec<(PathBuf, String)> = tokio::task::spawn_blocking(move || {
         let mut files = Vec::new();
-        
-        for entry in WalkDir::new(&canonical_base_clone).follow_links(true).into_iter().filter_map(Result::ok) {
+
+        for entry in WalkDir::new(&canonical_base_clone)
+            .follow_links(true)
+            .into_iter()
+            .filter_map(Result::ok)
+        {
             let path = entry.path();
-            
+
             // Security check: verify that symlinks don't escape the safe root boundary
             let Ok(canonical_path) = std::fs::canonicalize(path) else {
                 continue;
             };
-            
+
             if !canonical_path.starts_with(&canonical_base_clone) {
                 eprintln!("Security Warning: Discovered path escapes the safe root boundary.");
                 continue;
@@ -44,7 +48,7 @@ pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
                         .unwrap_or(Path::new(""))
                         .to_string_lossy()
                         .to_string();
-                    
+
                     files.push((canonical_path, topic));
                 }
             }
