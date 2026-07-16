@@ -63,9 +63,7 @@ function App() {
       }
       setLoading(true);
       try {
-        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", {
-          basePath,
-        });
+        const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes");
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -80,7 +78,7 @@ function App() {
     if (!basePath) return;
     setIsSyncing(true);
     try {
-      const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes", { basePath });
+      const fetchedQuizzes = await invoke<Quiz[]>("get_quizzes");
 
       setQuizzes((prevQuizzes) => {
         // Create a map of existing quizzes for quick lookup
