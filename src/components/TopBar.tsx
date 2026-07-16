@@ -13,6 +13,7 @@ export function TopBar({ isSidebarOpen, setIsSidebarOpen, selectFolder }: TopBar
         className="top-bar-btn"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         data-hint="Toggle Sidebar"
+        aria-label="Toggle Sidebar"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -34,6 +35,7 @@ export function TopBar({ isSidebarOpen, setIsSidebarOpen, selectFolder }: TopBar
         className="top-bar-btn"
         onClick={selectFolder}
         data-hint="Change Folder"
+        aria-label="Change Folder"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

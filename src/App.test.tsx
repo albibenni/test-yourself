@@ -8,10 +8,20 @@ import {
 } from "@testing-library/react";
 import App from "./App";
 import { invoke } from "@tauri-apps/api/core";
+import { load } from "@tauri-apps/plugin-store";
+import { open } from "@tauri-apps/plugin-dialog";
 
 // Mock Tauri invoke
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/plugin-store", () => ({
+  load: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/plugin-dialog", () => ({
+  open: vi.fn(),
 }));
 
 const mockQuizzes = [
@@ -53,6 +63,11 @@ describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (invoke as any).mockResolvedValue(mockQuizzes);
+    (load as any).mockResolvedValue({
+      get: vi.fn().mockResolvedValue("/mock/path"),
+      set: vi.fn().mockResolvedValue(true),
+      save: vi.fn().mockResolvedValue(true),
+    });
   });
 
   it("shows loading state initially", async () => {
@@ -64,7 +79,7 @@ describe("App Component", () => {
       }),
     );
     render(<App />);
-    expect(screen.getByText("Loading quizzes...")).toBeInTheDocument();
+    expect(await screen.findByText("Loading quizzes...")).toBeInTheDocument();
 
     await act(async () => {
       resolvePromise(mockQuizzes);
@@ -112,7 +127,7 @@ describe("App Component", () => {
       expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
-    const toggleButton = screen.getByTitle("Toggle Sidebar");
+    const toggleButton = screen.getByRole("button", { name: "Toggle Sidebar" });
     // The aside has role="complementary" implicitly
     const sidebar = screen.getByRole("complementary");
 
@@ -170,13 +185,42 @@ describe("App Component", () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.queryByText("Loading quizzes...")).not.toBeInTheDocument();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to load quizzes:",
+        expect.any(Error),
+      );
+    });
+    consoleSpy.mockRestore();
+  });
+
+  it("shows Select Quiz Folder when no directory is configured", async () => {
+    (load as any).mockResolvedValue({
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(true),
+      save: vi.fn().mockResolvedValue(true),
+    });
+    
+    render(<App />);
+    
+    await waitFor(() => {
+      expect(screen.getByText("Select Quiz Folder")).toBeInTheDocument();
+    });
+  });
+
+  it("allows selecting a new folder from TopBar", async () => {
+    (open as any).mockResolvedValue("/new/mock/path");
+    
+    render(<App />);
+    
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Failed to load quizzes:",
-      expect.any(Error),
-    );
-    consoleSpy.mockRestore();
+    const changeFolderBtn = screen.getByRole("button", { name: "Change Folder" });
+    fireEvent.click(changeFolderBtn);
+
+    await waitFor(() => {
+      expect(open).toHaveBeenCalledWith({ directory: true, multiple: false });
+    });
   });
 });
