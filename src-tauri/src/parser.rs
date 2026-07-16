@@ -81,8 +81,11 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                     current_text.push_str(&text);
                 }
             }
-            Event::End(TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item) => {
-                let paragraph_text = current_text.trim();
+            Event::End(ref end_tag @ (TagEnd::Paragraph | TagEnd::Heading(_) | TagEnd::Item)) => {
+                let paragraph_text_owned = current_text.trim().to_string();
+                current_text.clear();
+                
+                let paragraph_text = paragraph_text_owned.as_str();
 
                 if paragraph_text.is_empty() {
                     continue;
@@ -101,15 +104,15 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                         if !trimmed_lower.contains("answer") && 
                            !trimmed_lower.contains("solution") && 
                            !trimmed_lower.contains("soluzioni") {
+                            println!("in_solutions reset to false by heading: {}", trimmed_lower);
                             in_solutions = false;
                         }
                     }
 
                     if trimmed_lower.contains("solutions") || 
-                       trimmed_lower.contains("answer key") || 
+                       trimmed_lower.contains("answer") || 
                        trimmed_lower.contains("soluzioni") {
                         in_solutions = true;
-                        continue;
                     }
 
                     if in_solutions {
@@ -118,6 +121,8 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                             let q_id_val = &caps[1];
                             let correct_letter_val = caps[2].to_string();
                             let trailing_text_val = caps[3].trim().to_string();
+
+                            println!("FOUND SOLUTION FOR Q: {}, LETTER: {}", q_id_val, correct_letter_val);
 
                             current_solution_id = Some(q_id_val.to_string());
 
@@ -160,68 +165,75 @@ pub fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
                     } else {
                         // Parse Question
                         if let Some(caps) = RE_QUESTION.captures(trimmed) {
-                            let q_id = caps[1].to_string();
                             let raw_text = caps[2].to_string();
-                            let mut text = raw_text.clone();
-                            let mut options = Vec::new();
+                            
+                            // Prevent "1. Answer: B" from being parsed as a question
+                            if raw_text.to_lowercase().starts_with("answer") || 
+                               raw_text.to_lowercase().starts_with("soluzion") {
+                                // Let it fall through to RE_SOLUTION
+                            } else {
+                                let q_id = caps[1].to_string();
+                                let mut text = raw_text.clone();
+                                let mut options = Vec::new();
 
-                            // Look for inline options, e.g. " A) " or " A. "
-                            let re_inline_a = regex::Regex::new(r"(?:\s+|^)A[\.\)]\s+").unwrap();
-                            if let Some(mat_a) = re_inline_a.find(&raw_text) {
-                                text = raw_text[..mat_a.start()].trim().to_string();
-                                
-                                let re_inline_b = regex::Regex::new(r"\s+B[\.\)]\s+").unwrap();
-                                let re_inline_c = regex::Regex::new(r"\s+C[\.\)]\s+").unwrap();
-                                let re_inline_d = regex::Regex::new(r"\s+D[\.\)]\s+").unwrap();
-                                
-                                let start_a = mat_a.end();
-                                let mut start_b = raw_text.len();
-                                let mut start_c = raw_text.len();
-                                let mut start_d = raw_text.len();
-                                
-                                let mut mat_b_end = raw_text.len();
-                                let mut mat_c_end = raw_text.len();
-                                let mut mat_d_end = raw_text.len();
+                                // Look for inline options, e.g. " A) " or " A. "
+                                let re_inline_a = regex::Regex::new(r"(?:\s+|^)A[\.\)]\s+").unwrap();
+                                if let Some(mat_a) = re_inline_a.find(&raw_text) {
+                                    text = raw_text[..mat_a.start()].trim().to_string();
+                                    
+                                    let re_inline_b = regex::Regex::new(r"\s+B[\.\)]\s+").unwrap();
+                                    let re_inline_c = regex::Regex::new(r"\s+C[\.\)]\s+").unwrap();
+                                    let re_inline_d = regex::Regex::new(r"\s+D[\.\)]\s+").unwrap();
+                                    
+                                    let start_a = mat_a.end();
+                                    let mut start_b = raw_text.len();
+                                    let mut start_c = raw_text.len();
+                                    let mut start_d = raw_text.len();
+                                    
+                                    let mut mat_b_end = raw_text.len();
+                                    let mut mat_c_end = raw_text.len();
+                                    let mut mat_d_end = raw_text.len();
 
-                                if let Some(mat) = re_inline_b.find(&raw_text) {
-                                    start_b = mat.start();
-                                    mat_b_end = mat.end();
+                                    if let Some(mat) = re_inline_b.find(&raw_text) {
+                                        start_b = mat.start();
+                                        mat_b_end = mat.end();
+                                    }
+                                    if let Some(mat) = re_inline_c.find(&raw_text) {
+                                        start_c = mat.start();
+                                        mat_c_end = mat.end();
+                                    }
+                                    if let Some(mat) = re_inline_d.find(&raw_text) {
+                                        start_d = mat.start();
+                                        mat_d_end = mat.end();
+                                    }
+                                    
+                                    let opt_a = raw_text[start_a..start_b].trim().to_string();
+                                    options.push(QuizOption { letter: "A".to_string(), text: opt_a });
+                                    
+                                    if start_b < raw_text.len() {
+                                        let opt_b = raw_text[mat_b_end..start_c].trim().to_string();
+                                        options.push(QuizOption { letter: "B".to_string(), text: opt_b });
+                                    }
+                                    if start_c < raw_text.len() {
+                                        let opt_c = raw_text[mat_c_end..start_d].trim().to_string();
+                                        options.push(QuizOption { letter: "C".to_string(), text: opt_c });
+                                    }
+                                    if start_d < raw_text.len() {
+                                        let opt_d = raw_text[mat_d_end..].trim().to_string();
+                                        options.push(QuizOption { letter: "D".to_string(), text: opt_d });
+                                    }
                                 }
-                                if let Some(mat) = re_inline_c.find(&raw_text) {
-                                    start_c = mat.start();
-                                    mat_c_end = mat.end();
-                                }
-                                if let Some(mat) = re_inline_d.find(&raw_text) {
-                                    start_d = mat.start();
-                                    mat_d_end = mat.end();
-                                }
-                                
-                                let opt_a = raw_text[start_a..start_b].trim().to_string();
-                                options.push(QuizOption { letter: "A".to_string(), text: opt_a });
-                                
-                                if start_b < raw_text.len() {
-                                    let opt_b = raw_text[mat_b_end..start_c].trim().to_string();
-                                    options.push(QuizOption { letter: "B".to_string(), text: opt_b });
-                                }
-                                if start_c < raw_text.len() {
-                                    let opt_c = raw_text[mat_c_end..start_d].trim().to_string();
-                                    options.push(QuizOption { letter: "C".to_string(), text: opt_c });
-                                }
-                                if start_d < raw_text.len() {
-                                    let opt_d = raw_text[mat_d_end..].trim().to_string();
-                                    options.push(QuizOption { letter: "D".to_string(), text: opt_d });
-                                }
+
+                                let new_q = QuizQuestion {
+                                    id: q_id.clone(),
+                                    text,
+                                    options,
+                                    correct_answer: None,
+                                    explanation: None,
+                                };
+                                quiz.questions.push(new_q);
+                                continue;
                             }
-
-                            let new_q = QuizQuestion {
-                                id: q_id.clone(),
-                                text,
-                                options,
-                                correct_answer: None,
-                                explanation: None,
-                            };
-                            quiz.questions.push(new_q);
-                            continue;
                         }
 
                         // Parse Option
@@ -311,6 +323,15 @@ mod tests {
         assert_eq!(quiz.questions.len(), 8);
         assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
         assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("C"));
+    }
+
+    #[test]
+    fn test_parse_iframe_quiz() {
+        let path = PathBuf::from("../../SecondBrain/Computer Science/Web/Exercises and Quiz/iFrame_quiz.md");
+        let quiz = parse_quiz_file(&path, "Testing").expect("Failed to parse iframe quiz");
+        assert_eq!(quiz.questions.len(), 8);
+        assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+        assert_eq!(quiz.questions[0].options.len(), 4);
     }
 }
 
