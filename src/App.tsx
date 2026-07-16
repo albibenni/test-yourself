@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { load, Store } from "@tauri-apps/plugin-store";
 import "./App.css";import { Quiz } from "./types";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
@@ -14,9 +15,31 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [basePath, setBasePath] = useState<string | null>(
-    localStorage.getItem("quiz_base_path"),
-  );
+  const [basePath, setBasePath] = useState<string | null>(null);
+  const [storeInstance, setStoreInstance] = useState<Store | null>(null);
+
+  useEffect(() => {
+    async function initStore() {
+      try {
+        const store = await load("settings.json", { autoSave: false });
+        setStoreInstance(store);
+
+        const localPath = localStorage.getItem("quiz_base_path");
+        const savedPath = await store.get<string>("quiz_base_path");
+
+        if (savedPath) {
+          setBasePath(savedPath);
+        } else if (localPath) {
+          await store.set("quiz_base_path", localPath);
+          await store.save();
+          setBasePath(localPath);
+        }
+      } catch (err) {
+        console.error("Failed to load store:", err);
+      }
+    }
+    void initStore();
+  }, []);
 
   const selectFolder = async () => {
     const selected = await open({
@@ -25,7 +48,10 @@ function App() {
     });
     if (selected && typeof selected === "string") {
       setBasePath(selected);
-      localStorage.setItem("quiz_base_path", selected);
+      if (storeInstance) {
+        await storeInstance.set("quiz_base_path", selected);
+        await storeInstance.save();
+      }
     }
   };
 
