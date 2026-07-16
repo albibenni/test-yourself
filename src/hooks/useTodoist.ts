@@ -1,12 +1,44 @@
 import { useState, useCallback } from "react";
-import {
-  TodoistApi,
-  type Project,
-  type Task,
-  type AddTaskArgs,
-} from "@doist/todoist-sdk";
+import { TodoistApi, type AddTaskArgs } from "@doist/todoist-sdk";
 import { load } from "@tauri-apps/plugin-store";
+import { z } from "zod";
 import { STORE_FILENAME } from "../constants";
+
+export const ProjectSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+  })
+  .passthrough();
+
+export type Project = z.infer<typeof ProjectSchema>;
+
+const ProjectsResponseSchema = z
+  .object({
+    results: z.array(ProjectSchema),
+  })
+  .passthrough();
+
+export const TaskSchema = z
+  .object({
+    id: z.string(),
+    content: z.string(),
+    due: z
+      .object({
+        date: z.string(),
+      })
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
+
+export type Task = z.infer<typeof TaskSchema>;
+
+const TasksResponseSchema = z
+  .object({
+    results: z.array(TaskSchema),
+  })
+  .passthrough();
 
 export function useTodoist() {
   const [loading, setLoading] = useState(false);
@@ -40,9 +72,8 @@ export function useTodoist() {
     try {
       const api = await getApi();
       const response = await api.getProjects();
-      // The SDK types return Project[] directly. We can cast if necessary,
-      // but if the SDK types are correct, we can just return it.
-      return response as Project[];
+      const parsed = ProjectsResponseSchema.parse(response);
+      return parsed.results;
     } catch (err: unknown) {
       setError("Failed to fetch Todoist projects. Check your token.");
       throw err;
@@ -57,7 +88,8 @@ export function useTodoist() {
     try {
       const api = await getApi();
       const response = await api.getTasks();
-      return response as Task[];
+      const parsed = TasksResponseSchema.parse(response);
+      return parsed.results;
     } catch (err: unknown) {
       setError("Failed to fetch Todoist tasks.");
       throw err;
@@ -72,7 +104,8 @@ export function useTodoist() {
       setError("");
       try {
         const api = await getApi();
-        return await api.addTask(taskDetails);
+        const response = await api.addTask(taskDetails);
+        return TaskSchema.parse(response);
       } catch (err: unknown) {
         setError("Failed to create task.");
         throw err;
