@@ -77,6 +77,12 @@ coverage:
 	rm -f coverage-summary.tmp
 
 # Release automation: bump versions, tag, and push (e.g., make release type=minor)
+#To bump the patch version (e.g. 0.1.0 -> 0.1.1):
+#    make release
+#  To bump the minor version (e.g. 0.1.1 -> 0.2.0):
+#    make release type=minor
+#  To bump the major version (e.g. 0.2.0 -> 1.0.0):
+#    make release type=major
 release:
 	@type=$(type); \
 	if [ -z "$$type" ]; then type="patch"; fi; \
