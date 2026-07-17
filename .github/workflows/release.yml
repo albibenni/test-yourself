@@ -57,6 +57,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Test Yourself ${{ github.ref_name }}"
           releaseBody: "Release of version ${{ github.ref_name }}"
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.platform == 'macos-latest' && '--target universal-apple-darwin' || '' }}
