@@ -1,4 +1,4 @@
-.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean
+.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release
 
 # Install dependencies
 install:
@@ -75,3 +75,19 @@ coverage:
 	printf "Frontend (React)\t$$frontend_lines\t$$frontend_funcs\n" >> coverage-summary.tmp; \
 	column -t -s "$$(printf '\t')" coverage-summary.tmp; \
 	rm -f coverage-summary.tmp
+
+# Release automation: bump versions, tag, and push (e.g., make release type=minor)
+release:
+	@type=$(type); \
+	if [ -z "$$type" ]; then type="patch"; fi; \
+	echo "Starting $$type release..."; \
+	pnpm version $$type --no-git-tag-version; \
+	new_version=$$(node -p "require('./package.json').version"); \
+	node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const conf = JSON.parse(fs.readFileSync(file)); conf.version = '$$new_version'; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');"; \
+	node -e "const fs = require('fs'); const file = 'src-tauri/Cargo.toml'; let toml = fs.readFileSync(file, 'utf8'); toml = toml.replace(/^version = \".*\"$$/m, 'version = \"$$new_version\"'); fs.writeFileSync(file, toml);"; \
+	git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml; \
+	git commit -m "chore: release v$$new_version"; \
+	git tag v$$new_version; \
+	git push origin main; \
+	git push origin v$$new_version; \
+	echo "\n🎉 Successfully released v$$new_version! GitHub Actions is now building the installers."
