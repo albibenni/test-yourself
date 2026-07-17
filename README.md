@@ -28,7 +28,3 @@ If you want to build the app from source:
 
 For full details on how to use the app, available keyboard shortcuts, and configuring integrations, please see our [Usage Guide](docs/USAGE.md).
 For a deeper dive into how the core features work under the hood, read the [Integrations & Architecture](docs/INTEGRATIONS.md) document.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
