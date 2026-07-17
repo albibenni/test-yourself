@@ -98,7 +98,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   useEffect(() => {
     async function fetchSettings() {
       if (isOpen) {
-        const store = await load(STORE_FILENAME, { autoSave: false });
+        const store = await load(STORE_FILENAME, { autoSave: false } as any);
         const token = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
 
@@ -152,7 +152,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }, [isOpen, onClose]);
 
   const handleSave = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false } as any);
     await store.set("todoist_token", todoistToken);
     await store.set("obsidian_vault", vaultName);
     await store.set("default_todoist_date", defaultDate);

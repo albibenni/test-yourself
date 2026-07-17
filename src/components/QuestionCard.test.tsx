@@ -61,7 +61,7 @@ describe("QuestionCard Component", () => {
   });
 
   it("shows fallback explanation when no explanation is provided", () => {
-    const qWithoutExp = { ...mockQuestion, explanation: undefined };
+    const qWithoutExp = { ...mockQuestion, explanation: "" };
     render(<QuestionCard question={qWithoutExp} />);
     const btnA = screen.getByText("London").closest("button")!;
     fireEvent.click(btnA);

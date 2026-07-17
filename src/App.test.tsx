@@ -70,7 +70,7 @@ describe("App Component", () => {
       get: vi.fn().mockResolvedValue("/mock/path"),
       set: vi.fn().mockResolvedValue(true),
       save: vi.fn().mockResolvedValue(true),
-    });
+    } as any);
   });
 
   it("shows loading state initially", async () => {
@@ -201,7 +201,7 @@ describe("App Component", () => {
       get: vi.fn().mockResolvedValue(null),
       set: vi.fn().mockResolvedValue(true),
       save: vi.fn().mockResolvedValue(true),
-    });
+    } as any);
 
     render(<App />);
 
