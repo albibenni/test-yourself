@@ -10,11 +10,19 @@ A fast, desktop-based quiz application built with **Tauri**, **React**, and **Ty
 - **Keyboard Navigation**: Optimized for keyboard-heavy workflows.
 - **Powerful Integrations**: Built-in support for Todoist and Obsidian to schedule your review sessions.
 
-## Quick Start
+## Download & Install
 
-1. Install dependencies: `npm install`
-2. Run the development server: `npm run tauri dev`
-3. Build for production: `npm run tauri build`
+You can download the latest pre-compiled installers for **macOS**, **Windows**, and **Linux** directly from the [Releases page](../../releases/latest).
+
+Learn more about the app and other projects at **[albertobenatti.dev](https://albertobenatti.dev)**.
+
+## Developer Setup
+
+If you want to build the app from source:
+
+1. Install dependencies: `pnpm install`
+2. Run the development server: `pnpm tauri dev`
+3. Build for production: `pnpm tauri build`
 
 ## Documentation
 
