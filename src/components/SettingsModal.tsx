@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getVersion } from "@tauri-apps/api/app";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
 import { TodoistApi } from "@doist/todoist-sdk";
 import { check } from "@tauri-apps/plugin-updater";
@@ -96,6 +98,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [updateStatus, setUpdateStatus] = useState("");
+  const [appVersion, setAppVersion] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchVersion() {
+      try {
+        const version = await getVersion();
+        setAppVersion(version);
+      } catch (err) {
+        console.error("Failed to fetch app version", err);
+      }
+    }
+    void fetchVersion();
+  }, []);
 
   const handleCheckUpdate = async () => {
     try {
@@ -105,6 +120,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         setUpdateStatus(`Downloading update v${update.version}...`);
         await update.downloadAndInstall();
         setUpdateStatus("Update installed. Restarting...");
+        await relaunch();
       } else {
         setUpdateStatus("App is up to date!");
         setTimeout(() => setUpdateStatus(""), 3000);
@@ -293,7 +309,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <div className="form-group" style={{ marginTop: "1rem", borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <label>App Updates</label>
+              <label>App Updates {appVersion && <span style={{ fontSize: "0.8em", color: "var(--text-secondary)", marginLeft: "0.5rem", fontWeight: "normal" }}>(v{appVersion})</span>}</label>
               <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                 {updateStatus || "Check for new versions of Test Yourself."}
               </div>
