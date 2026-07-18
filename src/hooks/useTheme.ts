@@ -3,7 +3,7 @@ import { load } from "@tauri-apps/plugin-store";
 import { STORE_FILENAME } from "../constants";
 
 export type Theme = "dark" | "light" | "system";
-export type AccentColor = "blue" | "purple" | "green" | "rose" | "orange";
+export type AccentColor = "blue" | "purple" | "green" | "deep-green" | "rose" | "orange";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("system");

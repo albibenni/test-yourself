@@ -332,6 +332,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, onThemeChange, o
               { id: "blue", color: "#3b82f6" },
               { id: "purple", color: "#a855f7" },
               { id: "green", color: "#10b981" },
+              { id: "deep-green", color: "#047857" },
               { id: "rose", color: "#f43f5e" },
               { id: "orange", color: "#f97316" },
             ].map((a) => (
