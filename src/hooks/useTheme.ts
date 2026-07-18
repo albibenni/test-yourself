@@ -4,18 +4,22 @@ import { STORE_FILENAME } from "../constants";
 
 export type Theme = "dark" | "light" | "system";
 export type AccentColor = "blue" | "purple" | "green" | "deep-green" | "rose" | "orange" | "red-brick";
+export type TextColor = "slate" | "zinc" | "neutral" | "stone";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("system");
   const [accent, setAccent] = useState<AccentColor>("blue");
+  const [textColor, setTextColor] = useState<TextColor>("slate");
 
   useEffect(() => {
     async function loadSettings() {
       const store = await load(STORE_FILENAME, { autoSave: false } as any);
       const storedTheme = await store.get<Theme>("app_theme") || "system";
       const storedAccent = await store.get<AccentColor>("app_accent") || "blue";
+      const storedTextColor = await store.get<TextColor>("app_text_color") || "slate";
       setTheme(storedTheme);
       setAccent(storedAccent);
+      setTextColor(storedTextColor);
     }
     void loadSettings();
   }, []);
@@ -28,6 +32,7 @@ export function useTheme() {
       }
       document.documentElement.setAttribute("data-theme", activeTheme);
       document.documentElement.setAttribute("data-accent", accent);
+      document.documentElement.setAttribute("data-text-color", textColor);
     };
 
     applyTheme();
@@ -38,7 +43,7 @@ export function useTheme() {
       mediaQuery.addEventListener("change", handler);
       return () => mediaQuery.removeEventListener("change", handler);
     }
-  }, [theme, accent]);
+  }, [theme, accent, textColor]);
 
   const saveTheme = async (newTheme: Theme) => {
     setTheme(newTheme);
@@ -54,5 +59,12 @@ export function useTheme() {
     await store.save();
   };
 
-  return { theme, accent, saveTheme, saveAccent };
+  const saveTextColor = async (newTextColor: TextColor) => {
+    setTextColor(newTextColor);
+    const store = await load(STORE_FILENAME, { autoSave: false } as any);
+    await store.set("app_text_color", newTextColor);
+    await store.save();
+  };
+
+  return { theme, accent, textColor, saveTheme, saveAccent, saveTextColor };
 }

@@ -17,8 +17,10 @@ interface SettingsModalProps {
   onClose: () => void;
   theme: any;
   accent: any;
+  textColor: any;
   onThemeChange: (theme: any) => void;
   onAccentChange: (accent: any) => void;
+  onTextColorChange: (textColor: any) => void;
 }
 
 interface CustomSelectProps {
@@ -92,7 +94,7 @@ function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps)
   );
 }
 
-export function SettingsModal({ isOpen, onClose, theme, accent, onThemeChange, onAccentChange }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThemeChange, onAccentChange, onTextColorChange }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
   
@@ -321,6 +323,20 @@ export function SettingsModal({ isOpen, onClose, theme, accent, onThemeChange, o
               { label: "System Default", value: "system" },
               { label: "Light", value: "light" },
               { label: "Dark", value: "dark" },
+            ]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Text Tone</label>
+          <CustomSelect
+            value={textColor}
+            onChange={onTextColorChange}
+            options={[
+              { label: "Slate (Cool Gray)", value: "slate" },
+              { label: "Zinc (Neutral)", value: "zinc" },
+              { label: "Neutral (True Gray)", value: "neutral" },
+              { label: "Stone (Warm Gray)", value: "stone" },
             ]}
           />
         </div>

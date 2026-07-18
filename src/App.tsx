@@ -14,7 +14,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const { theme, accent, saveTheme, saveAccent } = useTheme();
+  const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } = useTheme();
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -148,8 +148,10 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         accent={accent}
+        textColor={textColor}
         onThemeChange={saveTheme}
         onAccentChange={saveAccent}
+        onTextColorChange={saveTextColor}
       />
       <ScheduleModal
         isOpen={isScheduleOpen}

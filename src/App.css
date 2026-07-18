@@ -1092,3 +1092,57 @@ body {
 .project-dropdown-item:hover {
   background-color: var(--border-dark);
 }
+
+/* Text Tones (Dark Mode Default) */
+:root[data-text-color="slate"],
+:root[data-theme="dark"][data-text-color="slate"] {
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
+:root[data-text-color="zinc"],
+:root[data-theme="dark"][data-text-color="zinc"] {
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+}
+
+:root[data-text-color="neutral"],
+:root[data-theme="dark"][data-text-color="neutral"] {
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+}
+
+:root[data-text-color="stone"],
+:root[data-theme="dark"][data-text-color="stone"] {
+  --text-primary: #fafaf9;
+  --text-secondary: #a8a29e;
+  --text-muted: #78716c;
+}
+
+/* Text Tones (Light Mode) */
+:root[data-theme="light"][data-text-color="slate"] {
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+}
+
+:root[data-theme="light"][data-text-color="zinc"] {
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+}
+
+:root[data-theme="light"][data-text-color="neutral"] {
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --text-muted: #a3a3a3;
+}
+
+:root[data-theme="light"][data-text-color="stone"] {
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
+  --text-muted: #a8a29e;
+}
