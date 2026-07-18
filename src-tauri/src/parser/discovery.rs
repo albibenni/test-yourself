@@ -73,14 +73,14 @@ mod tests {
     fn test_finds_only_markdown_files() {
         let dir = tempdir().unwrap();
         let base = dir.path();
-        
+
         File::create(base.join("test.md")).unwrap();
         File::create(base.join("test.txt")).unwrap();
         fs::create_dir(base.join("dir.md")).unwrap();
-        
+
         let canonical_base = fs::canonicalize(base).unwrap();
         let files = find_markdown_files(&canonical_base);
-        
+
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].0.file_name().unwrap(), "test.md");
         assert_eq!(files[0].1, "");
@@ -90,18 +90,21 @@ mod tests {
     fn test_extracts_topic_correctly() {
         let dir = tempdir().unwrap();
         let base = dir.path();
-        
+
         let topic_dir = base.join("Frontend").join("React");
         fs::create_dir_all(&topic_dir).unwrap();
         File::create(topic_dir.join("hooks.md")).unwrap();
-        
+
         let canonical_base = fs::canonicalize(base).unwrap();
         let files = find_markdown_files(&canonical_base);
-        
+
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].0.file_name().unwrap(), "hooks.md");
-        
-        let expected_topic = Path::new("Frontend").join("React").to_string_lossy().into_owned();
+
+        let expected_topic = Path::new("Frontend")
+            .join("React")
+            .to_string_lossy()
+            .into_owned();
         assert_eq!(files[0].1, expected_topic);
     }
 
@@ -111,15 +114,15 @@ mod tests {
         use std::os::unix::fs::symlink;
         let safe_dir = tempdir().unwrap();
         let unsafe_dir = tempdir().unwrap();
-        
+
         File::create(unsafe_dir.path().join("evil.md")).unwrap();
-        
+
         let link_path = safe_dir.path().join("evil_link.md");
         symlink(unsafe_dir.path().join("evil.md"), &link_path).unwrap();
-        
+
         let canonical_base = fs::canonicalize(safe_dir.path()).unwrap();
         let files = find_markdown_files(&canonical_base);
-        
+
         assert_eq!(files.len(), 0);
     }
 }

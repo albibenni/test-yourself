@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { load } from "@tauri-apps/plugin-store";
 import { TodoistApi } from "@doist/todoist-sdk";
+import { check } from "@tauri-apps/plugin-updater";
 import { STORE_FILENAME } from "../constants";
 
 interface Project {
@@ -94,6 +95,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [defaultProject, setDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState("");
+
+  const handleCheckUpdate = async () => {
+    try {
+      setUpdateStatus("Checking for updates...");
+      const update = await check();
+      if (update) {
+        setUpdateStatus(`Downloading update v${update.version}...`);
+        await update.downloadAndInstall();
+        setUpdateStatus("Update installed. Restarting...");
+      } else {
+        setUpdateStatus("App is up to date!");
+        setTimeout(() => setUpdateStatus(""), 3000);
+      }
+    } catch (error) {
+      setUpdateStatus(`Failed to update: ${error}`);
+      setTimeout(() => setUpdateStatus(""), 5000);
+    }
+  };
 
   useEffect(() => {
     async function fetchSettings() {
@@ -268,6 +288,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             ]}
           />
           {loadingProjects && <small>Loading projects...</small>}
+        </div>
+
+        <div className="form-group" style={{ marginTop: "1rem", borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <label>App Updates</label>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                {updateStatus || "Check for new versions of Test Yourself."}
+              </div>
+            </div>
+            <button
+              className="button-secondary"
+              onClick={() => void handleCheckUpdate()}
+              disabled={!!updateStatus && updateStatus !== "App is up to date!" && !updateStatus.startsWith("Failed")}
+            >
+              Check for Updates
+            </button>
+          </div>
         </div>
 
         <div className="modal-actions">

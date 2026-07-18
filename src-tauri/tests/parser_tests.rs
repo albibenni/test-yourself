@@ -363,18 +363,24 @@ async fn test_separated_answer_and_explanation() {
     let quiz = parse_quiz_file(&path, "Testing")
         .await
         .expect("Failed to parse separated_explanation_quiz.md");
-    
+
     assert_eq!(quiz.questions.len(), 2);
-    
+
     // Q1
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("A"));
-    let expl1 = quiz.questions[0].explanation.as_deref().expect("Explanation 1 should be parsed");
+    let expl1 = quiz.questions[0]
+        .explanation
+        .as_deref()
+        .expect("Explanation 1 should be parsed");
     assert!(expl1.contains("What is a socket?"));
     assert!(expl1.contains("Correct: A. It is an endpoint."));
-    
+
     // Q2
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("B"));
-    let expl2 = quiz.questions[1].explanation.as_deref().expect("Explanation 2 should be parsed");
+    let expl2 = quiz.questions[1]
+        .explanation
+        .as_deref()
+        .expect("Explanation 2 should be parsed");
     assert!(expl2.contains("What is TCP?"));
     assert!(expl2.contains("Correct: B. It is a reliable connection-oriented protocol."));
 }
@@ -385,12 +391,18 @@ async fn test_parse_onboarding_quiz() {
     let quiz = parse_quiz_file(&path, "Testing")
         .await
         .expect("Failed to parse onboarding_quiz.md");
-    
+
     assert_eq!(quiz.questions.len(), 2);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
-    assert_eq!(quiz.questions[0].explanation.as_deref(), Some("Inline answer provided."));
+    assert_eq!(
+        quiz.questions[0].explanation.as_deref(),
+        Some("Inline answer provided.")
+    );
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("B"));
-    assert_eq!(quiz.questions[1].explanation.as_deref(), Some("Inline answer provided."));
+    assert_eq!(
+        quiz.questions[1].explanation.as_deref(),
+        Some("Inline answer provided.")
+    );
 }
 
 #[tokio::test]
@@ -399,14 +411,20 @@ async fn test_parse_diffie_hellman_quiz() {
     let quiz = parse_quiz_file(&path, "Testing")
         .await
         .expect("Failed to parse diffie_hellman_quiz.md");
-    
+
     assert_eq!(quiz.questions.len(), 2);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
-    let expl1 = quiz.questions[0].explanation.as_deref().expect("Explanation missing");
+    let expl1 = quiz.questions[0]
+        .explanation
+        .as_deref()
+        .expect("Explanation missing");
     assert!(expl1.contains("DH only solves key agreement."));
-    
+
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("D"));
-    let expl2 = quiz.questions[1].explanation.as_deref().expect("Explanation missing");
+    let expl2 = quiz.questions[1]
+        .explanation
+        .as_deref()
+        .expect("Explanation missing");
     assert!(expl2.contains("The publicly agreed Yellow maps"));
 }
 
@@ -416,13 +434,19 @@ async fn test_parse_bola_quiz() {
     let quiz = parse_quiz_file(&path, "Testing")
         .await
         .expect("Failed to parse bola_quiz.md");
-    
+
     assert_eq!(quiz.questions.len(), 2);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
-    let expl1 = quiz.questions[0].explanation.as_deref().expect("Explanation missing");
+    let expl1 = quiz.questions[0]
+        .explanation
+        .as_deref()
+        .expect("Explanation missing");
     assert!(expl1.contains("The tldr states BOLA is"));
-    
+
     assert_eq!(quiz.questions[1].correct_answer.as_deref(), Some("C"));
-    let expl2 = quiz.questions[1].explanation.as_deref().expect("Explanation missing");
+    let expl2 = quiz.questions[1]
+        .explanation
+        .as_deref()
+        .expect("Explanation missing");
     assert!(expl2.contains("The analogy maps authentication"));
 }

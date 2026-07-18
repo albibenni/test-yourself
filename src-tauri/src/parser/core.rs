@@ -40,8 +40,12 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
     let mut options = Vec::new();
 
     for i in 0..matches.len() {
-        let Some(current_match) = matches[i].get(0) else { continue; };
-        let Some(letter_match) = matches[i].get(1) else { continue; };
+        let Some(current_match) = matches[i].get(0) else {
+            continue;
+        };
+        let Some(letter_match) = matches[i].get(1) else {
+            continue;
+        };
         let letter = letter_match.as_str().to_string();
 
         let start_idx = current_match.end();
@@ -124,22 +128,22 @@ pub fn process_solution_line(
     if let Some(caps) = RE_SOLUTION.captures(trimmed) {
         let q_id_val = &caps[1];
         let correct_letter_val = caps[2].to_string();
-        
+
         let mut trailing_text_val = caps[3].trim().to_string();
         if trailing_text_val.starts_with('|') {
             trailing_text_val = trailing_text_val[1..].trim().to_string();
         }
-        
+
         let lower_trailing = trailing_text_val.to_lowercase();
-        if lower_trailing.starts_with("explanation:") 
-            || lower_trailing.starts_with("**explanation:**") 
-            || lower_trailing.starts_with("- **explanation:**") 
+        if lower_trailing.starts_with("explanation:")
+            || lower_trailing.starts_with("**explanation:**")
+            || lower_trailing.starts_with("- **explanation:**")
         {
             if let Some(idx) = trailing_text_val.find(':') {
                 trailing_text_val = trailing_text_val[idx + 1..].trim().to_string();
             }
         }
-        
+
         *current_solution_id = Some(q_id_val.to_string());
 
         if let Some(q) = quiz
@@ -241,15 +245,25 @@ impl<'a> QuizParser<'a> {
             }
 
             let trimmed_lower = trimmed.to_lowercase();
-            
+
             // Check for inline answers format e.g., "Answers: 1-B, 2-C"
-            if trimmed_lower.contains("answer") || trimmed_lower.contains("solution") || trimmed_lower.contains("rispost") || trimmed_lower.contains("soluzion") {
+            if trimmed_lower.contains("answer")
+                || trimmed_lower.contains("solution")
+                || trimmed_lower.contains("rispost")
+                || trimmed_lower.contains("soluzion")
+            {
                 let mut found_inline = false;
                 for caps in crate::parser::regexes::RE_INLINE_ANSWERS.captures_iter(trimmed) {
                     found_inline = true;
                     let q_id_val = &caps[1];
                     let correct_letter_val = caps[2].to_string();
-                    if let Some(q) = self.quiz.questions.iter_mut().rev().find(|q| q.id == q_id_val && !q.options.is_empty()) {
+                    if let Some(q) = self
+                        .quiz
+                        .questions
+                        .iter_mut()
+                        .rev()
+                        .find(|q| q.id == q_id_val && !q.options.is_empty())
+                    {
                         q.correct_answer = Some(correct_letter_val);
                         if q.explanation.is_none() {
                             q.explanation = Some("Inline answer provided.".to_string());
