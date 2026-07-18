@@ -127,6 +127,14 @@
   --gradient-primary: linear-gradient(to right, #fb7185, #a78bfa);
 }
 
+[data-accent="red-brick"] {
+  --accent-rgb: 185, 28, 28;
+  --accent-color: #b91c1c;
+  --accent-hover: #991b1b;
+  --accent-soft: #fca5a5;
+  --gradient-primary: linear-gradient(to right, #dc2626, #7f1d1d);
+}
+
 [data-accent="orange"] {
   --accent-rgb: 249, 115, 22;
   --accent-color: #f97316;

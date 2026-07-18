@@ -334,6 +334,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, onThemeChange, o
               { id: "green", color: "#10b981" },
               { id: "deep-green", color: "#047857" },
               { id: "rose", color: "#f43f5e" },
+              { id: "red-brick", color: "#b91c1c" },
               { id: "orange", color: "#f97316" },
             ].map((a) => (
               <button
