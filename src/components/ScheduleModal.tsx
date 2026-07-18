@@ -53,7 +53,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
   const priRef = useRef<HTMLDivElement>(null);
   const projRef = useRef<HTMLDivElement>(null);
   const hashProjRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -319,7 +319,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
     }
   };
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     let text = e.target.value;
 
     // Autoclose logic on type
@@ -410,6 +410,13 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
     p.name.toLowerCase().includes(projectSearchQuery),
   );
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+    }
+  }, [taskContent, isOpen]);
+
   if (!isOpen || !quiz) return null;
 
   return (
@@ -422,13 +429,14 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
           style={{ position: "relative" }}
           ref={hashProjRef}
         >
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
             className="quick-add-input"
             value={taskContent}
             onChange={handleContentChange}
             placeholder="Task name"
+            rows={1}
+            style={{ resize: "none", overflow: "hidden" }}
           />
           <textarea
             className="quick-add-input quick-add-desc"

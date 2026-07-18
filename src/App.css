@@ -746,7 +746,7 @@ body {
   background-color: var(--bg-elevated) !important;
   border: 1px solid var(--border-dark) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
-  max-width: 550px !important;
+  max-width: 480px !important;
   width: 100% !important;
   gap: 0 !important;
   min-height: 0 !important;
