@@ -15,6 +15,10 @@ interface Project {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  theme: any;
+  accent: any;
+  onThemeChange: (theme: any) => void;
+  onAccentChange: (accent: any) => void;
 }
 
 interface CustomSelectProps {
@@ -88,7 +92,7 @@ function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps)
   );
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, theme, accent, onThemeChange, onAccentChange }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
   
@@ -304,6 +308,53 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             ]}
           />
           {loadingProjects && <small>Loading projects...</small>}
+        </div>
+
+        <h3 style={{ marginTop: "0.5rem", fontSize: "1rem", color: "var(--text-primary)" }}>Appearance</h3>
+        
+        <div className="form-group">
+          <label>Theme</label>
+          <CustomSelect
+            value={theme}
+            onChange={onThemeChange}
+            options={[
+              { label: "System Default", value: "system" },
+              { label: "Light", value: "light" },
+              { label: "Dark", value: "dark" },
+            ]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Accent Color</label>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
+            {[
+              { id: "blue", color: "#3b82f6" },
+              { id: "purple", color: "#a855f7" },
+              { id: "green", color: "#10b981" },
+              { id: "rose", color: "#f43f5e" },
+              { id: "orange", color: "#f97316" },
+            ].map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onAccentChange(a.id)}
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  backgroundColor: a.color,
+                  border: accent === a.id ? "2px solid var(--text-primary)" : "2px solid transparent",
+                  cursor: "pointer",
+                  padding: 0,
+                  outline: "none",
+                  boxShadow: accent === a.id ? "0 0 0 2px var(--bg-surface)" : "none",
+                  transition: "all 0.2s ease"
+                }}
+                aria-label={a.id}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="form-group" style={{ marginTop: "1rem", borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuizzes } from "./hooks/useQuizzes";
+import { useTheme } from "./hooks/useTheme";
 import "./App.css";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
@@ -13,6 +14,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { theme, accent, saveTheme, saveAccent } = useTheme();
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -144,6 +146,10 @@ function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        theme={theme}
+        accent={accent}
+        onThemeChange={saveTheme}
+        onAccentChange={saveAccent}
       />
       <ScheduleModal
         isOpen={isScheduleOpen}
