@@ -358,13 +358,13 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       );
     }
 
-    const shorthandRegex = /(^|\s)(\d+d|\d+m)(\s|$)/i;
+    const shorthandRegex = /(^|\s)(\d+d|\d+w|\d+m)(\s|$)/i;
     const shorthandMatch = text.match(shorthandRegex);
     if (shorthandMatch) {
       text = text.replace(shorthandRegex, "$1$3");
       const matchText = shorthandMatch[2].toLowerCase();
       const num = parseInt(matchText.replace(/\D/g, ""));
-      const unit = matchText.includes("d") ? "d" : "m";
+      const unit = matchText.includes("d") ? "d" : matchText.includes("w") ? "w" : "m";
       
       const d = new Date();
       let label = "";
@@ -372,6 +372,9 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       if (unit === "d") {
         d.setDate(d.getDate() + num);
         label = `In ${num} Day${num === 1 ? "" : "s"}`;
+      } else if (unit === "w") {
+        d.setDate(d.getDate() + num * 7);
+        label = `In ${num} Week${num === 1 ? "" : "s"}`;
       } else if (unit === "m") {
         d.setDate(d.getDate() + num * 30);
         label = `In ${num} Month${num === 1 ? "" : "s"}`;
@@ -620,6 +623,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
                   <div style={{ marginBottom: "6px" }}><b>today / tod</b>: Schedule for today</div>
                   <div style={{ marginBottom: "6px" }}><b>tomorrow / tom</b>: Schedule for tomorrow</div>
                   <div style={{ marginBottom: "6px" }}><b>Xd</b>: Schedule in X days (e.g., 7d, 14d)</div>
+                  <div style={{ marginBottom: "6px" }}><b>Xw</b>: Schedule in X weeks (e.g., 1w, 2w)</div>
                   <div style={{ marginBottom: "6px" }}><b>Xm</b>: Schedule in X months (e.g., 1m, 2m)</div>
                   <div style={{ marginBottom: "6px" }}><b>p1-p4</b>: Set priority (e.g., p1)</div>
                   <div><b>#project</b>: Assign to project (e.g., #Inbox)</div>
