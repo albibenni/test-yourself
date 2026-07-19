@@ -198,7 +198,17 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
         priority: priority,
         projectId: selectedProjectId || undefined,
       });
-      onSuccess?.(dueDateText);
+      const [y, m, d] = dueDateString.split("-");
+      const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const month = dateObj.toLocaleString("en-US", { month: "long" });
+      const dayNum = dateObj.getDate();
+      const getOrdinal = (n: number) => {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+      };
+      
+      onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
       onClose();
     } catch (err) {
       // Error is handled in the hook, but we can catch to prevent unhandled rejection
