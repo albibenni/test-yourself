@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -34,6 +34,17 @@ function App() {
     handleSync,
     groupedQuizzes,
   } = useQuizzes();
+
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setAnswers({});
+  }, [selectedQuiz?.path, resetKey]);
+
+  const totalQuestions = selectedQuiz?.questions.length || 0;
+  const answeredCount = Object.keys(answers).length;
+  const isAllAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
+  const correctCount = selectedQuiz?.questions.filter((q) => answers[q.id] === q.correct_answer).length || 0;
 
   return (
     <div className="app-wrapper">
@@ -147,9 +158,39 @@ function App() {
                   <QuestionCard
                     key={`${selectedQuiz.path}-${q.id}-${resetKey}`}
                     question={q}
+                    onAnswer={(_isCorrect, letter) => setAnswers((prev) => ({ ...prev, [q.id]: letter }))}
                   />
                 ))}
               </div>
+
+              {isAllAnswered && (
+                <div className="quiz-summary" style={{ marginTop: '3rem', padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                  <h2 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Quiz Review</h2>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '1.5rem' }}>
+                    You scored {correctCount} out of {totalQuestions} ({Math.round((correctCount / totalQuestions) * 100)}%)
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {selectedQuiz.questions.map((q) => {
+                      const selected = answers[q.id];
+                      const isCorrect = selected === q.correct_answer;
+                      return (
+                        <div key={`review-${q.id}`} style={{ padding: '1rem', borderLeft: `4px solid ${isCorrect ? 'var(--success-color)' : 'var(--error-color)'}`, backgroundColor: 'var(--bg-primary)', borderRadius: '4px' }}>
+                          <strong style={{ display: 'block', marginBottom: '0.5rem' }}>{q.id}. {q.text}</strong>
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            Your answer: <strong>{selected}</strong> {isCorrect ? '✨' : '❌'} {!isCorrect && <span style={{ marginLeft: '0.5rem' }}>(Correct: <strong>{q.correct_answer}</strong>)</span>}
+                          </div>
+                          {q.explanation && (
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '0.5rem' }}>
+                              Explanation: {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="empty-state">
