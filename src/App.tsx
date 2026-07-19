@@ -14,6 +14,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [resetKey, setResetKey] = useState(0);
   const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } = useTheme();
 
   const showToast = (message: string) => {
@@ -75,41 +76,61 @@ function App() {
               <div className="quiz-header">
                 <div className="header-title-row">
                   <h1>{selectedQuiz.title}</h1>
-                  <button
-                    className="button-primary"
-                    onClick={() => setIsScheduleOpen(true)}
-                    style={{
-                      marginLeft: "1rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+                    <button
+                      className="button-secondary"
+                      onClick={() => setResetKey((k) => k + 1)}
+                      title="Reset Quiz"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
                     >
-                      <rect
-                        x="3"
-                        y="4"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        ry="2"
-                      ></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    Schedule
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                      Reset
+                    </button>
+                    <button
+                      className="button-primary"
+                      onClick={() => setIsScheduleOpen(true)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      Schedule
+                    </button>
+                  </div>
                 </div>
                 <p>
                   Topic:{" "}
@@ -124,7 +145,7 @@ function App() {
               <div className="questions-container">
                 {selectedQuiz.questions.map((q) => (
                   <QuestionCard
-                    key={`${selectedQuiz.path}-${q.id}`}
+                    key={`${selectedQuiz.path}-${q.id}-${resetKey}`}
                     question={q}
                   />
                 ))}
