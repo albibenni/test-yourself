@@ -6,7 +6,7 @@ interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   quiz: Quiz | null;
-  onSuccess?: () => void;
+  onSuccess?: (dateText: string) => void;
 }
 
 interface Project {
@@ -198,7 +198,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
         priority: priority,
         projectId: selectedProjectId || undefined,
       });
-      onSuccess?.();
+      onSuccess?.(dueDateText);
       onClose();
     } catch (err) {
       // Error is handled in the hook, but we can catch to prevent unhandled rejection

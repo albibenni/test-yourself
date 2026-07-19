@@ -219,7 +219,7 @@ function App() {
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
         quiz={selectedQuiz}
-        onSuccess={() => showToast("Task created successfully!")}
+        onSuccess={(dateText) => showToast(`Task created successfully for ${dateText}!`)}
       />
       
       {toastMessage && (
