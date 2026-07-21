@@ -1,8 +1,17 @@
-use super::regexes::{RE_EXPLANATION, RE_OPTION, RE_QUESTION, RE_SOLUTION, RE_SOLUTION_HEADING, RE_CORRECT_ANSWER};
+use super::regexes::{
+    RE_CORRECT_ANSWER, RE_EXPLANATION, RE_OPTION, RE_QUESTION, RE_SOLUTION, RE_SOLUTION_HEADING,
+};
 use crate::models::{Quiz, QuizOption, QuizQuestion};
 
 pub fn update_solution_mode(trimmed_lower: &str, in_heading: bool, in_solutions: &mut bool) {
-    let solution_keywords = ["solution", "answer", "soluzioni", "risposte", "soluzione", "risposta"];
+    let solution_keywords = [
+        "solution",
+        "answer",
+        "soluzioni",
+        "risposte",
+        "soluzione",
+        "risposta",
+    ];
     let contains_solution_kw = solution_keywords
         .iter()
         .any(|&kw| trimmed_lower.contains(kw));
@@ -82,7 +91,14 @@ pub fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
         let raw_text = caps[2].to_string();
 
         let raw_lower = raw_text.to_lowercase();
-        let solution_keywords = ["solution", "answer", "soluzioni", "risposte", "soluzione", "risposta"];
+        let solution_keywords = [
+            "solution",
+            "answer",
+            "soluzioni",
+            "risposte",
+            "soluzione",
+            "risposta",
+        ];
         let is_actually_solution = solution_keywords
             .iter()
             .any(|&kw| raw_lower.starts_with(kw));
