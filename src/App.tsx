@@ -34,7 +34,7 @@ function App() {
           setUpdateVersion(update.version);
           showToast(`Update v${update.version} is available!`);
         }
-      } catch (e) {
+      } catch {
         // silently ignore update check failures on startup
       }
     }
