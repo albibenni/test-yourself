@@ -151,6 +151,10 @@ function App() {
                   >
                     {selectedQuiz.topic || DEFAULT_TOPIC}
                   </a>
+                  <span style={{ margin: "0 0.5rem", color: "var(--text-secondary)" }}>•</span>
+                  <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                    {answeredCount} of {totalQuestions} answered
+                  </span>
                 </p>
               </div>
               <div className="questions-container">
