@@ -95,13 +95,29 @@ function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps)
   );
 }
 
-function SettingsSection({ title, defaultOpen = true, children }: { title: string, defaultOpen?: boolean, children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function SettingsSection({ title, defaultOpen = true, forceOpen = false, children, storageKey }: { title: string, defaultOpen?: boolean, forceOpen?: boolean, children: React.ReactNode, storageKey: string }) {
+  const [isOpen, setIsOpen] = useState(() => {
+    const saved = localStorage.getItem(`settings_section_${storageKey}`);
+    return saved !== null ? saved === "true" : defaultOpen;
+  });
+
+  useEffect(() => {
+    if (forceOpen) {
+      setIsOpen(true);
+      localStorage.setItem(`settings_section_${storageKey}`, "true");
+    }
+  }, [forceOpen, storageKey]);
+
+  const toggle = () => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    localStorage.setItem(`settings_section_${storageKey}`, String(newState));
+  };
   return (
     <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: isOpen ? "1rem" : "0.5rem", marginBottom: "0.5rem" }}>
       <button 
         type="button" 
-        onClick={() => setIsOpen(!isOpen)} 
+        onClick={toggle} 
         className="settings-accordion-btn"
       >
         <h3 style={{ margin: 0, fontSize: "1rem" }}>{title}</h3>
@@ -305,7 +321,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
             </button>
           </div>
         
-        <SettingsSection title="Todoist Integration" defaultOpen={true}>
+        <SettingsSection title="Todoist Integration" defaultOpen={true} storageKey="todoist">
           <div className="form-group">
             <label>Obsidian Vault Name</label>
             <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -383,7 +399,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
           </div>
         </SettingsSection>
 
-        <SettingsSection title="Appearance" defaultOpen={false}>
+        <SettingsSection title="Appearance" defaultOpen={false} storageKey="appearance">
           <div className="form-group">
             <label>Theme</label>
             <CustomSelect
@@ -447,7 +463,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
           </div>
         </SettingsSection>
 
-        <SettingsSection title="About" defaultOpen={!!updateAvailable}>
+        <SettingsSection title="About" defaultOpen={false} forceOpen={!!updateAvailable} storageKey="about">
           <div className="form-group">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
