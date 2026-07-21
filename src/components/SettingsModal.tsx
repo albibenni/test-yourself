@@ -101,10 +101,7 @@ function SettingsSection({ title, defaultOpen = true, children }: { title: strin
       <button 
         type="button" 
         onClick={() => setIsOpen(!isOpen)} 
-        style={{ 
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-          background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', color: 'var(--text-primary)'
-        }}
+        className="settings-accordion-btn"
       >
         <h3 style={{ margin: 0, fontSize: "1rem" }}>{title}</h3>
         <svg
@@ -443,32 +440,34 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
           </div>
         </SettingsSection>
 
-        <div className="form-group" style={{ marginTop: "0.5rem", paddingTop: "0.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <label>App Updates {appVersion && <span style={{ fontSize: "0.8em", color: "var(--text-secondary)", marginLeft: "0.5rem", fontWeight: "normal" }}>(v{appVersion})</span>}</label>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                {updateStatus || "Check for new versions of Test Yourself."}
+        <SettingsSection title="About" defaultOpen={false}>
+          <div className="form-group">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <label>App Updates {appVersion && <span style={{ fontSize: "0.8em", color: "var(--text-secondary)", marginLeft: "0.5rem", fontWeight: "normal" }}>(v{appVersion})</span>}</label>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                  {updateStatus || "Check for new versions of Test Yourself."}
+                </div>
               </div>
+              <button
+                className="button-secondary"
+                onClick={() => void handleCheckUpdate()}
+                disabled={!!updateStatus && updateStatus !== "App is up to date!" && !updateStatus.startsWith("Failed")}
+              >
+                Check for Updates
+              </button>
             </div>
-            <button
-              className="button-secondary"
-              onClick={() => void handleCheckUpdate()}
-              disabled={!!updateStatus && updateStatus !== "App is up to date!" && !updateStatus.startsWith("Failed")}
-            >
-              Check for Updates
-            </button>
           </div>
+        </SettingsSection>
         </div>
 
-        <div className="modal-actions">
+        <div className="settings-sidebar-footer">
           <button className="button-secondary" onClick={onClose}>
             Cancel
           </button>
           <button className="button-primary" onClick={() => void handleSave()}>
             Save
           </button>
-        </div>
         </div>
       </div>
     </>
