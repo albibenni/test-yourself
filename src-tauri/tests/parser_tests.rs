@@ -493,5 +493,8 @@ C) Delegation
     assert_eq!(quiz.questions[0].id, "1");
     assert_eq!(quiz.questions[0].options.len(), 3);
     assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
-    assert_eq!(quiz.questions[0].explanation.as_deref(), Some("The TLDR states that OAuth 2.0 is for delegation."));
+    assert_eq!(
+        quiz.questions[0].explanation.as_deref(),
+        Some("The TLDR states that OAuth 2.0 is for delegation.")
+    );
 }
