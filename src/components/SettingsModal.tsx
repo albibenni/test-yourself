@@ -94,6 +94,39 @@ function CustomSelect({ value, options, onChange, disabled }: CustomSelectProps)
   );
 }
 
+function SettingsSection({ title, defaultOpen = true, children }: { title: string, defaultOpen?: boolean, children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: isOpen ? "1rem" : "0.5rem", marginBottom: "0.5rem" }}>
+      <button 
+        type="button" 
+        onClick={() => setIsOpen(!isOpen)} 
+        style={{ 
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+          background: 'none', border: 'none', padding: '0.5rem 0', cursor: 'pointer', color: 'var(--text-primary)'
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: "1rem" }}>{title}</h3>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {isOpen && <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>{children}</div>}
+    </div>
+  );
+}
+
 export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThemeChange, onAccentChange, onTextColorChange }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
@@ -267,148 +300,150 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
               </svg>
             </button>
           </div>
-        <div className="form-group">
-          <label>Todoist API Token</label>
-          <input
-            type="password"
-            placeholder="Enter your Todoist API token"
-            value={todoistToken}
-            onChange={(e) => setTodoistToken(e.target.value)}
-          />
-          <small>
-            You can find this in Todoist Settings &gt; Integrations &gt;
-            Developer.
-          </small>
-        </div>
-        <div className="form-group">
-          <label>Obsidian Vault Name</label>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <input
-              type="text"
-              style={{ flex: 1 }}
-              placeholder="e.g. MyVault"
-              value={vaultName}
-              onChange={(e) => setVaultName(e.target.value)}
-            />
-            <button
-              className="button-secondary"
-              onClick={() => void selectVaultFolder()}
-            >
-              Browse...
-            </button>
-          </div>
-          <small>Used to generate obsidian://open links.</small>
-        </div>
         
-        <h3 style={{ marginTop: "0.5rem", fontSize: "1rem", color: "var(--text-primary)" }}>Todoist Presets</h3>
-        
-        <div className="form-group">
-          <label>Default Schedule Date</label>
-          <CustomSelect
-            value={defaultDate}
-            onChange={setDefaultDate}
-            options={[
-              { label: "Today", value: "today" },
-              { label: "Tomorrow", value: "tomorrow" },
-              { label: "Next Week (7 days)", value: "in 7 days" },
-              { label: "In 2 Weeks (14 days)", value: "in 14 days" },
-            ]}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Default Priority</label>
-          <CustomSelect
-            value={defaultPriority}
-            onChange={(val) => setDefaultPriority(Number(val))}
-            options={[
-              { label: <span style={{ color: "#d1453b" }}>Priority 1</span>, value: 4 },
-              { label: <span style={{ color: "#eb8909" }}>Priority 2</span>, value: 3 },
-              { label: <span style={{ color: "#246fe0" }}>Priority 3</span>, value: 2 },
-              { label: <span>Priority 4</span>, value: 1 },
-            ]}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Default Project</label>
-          <CustomSelect
-            value={defaultProject}
-            onChange={setDefaultProject}
-            disabled={loadingProjects}
-            options={[
-              { label: "Inbox (Default)", value: "" },
-              ...projects.map((p) => ({ label: p.name, value: p.id })),
-            ]}
-          />
-          {loadingProjects && <small>Loading projects...</small>}
-        </div>
-
-        <h3 style={{ marginTop: "0.5rem", fontSize: "1rem", color: "var(--text-primary)" }}>Appearance</h3>
-        
-        <div className="form-group">
-          <label>Theme</label>
-          <CustomSelect
-            value={theme}
-            onChange={onThemeChange}
-            options={[
-              { label: "System Default", value: "system" },
-              { label: "Light", value: "light" },
-              { label: "Dark", value: "dark" },
-            ]}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Text Tone</label>
-          <CustomSelect
-            value={textColor}
-            onChange={onTextColorChange}
-            options={[
-              { label: "Slate (Cool Gray)", value: "slate" },
-              { label: "Zinc (Neutral)", value: "zinc" },
-              { label: "Neutral (True Gray)", value: "neutral" },
-              { label: "Stone (Warm Gray)", value: "stone" },
-              { label: "Accent (Tinted)", value: "accent" },
-            ]}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Accent Color</label>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
-            {[
-              { id: "blue", color: "#3b82f6" },
-              { id: "purple", color: "#a855f7" },
-              { id: "green", color: "#10b981" },
-              { id: "deep-green", color: "#047857" },
-              { id: "rose", color: "#f43f5e" },
-              { id: "red-brick", color: "#b91c1c" },
-              { id: "orange", color: "#f97316" },
-            ].map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => onAccentChange(a.id)}
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  backgroundColor: a.color,
-                  border: accent === a.id ? "2px solid var(--text-primary)" : "2px solid transparent",
-                  cursor: "pointer",
-                  padding: 0,
-                  outline: "none",
-                  boxShadow: accent === a.id ? "0 0 0 2px var(--bg-surface)" : "none",
-                  transition: "all 0.2s ease"
-                }}
-                aria-label={a.id}
+        <SettingsSection title="Todoist Integration" defaultOpen={true}>
+          <div className="form-group">
+            <label>Obsidian Vault Name</label>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <input
+                type="text"
+                style={{ flex: 1 }}
+                placeholder="e.g. MyVault"
+                value={vaultName}
+                onChange={(e) => setVaultName(e.target.value)}
               />
-            ))}
+              <button
+                className="button-secondary"
+                onClick={() => void selectVaultFolder()}
+              >
+                Browse...
+              </button>
+            </div>
+            <small>Used to generate obsidian://open links.</small>
           </div>
-        </div>
+          
+          <div className="form-group">
+            <label>API Token</label>
+            <input
+              type="password"
+              placeholder="Enter your Todoist API token"
+              value={todoistToken}
+              onChange={(e) => setTodoistToken(e.target.value)}
+            />
+            <small>
+              You can find this in Todoist Settings &gt; Integrations &gt;
+              Developer.
+            </small>
+          </div>
+          
+          <div className="form-group">
+            <label>Default Schedule Date</label>
+            <CustomSelect
+              value={defaultDate}
+              onChange={setDefaultDate}
+              options={[
+                { label: "Today", value: "today" },
+                { label: "Tomorrow", value: "tomorrow" },
+                { label: "Next Week (7 days)", value: "in 7 days" },
+                { label: "In 2 Weeks (14 days)", value: "in 14 days" },
+              ]}
+            />
+          </div>
 
-        <div className="form-group" style={{ marginTop: "1rem", borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>
+          <div className="form-group">
+            <label>Default Priority</label>
+            <CustomSelect
+              value={defaultPriority}
+              onChange={(val) => setDefaultPriority(Number(val))}
+              options={[
+                { label: <span style={{ color: "#d1453b" }}>Priority 1</span>, value: 4 },
+                { label: <span style={{ color: "#eb8909" }}>Priority 2</span>, value: 3 },
+                { label: <span style={{ color: "#246fe0" }}>Priority 3</span>, value: 2 },
+                { label: <span>Priority 4</span>, value: 1 },
+              ]}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Default Project</label>
+            <CustomSelect
+              value={defaultProject}
+              onChange={setDefaultProject}
+              disabled={loadingProjects}
+              options={[
+                { label: "Inbox (Default)", value: "" },
+                ...projects.map((p) => ({ label: p.name, value: p.id })),
+              ]}
+            />
+            {loadingProjects && <small>Loading projects...</small>}
+          </div>
+        </SettingsSection>
+
+        <SettingsSection title="Appearance" defaultOpen={false}>
+          <div className="form-group">
+            <label>Theme</label>
+            <CustomSelect
+              value={theme}
+              onChange={onThemeChange}
+              options={[
+                { label: "System Default", value: "system" },
+                { label: "Light", value: "light" },
+                { label: "Dark", value: "dark" },
+              ]}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Text Tone</label>
+            <CustomSelect
+              value={textColor}
+              onChange={onTextColorChange}
+              options={[
+                { label: "Slate (Cool Gray)", value: "slate" },
+                { label: "Zinc (Neutral)", value: "zinc" },
+                { label: "Neutral (True Gray)", value: "neutral" },
+                { label: "Stone (Warm Gray)", value: "stone" },
+                { label: "Accent (Tinted)", value: "accent" },
+              ]}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Accent Color</label>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
+              {[
+                { id: "blue", color: "#3b82f6" },
+                { id: "purple", color: "#a855f7" },
+                { id: "green", color: "#10b981" },
+                { id: "deep-green", color: "#047857" },
+                { id: "rose", color: "#f43f5e" },
+                { id: "red-brick", color: "#b91c1c" },
+                { id: "orange", color: "#f97316" },
+              ].map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => onAccentChange(a.id)}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "50%",
+                    backgroundColor: a.color,
+                    border: accent === a.id ? "2px solid var(--text-primary)" : "2px solid transparent",
+                    cursor: "pointer",
+                    padding: 0,
+                    outline: "none",
+                    boxShadow: accent === a.id ? "0 0 0 2px var(--bg-surface)" : "none",
+                    transition: "all 0.2s ease"
+                  }}
+                  aria-label={a.id}
+                />
+              ))}
+            </div>
+          </div>
+        </SettingsSection>
+
+        <div className="form-group" style={{ marginTop: "0.5rem", paddingTop: "0.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <label>App Updates {appVersion && <span style={{ fontSize: "0.8em", color: "var(--text-secondary)", marginLeft: "0.5rem", fontWeight: "normal" }}>(v{appVersion})</span>}</label>
