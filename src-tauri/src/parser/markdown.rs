@@ -18,6 +18,26 @@ pub async fn parse_quiz_file(filepath: &Path, topic: &str) -> Option<Quiz> {
     }
 }
 
+pub async fn parse_quiz_metadata(
+    filepath: &Path,
+    topic: &str,
+) -> Option<crate::models::QuizMetadata> {
+    let metadata = tokio::fs::metadata(filepath).await.ok()?;
+    let last_modified = metadata
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+
+    Some(crate::models::QuizMetadata {
+        title: filepath.file_stem()?.to_string_lossy().to_string(),
+        path: filepath.to_path_buf(),
+        topic: topic.to_string(),
+        last_modified,
+    })
+}
+
 async fn read_quiz_metadata(filepath: &Path, topic: &str) -> Option<(String, Quiz)> {
     let content = tokio::fs::read_to_string(filepath).await.ok()?;
 

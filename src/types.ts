@@ -23,3 +23,11 @@ export const QuizSchema = z.object({
   last_modified: z.number(),
 });
 export type Quiz = z.infer<typeof QuizSchema>;
+
+export const QuizMetadataSchema = z.object({
+  title: z.string(),
+  path: z.string(),
+  topic: z.string(),
+  last_modified: z.number(),
+});
+export type QuizMetadata = z.infer<typeof QuizMetadataSchema>;

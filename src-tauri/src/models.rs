@@ -24,3 +24,11 @@ pub struct Quiz {
     pub questions: Vec<QuizQuestion>,
     pub last_modified: u64,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QuizMetadata {
+    pub title: String,
+    pub path: PathBuf,
+    pub topic: String,
+    pub last_modified: u64,
+}

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useTodoist } from "../hooks/useTodoist";
-import type { Quiz } from "../types";
+import type { QuizMetadata } from "../types";
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  quiz: Quiz | null;
+  quiz: QuizMetadata | null;
   onSuccess?: (dateText: string) => void;
 }
 
@@ -18,7 +18,12 @@ interface TaskCountMap {
   [dateString: string]: number; // YYYY-MM-DD -> count
 }
 
-export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModalProps) {
+export function ScheduleModal({
+  isOpen,
+  onClose,
+  quiz,
+  onSuccess,
+}: ScheduleModalProps) {
   const [taskContent, setTaskContent] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [dueDateString, setDueDateString] = useState("tomorrow");
@@ -73,10 +78,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       ) {
         setShowProjectDropdown(false);
       }
-      if (
-        infoRef.current &&
-        !infoRef.current.contains(e.target as Node)
-      ) {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
         setShowInfoDropdown(false);
       }
     };
@@ -94,41 +96,51 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       setShowProjectDropdown(false);
       setShowProjectSelectDropdown(false);
       setShowInfoDropdown(false);
-      
-      void getDefaultSettings().then(({ defaultDate, defaultPriority, defaultProject }) => {
-        let exactDate = defaultDate;
-        const d = new Date();
-        if (defaultDate === "tomorrow") {
-          d.setDate(d.getDate() + 1);
-          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        } else if (defaultDate === "in 7 days" || defaultDate === "next week") {
-          d.setDate(d.getDate() + 7);
-          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        } else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks") {
-          d.setDate(d.getDate() + 14);
-          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        } else if (defaultDate === "today") {
-          exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        }
-        
-        setDueDateString(exactDate);
-        setPriority(defaultPriority);
-        if (defaultProject) {
-          setSelectedProjectId(defaultProject);
-        }
 
-        if (defaultDate === "today") setDueDateText("Today");
-        else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
-        else if (defaultDate === "in 7 days" || defaultDate === "next week") setDueDateText("Next Week");
-        else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks") setDueDateText("In 2 Weeks");
-        else setDueDateText(defaultDate);
-
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
+      void getDefaultSettings().then(
+        ({ defaultDate, defaultPriority, defaultProject }) => {
+          let exactDate = defaultDate;
+          const d = new Date();
+          if (defaultDate === "tomorrow") {
+            d.setDate(d.getDate() + 1);
+            exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          } else if (
+            defaultDate === "in 7 days" ||
+            defaultDate === "next week"
+          ) {
+            d.setDate(d.getDate() + 7);
+            exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          } else if (
+            defaultDate === "in 14 days" ||
+            defaultDate === "in 2 weeks"
+          ) {
+            d.setDate(d.getDate() + 14);
+            exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          } else if (defaultDate === "today") {
+            exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           }
-        }, 50);
-      });
+
+          setDueDateString(exactDate);
+          setPriority(defaultPriority);
+          if (defaultProject) {
+            setSelectedProjectId(defaultProject);
+          }
+
+          if (defaultDate === "today") setDueDateText("Today");
+          else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
+          else if (defaultDate === "in 7 days" || defaultDate === "next week")
+            setDueDateText("Next Week");
+          else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks")
+            setDueDateText("In 2 Weeks");
+          else setDueDateText(defaultDate);
+
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 50);
+        },
+      );
     }
   }, [isOpen, quiz]);
 
@@ -207,7 +219,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
         const v = n % 100;
         return n + (s[(v - 20) % 10] || s[v] || s[0]);
       };
-      
+
       onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
       onClose();
     } catch (err) {
@@ -374,11 +386,15 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
       text = text.replace(shorthandRegex, "$1$3");
       const matchText = shorthandMatch[2].toLowerCase();
       const num = parseInt(matchText.replace(/\D/g, ""));
-      const unit = matchText.includes("d") ? "d" : matchText.includes("w") ? "w" : "m";
-      
+      const unit = matchText.includes("d")
+        ? "d"
+        : matchText.includes("w")
+          ? "w"
+          : "m";
+
       const d = new Date();
       let label = "";
-      
+
       if (unit === "d") {
         d.setDate(d.getDate() + num);
         label = `In ${num} Day${num === 1 ? "" : "s"}`;
@@ -389,7 +405,7 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
         d.setDate(d.getDate() + num * 30);
         label = `In ${num} Month${num === 1 ? "" : "s"}`;
       }
-      
+
       setDueDateText(label);
       setDueDateString(
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
@@ -621,26 +637,69 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
                 title="Typing Shortcuts"
                 style={{ padding: "0 8px" }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
               </button>
               {showInfoDropdown && (
-                <div className="project-dropdown" style={{ minWidth: "220px", padding: "12px", fontSize: "13px", color: "#ccc", whiteSpace: "normal", lineHeight: "1.5", left: "0", zIndex: 100 }}>
-                  <div style={{ marginBottom: "10px", fontWeight: "bold", color: "#fff" }}>Typing Shortcuts</div>
-                  <div style={{ marginBottom: "6px" }}><b>today / tod</b>: Schedule for today</div>
-                  <div style={{ marginBottom: "6px" }}><b>tomorrow / tom</b>: Schedule for tomorrow</div>
-                  <div style={{ marginBottom: "6px" }}><b>Xd</b>: Schedule in X days (e.g., 7d, 14d)</div>
-                  <div style={{ marginBottom: "6px" }}><b>Xw</b>: Schedule in X weeks (e.g., 1w, 2w)</div>
-                  <div style={{ marginBottom: "6px" }}><b>Xm</b>: Schedule in X months (e.g., 1m, 2m)</div>
-                  <div style={{ marginBottom: "6px" }}><b>p1-p4</b>: Set priority (e.g., p1)</div>
-                  <div><b>#project</b>: Assign to project (e.g., #Inbox)</div>
+                <div
+                  className="project-dropdown"
+                  style={{
+                    minWidth: "220px",
+                    padding: "12px",
+                    fontSize: "13px",
+                    color: "#ccc",
+                    whiteSpace: "normal",
+                    lineHeight: "1.5",
+                    left: "0",
+                    zIndex: 100,
+                  }}
+                >
+                  <div
+                    style={{
+                      marginBottom: "10px",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
+                  >
+                    Typing Shortcuts
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>today / tod</b>: Schedule for today
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>tomorrow / tom</b>: Schedule for tomorrow
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>Xd</b>: Schedule in X days (e.g., 7d, 14d)
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>Xw</b>: Schedule in X weeks (e.g., 1w, 2w)
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>Xm</b>: Schedule in X months (e.g., 1m, 2m)
+                  </div>
+                  <div style={{ marginBottom: "6px" }}>
+                    <b>p1-p4</b>: Set priority (e.g., p1)
+                  </div>
+                  <div>
+                    <b>#project</b>: Assign to project (e.g., #Inbox)
+                  </div>
                 </div>
               )}
             </div>
-
           </div>
 
           <div className="quick-add-footer">
@@ -664,4 +723,3 @@ export function ScheduleModal({ isOpen, onClose, quiz, onSuccess }: ScheduleModa
     </div>
   );
 }
-

@@ -4,7 +4,12 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type { Store } from "@tauri-apps/plugin-store";
 import { load } from "@tauri-apps/plugin-store";
 import { z } from "zod";
-import { QuizSchema, type Quiz } from "../types";
+import {
+  QuizSchema,
+  QuizMetadataSchema,
+  type Quiz,
+  type QuizMetadata,
+} from "../types";
 import {
   STORE_FILENAME,
   STORE_KEY_BASE_PATH,
@@ -12,10 +17,14 @@ import {
 } from "../constants";
 
 export function useQuizzes() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizzes, setQuizzes] = useState<QuizMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [selectedQuizMeta, setSelectedQuizMeta] = useState<QuizMetadata | null>(
+    null,
+  );
+  const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
+  const [loadingActiveQuiz, setLoadingActiveQuiz] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [basePath, setBasePath] = useState<string | null>(null);
@@ -55,7 +64,7 @@ export function useQuizzes() {
       setLoading(true);
       try {
         const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
-        const fetchedQuizzes = z.array(QuizSchema).parse(rawData);
+        const fetchedQuizzes = z.array(QuizMetadataSchema).parse(rawData);
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.error("Failed to load quizzes:", error);
@@ -66,6 +75,31 @@ export function useQuizzes() {
     void loadQuizzes();
   }, [basePath]);
 
+  // Fetch active quiz content when selected meta changes
+  useEffect(() => {
+    async function loadActiveQuiz() {
+      if (!selectedQuizMeta) {
+        setActiveQuiz(null);
+        return;
+      }
+      setLoadingActiveQuiz(true);
+      try {
+        const rawData = await invoke("get_quiz_content", {
+          path: selectedQuizMeta.path,
+          topic: selectedQuizMeta.topic,
+        });
+        const fetchedQuiz = QuizSchema.parse(rawData);
+        setActiveQuiz(fetchedQuiz);
+      } catch (error) {
+        console.error("Failed to load active quiz:", error);
+        setActiveQuiz(null);
+      } finally {
+        setLoadingActiveQuiz(false);
+      }
+    }
+    void loadActiveQuiz();
+  }, [selectedQuizMeta]);
+
   const selectFolder = async () => {
     const selected = await open({
       directory: true,
@@ -73,7 +107,7 @@ export function useQuizzes() {
     });
     if (selected && typeof selected === "string" && selected !== basePath) {
       setBasePath(selected);
-      setSelectedQuiz(null); // Clear the active quiz when changing directories
+      setSelectedQuizMeta(null);
       if (storeInstance) {
         await storeInstance.set(STORE_KEY_BASE_PATH, selected);
         await storeInstance.save();
@@ -86,7 +120,7 @@ export function useQuizzes() {
     setIsSyncing(true);
     try {
       const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
-      const fetchedQuizzes = z.array(QuizSchema).parse(rawData);
+      const fetchedQuizzes = z.array(QuizMetadataSchema).parse(rawData);
 
       setQuizzes((prevQuizzes) => {
         const prevQuizMap = new Map(prevQuizzes.map((q) => [q.path, q]));
@@ -99,11 +133,11 @@ export function useQuizzes() {
           return fetched;
         });
 
-        if (selectedQuiz) {
+        if (selectedQuizMeta) {
           const updatedSelected = mergedQuizzes.find(
-            (q) => q.path === selectedQuiz.path,
+            (q) => q.path === selectedQuizMeta.path,
           );
-          setSelectedQuiz(updatedSelected || null);
+          setSelectedQuizMeta(updatedSelected || null);
         }
 
         return mergedQuizzes;
@@ -131,7 +165,7 @@ export function useQuizzes() {
         acc[quiz.topic].push(quiz);
         return acc;
       },
-      {} as Record<string, Quiz[]>,
+      {} as Record<string, QuizMetadata[]>,
     );
   }, [filteredQuizzes]);
 
@@ -139,8 +173,10 @@ export function useQuizzes() {
     quizzes,
     loading,
     isSyncing,
-    selectedQuiz,
-    setSelectedQuiz,
+    selectedQuizMeta,
+    setSelectedQuizMeta,
+    activeQuiz,
+    loadingActiveQuiz,
     searchQuery,
     setSearchQuery,
     basePath,

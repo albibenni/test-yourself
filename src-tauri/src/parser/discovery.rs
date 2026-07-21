@@ -44,6 +44,41 @@ pub async fn parse_quizzes(md_files: Vec<(PathBuf, String)>) -> Vec<Quiz> {
     quizzes
 }
 
+pub async fn parse_quizzes_metadata(
+    md_files: Vec<(PathBuf, String)>,
+) -> Vec<crate::models::QuizMetadata> {
+    let mut metadata = Vec::new();
+
+    for (path, topic) in md_files {
+        if let Some(quiz) = parse_quiz_file(&path, &topic).await {
+            metadata.push(crate::models::QuizMetadata {
+                title: quiz.title,
+                path: quiz.path,
+                topic: quiz.topic,
+                last_modified: quiz.last_modified,
+            });
+        }
+    }
+
+    metadata
+}
+
+pub async fn get_all_quizzes_metadata(base_dir: &str) -> Vec<crate::models::QuizMetadata> {
+    let Ok(canonical_base) = tokio::fs::canonicalize(base_dir).await else {
+        eprintln!("Security Warning: Base directory could not be canonicalized.");
+        return Vec::new();
+    };
+
+    let canonical_base_clone = canonical_base.clone();
+
+    let md_files: Vec<(PathBuf, String)> =
+        tokio::task::spawn_blocking(move || find_markdown_files(&canonical_base_clone))
+            .await
+            .unwrap_or_default();
+
+    parse_quizzes_metadata(md_files).await
+}
+
 pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     // Deep Path Canonicalization for maximum security
     let Ok(canonical_base) = tokio::fs::canonicalize(base_dir).await else {

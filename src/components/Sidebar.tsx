@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { clsx } from "clsx";
-import type { Quiz } from "../types";
+import type { QuizMetadata } from "../types";
 import { APP_TITLE, DEFAULT_TOPIC } from "../constants";
 
 interface SidebarProps {
@@ -9,9 +9,9 @@ interface SidebarProps {
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   loading: boolean;
-  groupedQuizzes: Record<string, Quiz[]>;
-  selectedQuiz: Quiz | null;
-  setSelectedQuiz: Dispatch<SetStateAction<Quiz | null>>;
+  groupedQuizzes: Record<string, QuizMetadata[]>;
+  selectedQuiz: QuizMetadata | null;
+  setSelectedQuiz: Dispatch<SetStateAction<QuizMetadata | null>>;
   handleSync: () => void;
   isSyncing: boolean;
 }
@@ -170,17 +170,18 @@ export function Sidebar({
         )}
       </div>
       <hr className="sidebar-divider" />
-      <div 
-        className="sidebar-footer" 
-        style={{ 
-          padding: '0.75rem 1.5rem', 
-          fontSize: '0.8125rem', 
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-          backgroundColor: 'color-mix(in srgb, var(--text-primary) 2%, transparent)'
+      <div
+        className="sidebar-footer"
+        style={{
+          padding: "0.75rem 1.5rem",
+          fontSize: "0.8125rem",
+          color: "var(--text-secondary)",
+          textAlign: "center",
+          backgroundColor:
+            "color-mix(in srgb, var(--text-primary) 2%, transparent)",
         }}
       >
-        {flatQuizzes.length} {flatQuizzes.length === 1 ? 'quiz' : 'quizzes'}
+        {flatQuizzes.length} {flatQuizzes.length === 1 ? "quiz" : "quizzes"}
       </div>
     </aside>
   );
