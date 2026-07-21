@@ -14,8 +14,8 @@ export const ProjectSchema = z
 export type Project = z.infer<typeof ProjectSchema>;
 
 const ProjectsResponseSchema = z.union([
-  z.object({ results: z.array(ProjectSchema) }).transform(val => val.results),
-  z.array(ProjectSchema)
+  z.object({ results: z.array(ProjectSchema) }).transform((val) => val.results),
+  z.array(ProjectSchema),
 ]);
 
 export const TaskSchema = z
@@ -34,8 +34,8 @@ export const TaskSchema = z
 export type Task = z.infer<typeof TaskSchema>;
 
 const TasksResponseSchema = z.union([
-  z.object({ results: z.array(TaskSchema) }).transform(val => val.results),
-  z.array(TaskSchema)
+  z.object({ results: z.array(TaskSchema) }).transform((val) => val.results),
+  z.array(TaskSchema),
 ]);
 
 export function useTodoist() {
@@ -117,9 +117,12 @@ export function useTodoist() {
   const getDefaultSettings = async () => {
     const store = await load(STORE_FILENAME, { autoSave: false } as any);
     return {
-      defaultDate: (await store.get<string>("default_todoist_date")) || "tomorrow",
-      defaultPriority: (await store.get<number>("default_todoist_priority")) || 4,
-      defaultProject: (await store.get<string>("default_todoist_project")) || "",
+      defaultDate:
+        (await store.get<string>("default_todoist_date")) || "tomorrow",
+      defaultPriority:
+        (await store.get<number>("default_todoist_priority")) || 4,
+      defaultProject:
+        (await store.get<string>("default_todoist_project")) || "",
     };
   };
 

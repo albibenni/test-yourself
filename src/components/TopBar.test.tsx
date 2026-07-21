@@ -12,7 +12,8 @@ describe("TopBar Component", () => {
         isSidebarOpen={true}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      onOpenSettings={vi.fn()} />,
+        onOpenSettings={vi.fn()}
+      />,
     );
 
     expect(screen.getByText("Test Yourself")).toBeInTheDocument();
@@ -35,7 +36,8 @@ describe("TopBar Component", () => {
         isSidebarOpen={true}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      onOpenSettings={vi.fn()} />,
+        onOpenSettings={vi.fn()}
+      />,
     );
 
     const toggleBtn = screen.getByRole("button", { name: "Toggle Sidebar" });
@@ -52,7 +54,8 @@ describe("TopBar Component", () => {
         isSidebarOpen={false}
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={selectFolder}
-      onOpenSettings={vi.fn()} />,
+        onOpenSettings={vi.fn()}
+      />,
     );
 
     const changeFolderBtn = screen.getByRole("button", {

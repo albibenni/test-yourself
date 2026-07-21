@@ -3,7 +3,8 @@ import { load } from "@tauri-apps/plugin-store";
 import { STORE_FILENAME } from "../constants";
 
 export type Theme = "dark" | "light" | "system";
-export type AccentColor = "blue" | "purple" | "green" | "deep-green" | "rose" | "orange" | "red-brick";
+export type AccentColor =
+  "blue" | "purple" | "green" | "deep-green" | "rose" | "orange" | "red-brick";
 export type TextColor = "slate" | "zinc" | "neutral" | "stone";
 
 export function useTheme() {
@@ -14,9 +15,11 @@ export function useTheme() {
   useEffect(() => {
     async function loadSettings() {
       const store = await load(STORE_FILENAME, { autoSave: false } as any);
-      const storedTheme = await store.get<Theme>("app_theme") || "system";
-      const storedAccent = await store.get<AccentColor>("app_accent") || "blue";
-      const storedTextColor = await store.get<TextColor>("app_text_color") || "slate";
+      const storedTheme = (await store.get<Theme>("app_theme")) || "system";
+      const storedAccent =
+        (await store.get<AccentColor>("app_accent")) || "blue";
+      const storedTextColor =
+        (await store.get<TextColor>("app_text_color")) || "slate";
       setTheme(storedTheme);
       setAccent(storedAccent);
       setTextColor(storedTextColor);
@@ -28,7 +31,9 @@ export function useTheme() {
     const applyTheme = () => {
       let activeTheme = theme;
       if (theme === "system") {
-        activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
       }
       document.documentElement.setAttribute("data-theme", activeTheme);
       document.documentElement.setAttribute("data-accent", accent);

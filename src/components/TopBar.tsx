@@ -70,14 +70,20 @@ export function TopBar({
         onClick={onOpenSettings}
         data-hint="Settings"
         aria-label="Settings"
-        style={{ position: 'relative' }}
+        style={{ position: "relative" }}
       >
         {hasUpdate && (
-          <span 
-            style={{ 
-              position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', 
-              backgroundColor: 'var(--error-color, #ef4444)', borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-color)' 
-            }} 
+          <span
+            style={{
+              position: "absolute",
+              top: "2px",
+              right: "2px",
+              width: "6px",
+              height: "6px",
+              backgroundColor: "var(--error-color, #ef4444)",
+              borderRadius: "50%",
+              boxShadow: "0 0 0 2px var(--bg-color)",
+            }}
           />
         )}
         <svg
