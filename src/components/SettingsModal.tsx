@@ -337,6 +337,7 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
               { label: "Zinc (Neutral)", value: "zinc" },
               { label: "Neutral (True Gray)", value: "neutral" },
               { label: "Stone (Warm Gray)", value: "stone" },
+              { label: "Accent (Tinted)", value: "accent" },
             ]}
           />
         </div>

@@ -29,6 +29,7 @@
   --date-accent: #058527;
   --brand-todoist: #db4c3f;
   --gradient-primary: linear-gradient(to right, #60a5fa, #a78bfa);
+  --quiz-option-text: var(--text-primary);
 
   font-family:
     "Inter",
@@ -683,7 +684,7 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  color: var(--text-primary);
+  color: var(--quiz-option-text);
   font-family: inherit;
   font-size: 0.9375rem;
   text-align: left;
@@ -700,7 +701,8 @@ body {
 .option-letter {
   font-weight: 600;
   margin-right: 0.75rem;
-  color: var(--text-secondary);
+  color: inherit;
+  opacity: 0.8;
 }
 
 /* Result States */
@@ -1122,6 +1124,14 @@ body {
   --text-muted: #78716c;
 }
 
+:root[data-text-color="accent"],
+:root[data-theme="dark"][data-text-color="accent"] {
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --quiz-option-text: var(--accent-soft);
+}
+
 /* Text Tones (Light Mode) */
 :root[data-theme="light"][data-text-color="slate"] {
   --text-primary: #0f172a;
@@ -1145,4 +1155,11 @@ body {
   --text-primary: #1c1917;
   --text-secondary: #57534e;
   --text-muted: #a8a29e;
+}
+
+:root[data-theme="light"][data-text-color="accent"] {
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --quiz-option-text: color-mix(in srgb, var(--accent-color) 60%, #000);
 }
