@@ -31,3 +31,8 @@ export const QuizMetadataSchema = z.object({
   last_modified: z.number(),
 });
 export type QuizMetadata = z.infer<typeof QuizMetadataSchema>;
+
+export type ThemeType = "system" | "light" | "dark";
+export type TextColor = "slate" | "zinc" | "neutral" | "stone" | "accent";
+export type AccentColor =
+  "blue" | "purple" | "green" | "deep-green" | "rose" | "red-brick" | "orange";

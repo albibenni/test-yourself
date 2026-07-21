@@ -6,6 +6,7 @@ import { load } from "@tauri-apps/plugin-store";
 import { TodoistApi } from "@doist/todoist-sdk";
 import { check } from "@tauri-apps/plugin-updater";
 import { STORE_FILENAME } from "../constants";
+import type { ThemeType, TextColor, AccentColor } from "../types";
 
 interface Project {
   id: string;
@@ -15,28 +16,28 @@ interface Project {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  theme: any;
-  accent: any;
-  textColor: any;
-  onThemeChange: (theme: any) => void;
-  onAccentChange: (accent: any) => void;
-  onTextColorChange: (textColor: any) => void;
+  theme: ThemeType;
+  accent: AccentColor;
+  textColor: TextColor;
+  onThemeChange: (theme: ThemeType) => void;
+  onAccentChange: (accent: AccentColor) => void;
+  onTextColorChange: (textColor: TextColor) => void;
   updateAvailable?: string | null;
 }
 
-interface CustomSelectProps {
-  value: string | number;
-  options: { label: React.ReactNode; value: string | number }[];
-  onChange: (value: any) => void;
+interface CustomSelectProps<T extends string | number> {
+  value: T;
+  options: { label: React.ReactNode; value: T }[];
+  onChange: (value: T) => void;
   disabled?: boolean;
 }
 
-function CustomSelect({
+function CustomSelect<T extends string | number>({
   value,
   options,
   onChange,
   disabled,
-}: CustomSelectProps) {
+}: CustomSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -149,6 +150,7 @@ function SettingsSection({
 
   useEffect(() => {
     if (forceOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(true);
       localStorage.setItem(`settings_section_${storageKey}`, "true");
     }
@@ -229,6 +231,7 @@ export function SettingsModal({
 
   useEffect(() => {
     if (updateAvailable) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUpdateStatus(`Update v${updateAvailable} is available!`);
     }
   }, [updateAvailable]);
@@ -259,7 +262,9 @@ export function SettingsModal({
         setTimeout(() => setUpdateStatus(""), 3000);
       }
     } catch (error) {
-      setUpdateStatus(`Failed to update: ${error}`);
+      setUpdateStatus(
+        `Failed to update: ${error instanceof Error ? error.message : String(error)}`,
+      );
       setTimeout(() => setUpdateStatus(""), 5000);
     }
   };
@@ -267,7 +272,8 @@ export function SettingsModal({
   useEffect(() => {
     async function fetchSettings() {
       if (isOpen) {
-        const store = await load(STORE_FILENAME, { autoSave: false } as any);
+        // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
+        const store = await load(STORE_FILENAME, { autoSave: false });
         const token = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
 
@@ -294,8 +300,9 @@ export function SettingsModal({
         const api = new TodoistApi(todoistToken);
         const response = await api.getProjects();
         // The API might return { results: Project[] } or Project[] directly depending on the SDK version
-        const projs = (response as any).results || response;
-        setProjects(projs as Project[]);
+        const data = response as unknown as { results?: Project[] } | Project[];
+        const projs = Array.isArray(data) ? data : data.results || [];
+        setProjects(projs);
       } catch (err) {
         console.error("Failed to fetch projects for settings", err);
       } finally {
@@ -321,7 +328,8 @@ export function SettingsModal({
   }, [isOpen, onClose]);
 
   const handleSave = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false } as any);
+    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
+    const store = await load(STORE_FILENAME, { autoSave: false });
     await store.set("todoist_token", todoistToken);
     await store.set("obsidian_vault", vaultName);
     await store.set("default_todoist_date", defaultDate);
@@ -510,7 +518,7 @@ export function SettingsModal({
           >
             <div className="form-group">
               <label>Theme</label>
-              <CustomSelect
+              <CustomSelect<ThemeType>
                 value={theme}
                 onChange={onThemeChange}
                 options={[
@@ -523,7 +531,7 @@ export function SettingsModal({
 
             <div className="form-group">
               <label>Text Tone</label>
-              <CustomSelect
+              <CustomSelect<TextColor>
                 value={textColor}
                 onChange={onTextColorChange}
                 options={[
@@ -553,7 +561,7 @@ export function SettingsModal({
                   <button
                     key={a.id}
                     type="button"
-                    onClick={() => onAccentChange(a.id)}
+                    onClick={() => onAccentChange(a.id as AccentColor)}
                     style={{
                       width: "24px",
                       height: "24px",

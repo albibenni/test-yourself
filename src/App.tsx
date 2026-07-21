@@ -59,6 +59,7 @@ function App() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnswers({});
   }, [selectedQuizMeta?.path, resetKey]);
 
@@ -343,9 +344,15 @@ function App() {
         theme={theme}
         accent={accent}
         textColor={textColor}
-        onThemeChange={saveTheme}
-        onAccentChange={saveAccent}
-        onTextColorChange={saveTextColor}
+        onThemeChange={(val) => {
+          void saveTheme(val);
+        }}
+        onAccentChange={(val) => {
+          void saveAccent(val);
+        }}
+        onTextColorChange={(val) => {
+          void saveTextColor(val);
+        }}
         updateAvailable={updateVersion}
       />
       <ScheduleModal
