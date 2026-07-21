@@ -58,10 +58,17 @@ function App() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  const [prevResetParams, setPrevResetParams] = useState({
+    path: selectedQuizMeta?.path,
+    key: resetKey,
+  });
+  if (
+    selectedQuizMeta?.path !== prevResetParams.path ||
+    resetKey !== prevResetParams.key
+  ) {
+    setPrevResetParams({ path: selectedQuizMeta?.path, key: resetKey });
     setAnswers({});
-  }, [selectedQuizMeta?.path, resetKey]);
+  }
 
   const totalQuestions = activeQuiz?.questions.length || 0;
   const answeredCount = Object.keys(answers).length;

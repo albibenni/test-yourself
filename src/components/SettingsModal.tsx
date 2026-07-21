@@ -145,7 +145,7 @@ function SettingsSection({
   storageKey: string;
 }) {
   const [isOpen, setIsOpen] = useState(() => {
-    const saved = localStorage.getItem(`settings_section_${storageKey}`);
+    const saved = window.localStorage.getItem(`settings_section_${storageKey}`);
     return saved !== null ? saved === "true" : defaultOpen;
   });
 
@@ -154,14 +154,17 @@ function SettingsSection({
     setPrevForceOpen(forceOpen);
     if (forceOpen) {
       setIsOpen(true);
-      localStorage.setItem(`settings_section_${storageKey}`, "true");
+      window.localStorage.setItem(`settings_section_${storageKey}`, "true");
     }
   }
 
   const toggle = () => {
     const newState = !isOpen;
     setIsOpen(newState);
-    localStorage.setItem(`settings_section_${storageKey}`, String(newState));
+    window.localStorage.setItem(
+      `settings_section_${storageKey}`,
+      String(newState),
+    );
   };
   return (
     <div
@@ -284,14 +287,16 @@ export function SettingsModal({
         const fallbackToken = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
 
-        // Fallback to localStorage for backward compatibility initially
+        // Fallback to window.localStorage for backward compatibility initially
         setTodoistToken(
           secureToken ||
             fallbackToken ||
-            localStorage.getItem("todoist_token") ||
+            window.localStorage.getItem("todoist_token") ||
             "",
         );
-        setVaultName(vault || localStorage.getItem("obsidian_vault") || "");
+        setVaultName(
+          vault || window.localStorage.getItem("obsidian_vault") || "",
+        );
 
         const defDate = await store.get<string>("default_todoist_date");
         const defPri = await store.get<number>("default_todoist_priority");
@@ -347,9 +352,9 @@ export function SettingsModal({
     await store.delete("todoist_token");
     await store.save();
 
-    // Clean up old unencrypted localStorage if present
-    localStorage.removeItem("todoist_token");
-    localStorage.removeItem("obsidian_vault");
+    // Clean up old unencrypted window.localStorage if present
+    window.localStorage.removeItem("todoist_token");
+    window.localStorage.removeItem("obsidian_vault");
 
     onClose();
   };

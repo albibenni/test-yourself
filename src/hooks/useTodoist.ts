@@ -19,7 +19,7 @@ export function useTodoist() {
     const token =
       (await getSecureToken("todoist_token")) ||
       (await store.get<string>("todoist_token")) ||
-      localStorage.getItem("todoist_token");
+      window.localStorage.getItem("todoist_token");
     if (!token) {
       throw new Error("Missing API token. Please configure it in settings.");
     }
@@ -30,7 +30,7 @@ export function useTodoist() {
     const store = await load(STORE_FILENAME, { autoSave: false });
     return (
       (await store.get<string>("obsidian_vault")) ||
-      localStorage.getItem("obsidian_vault") ||
+      window.localStorage.getItem("obsidian_vault") ||
       "Vault"
     );
   };

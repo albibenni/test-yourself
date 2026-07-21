@@ -65,7 +65,16 @@ const mockQuizzes = [
 describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(invoke).mockResolvedValue(mockQuizzes);
+    vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") {
+        const path = (args as { path?: string })?.path;
+        return Promise.resolve(
+          mockQuizzes.find((q) => q.path === path) || null,
+        );
+      }
+      return Promise.resolve(null);
+    });
     vi.mocked(load).mockResolvedValue({
       get: vi.fn().mockResolvedValue("/mock/path"),
       set: vi.fn().mockResolvedValue(true),
@@ -161,7 +170,7 @@ describe("App Component", () => {
     expect(
       screen.getByRole("heading", { name: "React Basics", level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByText("1. What is React?")).toBeInTheDocument();
+    expect(await screen.findByText("1. What is React?")).toBeInTheDocument();
 
     // Answer correctly (Question 1)
     const btnA = screen.getByText("A library").closest("button")!;

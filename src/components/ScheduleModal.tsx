@@ -87,8 +87,8 @@ export function ScheduleModal({
   }, []);
 
   const [prevResetParams, setPrevResetParams] = useState({
-    isOpen,
-    quizPath: quiz?.path,
+    isOpen: false,
+    quizPath: undefined as string | undefined,
   });
   if (
     isOpen !== prevResetParams.isOpen ||

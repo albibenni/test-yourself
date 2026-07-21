@@ -34,11 +34,10 @@ export function useQuizzes() {
   useEffect(() => {
     async function initStore() {
       try {
-        // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
         const store = await load(STORE_FILENAME, { autoSave: false });
         setStoreInstance(store);
 
-        const localPath = localStorage.getItem(STORE_KEY_BASE_PATH);
+        const localPath = window.localStorage.getItem(STORE_KEY_BASE_PATH);
         const savedPath = await store.get<string>(STORE_KEY_BASE_PATH);
 
         if (savedPath) {
@@ -48,6 +47,7 @@ export function useQuizzes() {
           await store.save();
           setBasePath(localPath);
         }
+        console.error("INIT STORE RESULT:", { localPath, savedPath });
       } catch (err) {
         console.error("Failed to load store:", err);
       }
@@ -60,6 +60,7 @@ export function useQuizzes() {
     async function loadQuizzes() {
       if (!basePath) {
         setLoading(false);
+        console.log("basePath", basePath);
         return;
       }
       setLoading(true);
@@ -71,6 +72,7 @@ export function useQuizzes() {
         console.error("Failed to load quizzes:", error);
       } finally {
         setLoading(false);
+        console.log("basePath", basePath);
       }
     }
     void loadQuizzes();
