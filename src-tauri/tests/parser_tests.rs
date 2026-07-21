@@ -474,3 +474,24 @@ async fn test_parse_bola_quiz() {
         .expect("Explanation missing");
     assert!(expl2.contains("The analogy maps authentication"));
 }
+
+#[tokio::test]
+async fn test_markdown_formatting_in_quiz() {
+    let md = "
+**Q1: What is the fundamental division?**
+A) Auth
+B) Session
+C) Delegation
+
+## Answer Key & Explanations
+
+**Q1: Correct Answer: C**
+*Explanation*: The TLDR states that OAuth 2.0 is for delegation.
+";
+    let quiz = parse_string(md).await.unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].id, "1");
+    assert_eq!(quiz.questions[0].options.len(), 3);
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("C"));
+    assert_eq!(quiz.questions[0].explanation.as_deref(), Some("The TLDR states that OAuth 2.0 is for delegation."));
+}
