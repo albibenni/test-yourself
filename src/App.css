@@ -1129,7 +1129,7 @@ body {
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --quiz-option-text: var(--accent-soft);
+  --quiz-option-text: color-mix(in srgb, var(--accent-soft) 35%, #ffffff);
 }
 
 /* Text Tones (Light Mode) */
@@ -1161,5 +1161,5 @@ body {
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --quiz-option-text: color-mix(in srgb, var(--accent-color) 60%, #000);
+  --quiz-option-text: color-mix(in srgb, var(--accent-color) 75%, #1e293b);
 }
