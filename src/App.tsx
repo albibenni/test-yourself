@@ -16,7 +16,8 @@ function App() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
-  const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } = useTheme();
+  const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } =
+    useTheme();
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -43,8 +44,10 @@ function App() {
   const {
     loading,
     isSyncing,
-    selectedQuiz,
-    setSelectedQuiz,
+    selectedQuizMeta,
+    setSelectedQuizMeta,
+    activeQuiz,
+    loadingActiveQuiz,
     searchQuery,
     setSearchQuery,
     basePath,
@@ -57,12 +60,14 @@ function App() {
 
   useEffect(() => {
     setAnswers({});
-  }, [selectedQuiz?.path, resetKey]);
+  }, [selectedQuizMeta?.path, resetKey]);
 
-  const totalQuestions = selectedQuiz?.questions.length || 0;
+  const totalQuestions = activeQuiz?.questions.length || 0;
   const answeredCount = Object.keys(answers).length;
   const isAllAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
-  const correctCount = selectedQuiz?.questions.filter((q) => answers[q.id] === q.correct_answer).length || 0;
+  const correctCount =
+    activeQuiz?.questions.filter((q) => answers[q.id] === q.correct_answer)
+      .length || 0;
 
   return (
     <div className="app-wrapper">
@@ -81,8 +86,8 @@ function App() {
           setSearchQuery={setSearchQuery}
           loading={loading}
           groupedQuizzes={groupedQuizzes}
-          selectedQuiz={selectedQuiz}
-          setSelectedQuiz={setSelectedQuiz}
+          selectedQuiz={selectedQuizMeta}
+          setSelectedQuiz={setSelectedQuizMeta}
           handleSync={() => void handleSync()}
           isSyncing={isSyncing}
         />
@@ -101,12 +106,18 @@ function App() {
                 Choose Folder
               </button>
             </div>
-          ) : selectedQuiz ? (
+          ) : selectedQuizMeta ? (
             <div className="quiz-viewer">
               <div className="quiz-header">
                 <div className="header-title-row">
-                  <h1>{selectedQuiz.title}</h1>
-                  <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+                  <h1>{selectedQuizMeta.title}</h1>
+                  <div
+                    style={{
+                      marginLeft: "auto",
+                      display: "flex",
+                      gap: "0.5rem",
+                    }}
+                  >
                     <button
                       className="button-secondary"
                       onClick={() => setResetKey((k) => k + 1)}
@@ -153,7 +164,14 @@ function App() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <rect
+                          x="3"
+                          y="4"
+                          width="18"
+                          height="18"
+                          rx="2"
+                          ry="2"
+                        ></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
@@ -165,53 +183,144 @@ function App() {
                 <p>
                   Topic:{" "}
                   <a
-                    href={`obsidian://open?file=${encodeURIComponent(selectedQuiz.path)}`}
+                    href={`obsidian://open?file=${encodeURIComponent(selectedQuizMeta.path)}`}
                     style={{ color: "inherit", textDecoration: "underline" }}
                   >
-                    {selectedQuiz.topic || DEFAULT_TOPIC}
+                    {selectedQuizMeta.topic || DEFAULT_TOPIC}
                   </a>
-                  <span style={{ margin: "0 0.5rem", color: "var(--text-secondary)" }}>•</span>
-                  <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                  <span
+                    style={{
+                      margin: "0 0.5rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    •
+                  </span>
+                  <span
+                    style={{
+                      color: "var(--text-secondary)",
+                      fontSize: "0.9rem",
+                    }}
+                  >
                     {answeredCount} of {totalQuestions} answered
                   </span>
                 </p>
               </div>
-              <div className="questions-container">
-                {selectedQuiz.questions.map((q) => (
-                  <QuestionCard
-                    key={`${selectedQuiz.path}-${q.id}-${resetKey}`}
-                    question={q}
-                    onAnswer={(_isCorrect, letter) => setAnswers((prev) => ({ ...prev, [q.id]: letter }))}
-                  />
-                ))}
-              </div>
 
-              {isAllAnswered && (
-                <div className="quiz-summary" style={{ marginTop: '3rem', padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
-                  <h2 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Quiz Review</h2>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '1.5rem' }}>
-                    You scored {correctCount} out of {totalQuestions} ({Math.round((correctCount / totalQuestions) * 100)}%)
-                  </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {selectedQuiz.questions.map((q) => {
-                      const selected = answers[q.id];
-                      const isCorrect = selected === q.correct_answer;
-                      return (
-                        <div key={`review-${q.id}`} style={{ padding: '1rem', borderLeft: `4px solid ${isCorrect ? 'var(--success-color)' : 'var(--error-color)'}`, backgroundColor: 'var(--bg-primary)', borderRadius: '4px' }}>
-                          <strong style={{ display: 'block', marginBottom: '0.5rem' }}>{q.id}. {q.text}</strong>
-                          <div style={{ marginBottom: '0.5rem' }}>
-                            Your answer: <strong>{selected}</strong> {isCorrect ? '✨' : '❌'} {!isCorrect && <span style={{ marginLeft: '0.5rem' }}>(Correct: <strong>{q.correct_answer}</strong>)</span>}
-                          </div>
-                          {q.explanation && (
-                            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '0.5rem' }}>
-                              Explanation: {q.explanation}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+              {loadingActiveQuiz ? (
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Loading quiz questions...
+                </div>
+              ) : activeQuiz ? (
+                <>
+                  <div className="questions-container">
+                    {activeQuiz.questions.map((q) => (
+                      <QuestionCard
+                        key={`${activeQuiz.path}-${q.id}-${resetKey}`}
+                        question={q}
+                        onAnswer={(_isCorrect, letter) =>
+                          setAnswers((prev) => ({ ...prev, [q.id]: letter }))
+                        }
+                      />
+                    ))}
                   </div>
+
+                  {isAllAnswered && (
+                    <div
+                      className="quiz-summary"
+                      style={{
+                        marginTop: "3rem",
+                        padding: "1.5rem",
+                        backgroundColor: "var(--bg-secondary)",
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <h2 style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+                        Quiz Review
+                      </h2>
+                      <p
+                        style={{
+                          fontSize: "1.1rem",
+                          fontWeight: 500,
+                          marginBottom: "1.5rem",
+                        }}
+                      >
+                        You scored {correctCount} out of {totalQuestions} (
+                        {Math.round((correctCount / totalQuestions) * 100)}%)
+                      </p>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "1rem",
+                        }}
+                      >
+                        {activeQuiz.questions.map((q) => {
+                          const selected = answers[q.id];
+                          const isCorrect = selected === q.correct_answer;
+                          return (
+                            <div
+                              key={`review-${q.id}`}
+                              style={{
+                                padding: "1rem",
+                                borderLeft: `4px solid ${isCorrect ? "var(--success-color)" : "var(--error-color)"}`,
+                                backgroundColor: "var(--bg-primary)",
+                                borderRadius: "4px",
+                              }}
+                            >
+                              <strong
+                                style={{
+                                  display: "block",
+                                  marginBottom: "0.5rem",
+                                }}
+                              >
+                                {q.id}. {q.text}
+                              </strong>
+                              <div style={{ marginBottom: "0.5rem" }}>
+                                Your answer: <strong>{selected}</strong>{" "}
+                                {isCorrect ? "✨" : "❌"}{" "}
+                                {!isCorrect && (
+                                  <span style={{ marginLeft: "0.5rem" }}>
+                                    (Correct:{" "}
+                                    <strong>{q.correct_answer}</strong>)
+                                  </span>
+                                )}
+                              </div>
+                              {q.explanation && (
+                                <div
+                                  style={{
+                                    fontSize: "0.9rem",
+                                    color: "var(--text-secondary)",
+                                    fontStyle: "italic",
+                                    marginTop: "0.5rem",
+                                  }}
+                                >
+                                  Explanation: {q.explanation}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--error-color)",
+                  }}
+                >
+                  Failed to load quiz content.
                 </div>
               )}
             </div>
@@ -242,13 +351,25 @@ function App() {
       <ScheduleModal
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
-        quiz={selectedQuiz}
-        onSuccess={(dateText) => showToast(`Task created successfully for ${dateText}!`)}
+        quiz={selectedQuizMeta}
+        onSuccess={(dateText) =>
+          showToast(`Task created successfully for ${dateText}!`)
+        }
       />
-      
+
       {toastMessage && (
         <div className="toast-notification">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
             <polyline points="22 4 12 14.01 9 11.01"></polyline>
           </svg>

@@ -18,6 +18,8 @@ export default tseslint.config(
       "coverage",
       "eslint.config.js",
       "vite.config.ts",
+      "pnpm-lock.yaml",
+      ".github",
     ],
   },
   {
