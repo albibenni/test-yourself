@@ -31,18 +31,16 @@ export function Sidebar({
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
 
   const flatQuizzes = useMemo(() => {
-    return (
-      Object.entries(groupedQuizzes)
-        .sort(([a], [b]) => a.localeCompare(b))
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .flatMap(([_, quizzes]) => quizzes)
-    );
+    return Object.entries(groupedQuizzes)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .flatMap(([, quizzes]) => quizzes);
   }, [groupedQuizzes]);
 
-  useEffect(() => {
-    // eslint-disable-next-line
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
     setFocusedQuizIndex(0);
-  }, [searchQuery]);
+  }
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (flatQuizzes.length === 0) return;

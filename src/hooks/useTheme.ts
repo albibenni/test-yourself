@@ -10,7 +10,6 @@ export function useTheme() {
 
   useEffect(() => {
     async function loadSettings() {
-      // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
       const store = await load(STORE_FILENAME, { autoSave: false });
       const storedTheme = (await store.get<Theme>("app_theme")) || "system";
       const storedAccent =
@@ -49,7 +48,6 @@ export function useTheme() {
 
   const saveTheme = async (newTheme: Theme) => {
     setTheme(newTheme);
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     await store.set("app_theme", newTheme);
     await store.save();
@@ -57,7 +55,6 @@ export function useTheme() {
 
   const saveAccent = async (newAccent: AccentColor) => {
     setAccent(newAccent);
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     await store.set("app_accent", newAccent);
     await store.save();
@@ -65,7 +62,6 @@ export function useTheme() {
 
   const saveTextColor = async (newTextColor: TextColor) => {
     setTextColor(newTextColor);
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     await store.set("app_text_color", newTextColor);
     await store.save();

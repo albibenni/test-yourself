@@ -86,9 +86,16 @@ export function ScheduleModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
+  const [prevResetParams, setPrevResetParams] = useState({
+    isOpen,
+    quizPath: quiz?.path,
+  });
+  if (
+    isOpen !== prevResetParams.isOpen ||
+    quiz?.path !== prevResetParams.quizPath
+  ) {
+    setPrevResetParams({ isOpen, quizPath: quiz?.path });
     if (isOpen && quiz) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTaskContent(`Review Quiz: ${quiz.title}`);
       setTaskDescription("");
       setShowCalendar(false);
@@ -97,7 +104,11 @@ export function ScheduleModal({
       setShowProjectDropdown(false);
       setShowProjectSelectDropdown(false);
       setShowInfoDropdown(false);
+    }
+  }
 
+  useEffect(() => {
+    if (isOpen && quiz) {
       void getDefaultSettings().then(
         ({ defaultDate, defaultPriority, defaultProject }) => {
           let exactDate = defaultDate;
@@ -143,8 +154,7 @@ export function ScheduleModal({
         },
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, quiz]);
+  }, [isOpen, quiz, getDefaultSettings]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

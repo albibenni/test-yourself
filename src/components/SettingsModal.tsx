@@ -149,13 +149,14 @@ function SettingsSection({
     return saved !== null ? saved === "true" : defaultOpen;
   });
 
-  useEffect(() => {
+  const [prevForceOpen, setPrevForceOpen] = useState(forceOpen);
+  if (forceOpen !== prevForceOpen) {
+    setPrevForceOpen(forceOpen);
     if (forceOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(true);
       localStorage.setItem(`settings_section_${storageKey}`, "true");
     }
-  }, [forceOpen, storageKey]);
+  }
 
   const toggle = () => {
     const newState = !isOpen;
@@ -230,12 +231,14 @@ export function SettingsModal({
   );
   const [appVersion, setAppVersion] = useState<string>("");
 
-  useEffect(() => {
+  const [prevUpdateAvailable, setPrevUpdateAvailable] =
+    useState(updateAvailable);
+  if (updateAvailable !== prevUpdateAvailable) {
+    setPrevUpdateAvailable(updateAvailable);
     if (updateAvailable) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUpdateStatus(`Update v${updateAvailable} is available!`);
     }
-  }, [updateAvailable]);
+  }
 
   useEffect(() => {
     async function fetchVersion() {
@@ -273,8 +276,10 @@ export function SettingsModal({
   useEffect(() => {
     async function fetchSettings() {
       if (isOpen) {
-        // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
-        const store = await load(STORE_FILENAME, { autoSave: false });
+        const store = await load(STORE_FILENAME, {
+          autoSave: false,
+          defaults: {},
+        });
         const secureToken = await getSecureToken("todoist_token");
         const fallbackToken = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
@@ -292,8 +297,8 @@ export function SettingsModal({
         const defPri = await store.get<number>("default_todoist_priority");
         const defProj = await store.get<string>("default_todoist_project");
         if (defDate) setDefaultDate(defDate);
-        if (defPri) setDefaultPriority(defPri);
-        if (defProj) setDefaultProject(defProj);
+        if (defPri !== undefined) setDefaultPriority(defPri);
+        if (defProj !== undefined) setDefaultProject(defProj);
       }
     }
     void fetchSettings();
@@ -332,8 +337,7 @@ export function SettingsModal({
   }, [isOpen, onClose]);
 
   const handleSave = async () => {
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     await setSecureToken("todoist_token", todoistToken);
     await store.set("obsidian_vault", vaultName);
     await store.set("default_todoist_date", defaultDate);

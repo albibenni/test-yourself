@@ -15,7 +15,6 @@ export function useTodoist() {
   const [error, setError] = useState("");
 
   const getProvider = async (): Promise<TaskProvider> => {
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     const token =
       (await getSecureToken("todoist_token")) ||
@@ -28,7 +27,6 @@ export function useTodoist() {
   };
 
   const getVaultName = async () => {
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     return (
       (await store.get<string>("obsidian_vault")) ||
@@ -83,7 +81,6 @@ export function useTodoist() {
   );
 
   const getDefaultSettings = async () => {
-    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
     return {
       defaultDate:
