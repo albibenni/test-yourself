@@ -34,6 +34,30 @@ Explanation: Because math.
 }
 
 #[tokio::test]
+async fn test_italian_solution_format() {
+    let md = "
+### 1. Qual è uno dei presupposti fondamentali?
+* [ ] A) Sbagliata
+* [ ] B) Giusta
+
+## PARTE 2: Soluzioni e Spiegazioni
+
+### Soluzione 1
+* **Risposta corretta**: B
+* **Spiegazione**: Il fondamento del Modello...
+";
+    let quiz = parse_string(md).await.unwrap();
+    assert_eq!(quiz.questions.len(), 1);
+    assert_eq!(quiz.questions[0].id, "1");
+    assert_eq!(quiz.questions[0].options.len(), 2);
+    assert_eq!(quiz.questions[0].correct_answer.as_deref(), Some("B"));
+    assert_eq!(
+        quiz.questions[0].explanation.as_deref(),
+        Some("Il fondamento del Modello...")
+    );
+}
+
+#[tokio::test]
 async fn test_saga_format() {
     let md = "
 **1. Why is Saga preferred?** x

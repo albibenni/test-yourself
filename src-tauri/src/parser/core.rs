@@ -1,8 +1,8 @@
-use super::regexes::{RE_EXPLANATION, RE_OPTION, RE_QUESTION, RE_SOLUTION};
+use super::regexes::{RE_EXPLANATION, RE_OPTION, RE_QUESTION, RE_SOLUTION, RE_SOLUTION_HEADING, RE_CORRECT_ANSWER};
 use crate::models::{Quiz, QuizOption, QuizQuestion};
 
 pub fn update_solution_mode(trimmed_lower: &str, in_heading: bool, in_solutions: &mut bool) {
-    let solution_keywords = ["solution", "answer", "soluzioni", "risposte"];
+    let solution_keywords = ["solution", "answer", "soluzioni", "risposte", "soluzione", "risposta"];
     let contains_solution_kw = solution_keywords
         .iter()
         .any(|&kw| trimmed_lower.contains(kw));
@@ -82,7 +82,7 @@ pub fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
         let raw_text = caps[2].to_string();
 
         let raw_lower = raw_text.to_lowercase();
-        let solution_keywords = ["solution", "answer", "soluzioni", "risposte"];
+        let solution_keywords = ["solution", "answer", "soluzioni", "risposte", "soluzione", "risposta"];
         let is_actually_solution = solution_keywords
             .iter()
             .any(|&kw| raw_lower.starts_with(kw));
@@ -125,6 +125,27 @@ pub fn process_solution_line(
     quiz: &mut Quiz,
     current_solution_id: &mut Option<String>,
 ) {
+    if let Some(caps) = RE_SOLUTION_HEADING.captures(trimmed) {
+        let q_id_val = caps[1].to_string();
+        *current_solution_id = Some(q_id_val);
+        return;
+    }
+
+    if let Some(caps) = RE_CORRECT_ANSWER.captures(trimmed) {
+        let correct_letter_val = caps[1].to_string();
+        if let Some(ref q_id) = current_solution_id {
+            if let Some(q) = quiz
+                .questions
+                .iter_mut()
+                .rev()
+                .find(|q| q.id == *q_id && !q.options.is_empty())
+            {
+                q.correct_answer = Some(correct_letter_val);
+            }
+        }
+        return;
+    }
+
     if let Some(caps) = RE_SOLUTION.captures(trimmed) {
         let q_id_val = &caps[1];
         let correct_letter_val = caps[2].to_string();

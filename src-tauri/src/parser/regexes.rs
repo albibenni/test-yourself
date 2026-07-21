@@ -12,3 +12,7 @@ pub static RE_EXPLANATION: LazyLock<Regex> = LazyLock::new(|| {
 });
 pub static RE_INLINE_ANSWERS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(\d+)\s*[-:]\s*([A-D])").unwrap());
+pub static RE_SOLUTION_HEADING: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:Soluzione|Solution|Answer|Risposta)\s*(\d+)$").unwrap());
+pub static RE_CORRECT_ANSWER: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:Risposta corretta|Correct answer|Answer|Risposta)\s*[:\-]?\s*([A-D])\b").unwrap());

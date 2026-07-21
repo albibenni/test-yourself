@@ -169,6 +169,19 @@ export function Sidebar({
             ))
         )}
       </div>
+      <hr className="sidebar-divider" />
+      <div 
+        className="sidebar-footer" 
+        style={{ 
+          padding: '0.75rem 1.5rem', 
+          fontSize: '0.8125rem', 
+          color: 'var(--text-secondary)',
+          textAlign: 'center',
+          backgroundColor: 'color-mix(in srgb, var(--text-primary) 2%, transparent)'
+        }}
+      >
+        {flatQuizzes.length} {flatQuizzes.length === 1 ? 'quiz' : 'quizzes'}
+      </div>
     </aside>
   );
 }
