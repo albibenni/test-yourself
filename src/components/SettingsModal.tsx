@@ -232,9 +232,41 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>Settings</h2>
+    <>
+      <div className="settings-sidebar-overlay" onClick={onClose} />
+      <div className="settings-sidebar">
+        <div className="settings-sidebar-content">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>Settings</h2>
+            <button 
+              onClick={onClose} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-secondary)', 
+                cursor: 'pointer', 
+                padding: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '0.25rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--text-primary) 10%, transparent)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+              aria-label="Close settings"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         <div className="form-group">
           <label>Todoist API Token</label>
           <input
@@ -402,7 +434,8 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
             Save
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
