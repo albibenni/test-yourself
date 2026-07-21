@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { check } from "@tauri-apps/plugin-updater";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -21,6 +22,23 @@ function App() {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkForUpdates() {
+      try {
+        const update = await check();
+        if (update) {
+          setUpdateVersion(update.version);
+          showToast(`Update v${update.version} is available!`);
+        }
+      } catch (e) {
+        // silently ignore update check failures on startup
+      }
+    }
+    void checkForUpdates();
+  }, []);
 
   const {
     loading,
@@ -53,6 +71,7 @@ function App() {
         setIsSidebarOpen={setIsSidebarOpen}
         selectFolder={() => void selectFolder()}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        hasUpdate={!!updateVersion}
       />
 
       <div className="app-container">
@@ -218,6 +237,7 @@ function App() {
         onThemeChange={saveTheme}
         onAccentChange={saveAccent}
         onTextColorChange={saveTextColor}
+        updateAvailable={updateVersion}
       />
       <ScheduleModal
         isOpen={isScheduleOpen}

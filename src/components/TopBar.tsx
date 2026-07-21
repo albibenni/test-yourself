@@ -6,6 +6,7 @@ interface TopBarProps {
   setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
   selectFolder: () => void;
   onOpenSettings: () => void;
+  hasUpdate?: boolean;
 }
 
 export function TopBar({
@@ -13,6 +14,7 @@ export function TopBar({
   setIsSidebarOpen,
   selectFolder,
   onOpenSettings,
+  hasUpdate,
 }: TopBarProps) {
   return (
     <div className="top-bar" data-tauri-drag-region>
@@ -68,7 +70,16 @@ export function TopBar({
         onClick={onOpenSettings}
         data-hint="Settings"
         aria-label="Settings"
+        style={{ position: 'relative' }}
       >
+        {hasUpdate && (
+          <span 
+            style={{ 
+              position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', 
+              backgroundColor: 'var(--error-color, #ef4444)', borderRadius: '50%', boxShadow: '0 0 0 2px var(--bg-color)' 
+            }} 
+          />
+        )}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"

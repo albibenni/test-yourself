@@ -21,6 +21,7 @@ interface SettingsModalProps {
   onThemeChange: (theme: any) => void;
   onAccentChange: (accent: any) => void;
   onTextColorChange: (textColor: any) => void;
+  updateAvailable?: string | null;
 }
 
 interface CustomSelectProps {
@@ -124,7 +125,7 @@ function SettingsSection({ title, defaultOpen = true, children }: { title: strin
   );
 }
 
-export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThemeChange, onAccentChange, onTextColorChange }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThemeChange, onAccentChange, onTextColorChange, updateAvailable }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
   
@@ -133,8 +134,14 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
   const [defaultProject, setDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState("");
+  const [updateStatus, setUpdateStatus] = useState(updateAvailable ? `Update v${updateAvailable} is available!` : "");
   const [appVersion, setAppVersion] = useState<string>("");
+
+  useEffect(() => {
+    if (updateAvailable) {
+      setUpdateStatus(`Update v${updateAvailable} is available!`);
+    }
+  }, [updateAvailable]);
 
   useEffect(() => {
     async function fetchVersion() {
@@ -440,21 +447,21 @@ export function SettingsModal({ isOpen, onClose, theme, accent, textColor, onThe
           </div>
         </SettingsSection>
 
-        <SettingsSection title="About" defaultOpen={false}>
+        <SettingsSection title="About" defaultOpen={!!updateAvailable}>
           <div className="form-group">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <label>App Updates {appVersion && <span style={{ fontSize: "0.8em", color: "var(--text-secondary)", marginLeft: "0.5rem", fontWeight: "normal" }}>(v{appVersion})</span>}</label>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                <div style={{ fontSize: "0.75rem", color: updateAvailable ? "var(--accent-color)" : "var(--text-secondary)", fontWeight: updateAvailable ? 600 : "normal" }}>
                   {updateStatus || "Check for new versions of Test Yourself."}
                 </div>
               </div>
               <button
                 className="button-secondary"
                 onClick={() => void handleCheckUpdate()}
-                disabled={!!updateStatus && updateStatus !== "App is up to date!" && !updateStatus.startsWith("Failed")}
+                disabled={!!updateStatus && updateStatus !== "App is up to date!" && !updateStatus.startsWith("Update v") && !updateStatus.startsWith("Failed")}
               >
-                Check for Updates
+                {updateAvailable || updateStatus.startsWith("Update v") ? "Install Update" : "Check for Updates"}
               </button>
             </div>
           </div>
