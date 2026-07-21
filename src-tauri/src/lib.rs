@@ -42,6 +42,20 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_stronghold::Builder::new(|password| {
+            use argon2::{hash_raw, Config, Variant, Version};
+            let config = Config {
+                lanes: 4,
+                mem_cost: 10_000,
+                time_cost: 10,
+                variant: Variant::Argon2id,
+                version: Version::Version13,
+                ..Default::default()
+            };
+            let salt = b"test-yourself-secure-salt";
+            let key = hash_raw(password.as_ref(), salt, &config).expect("failed to hash password");
+            key.to_vec()
+        }).build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![

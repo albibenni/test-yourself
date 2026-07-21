@@ -88,6 +88,7 @@ export function ScheduleModal({
 
   useEffect(() => {
     if (isOpen && quiz) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTaskContent(`Review Quiz: ${quiz.title}`);
       setTaskDescription("");
       setShowCalendar(false);
@@ -142,6 +143,7 @@ export function ScheduleModal({
         },
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, quiz]);
 
   useEffect(() => {
@@ -182,7 +184,6 @@ export function ScheduleModal({
         })
         .catch(console.error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, getProjects, getTasks, setError]);
 
   const handleSchedule = async () => {

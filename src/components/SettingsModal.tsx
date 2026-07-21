@@ -3,10 +3,11 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { getVersion } from "@tauri-apps/api/app";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
-import { TodoistApi } from "@doist/todoist-sdk";
+import { TodoistProvider } from "../providers/TodoistProvider";
 import { check } from "@tauri-apps/plugin-updater";
 import { STORE_FILENAME } from "../constants";
 import type { ThemeType, TextColor, AccentColor } from "../types";
+import { getSecureToken, setSecureToken } from "../utils/secureStore";
 
 interface Project {
   id: string;
@@ -274,11 +275,17 @@ export function SettingsModal({
       if (isOpen) {
         // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
         const store = await load(STORE_FILENAME, { autoSave: false });
-        const token = await store.get<string>("todoist_token");
+        const secureToken = await getSecureToken("todoist_token");
+        const fallbackToken = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
 
         // Fallback to localStorage for backward compatibility initially
-        setTodoistToken(token || localStorage.getItem("todoist_token") || "");
+        setTodoistToken(
+          secureToken ||
+            fallbackToken ||
+            localStorage.getItem("todoist_token") ||
+            "",
+        );
         setVaultName(vault || localStorage.getItem("obsidian_vault") || "");
 
         const defDate = await store.get<string>("default_todoist_date");
@@ -297,11 +304,8 @@ export function SettingsModal({
       if (!todoistToken || !isOpen) return;
       setLoadingProjects(true);
       try {
-        const api = new TodoistApi(todoistToken);
-        const response = await api.getProjects();
-        // The API might return { results: Project[] } or Project[] directly depending on the SDK version
-        const data = response as unknown as { results?: Project[] } | Project[];
-        const projs = Array.isArray(data) ? data : data.results || [];
+        const provider = new TodoistProvider(todoistToken);
+        const projs = await provider.getProjects();
         setProjects(projs);
       } catch (err) {
         console.error("Failed to fetch projects for settings", err);
@@ -330,11 +334,13 @@ export function SettingsModal({
   const handleSave = async () => {
     // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
     const store = await load(STORE_FILENAME, { autoSave: false });
-    await store.set("todoist_token", todoistToken);
+    await setSecureToken("todoist_token", todoistToken);
     await store.set("obsidian_vault", vaultName);
     await store.set("default_todoist_date", defaultDate);
     await store.set("default_todoist_priority", defaultPriority);
     await store.set("default_todoist_project", defaultProject);
+    // Clean up old unencrypted token
+    await store.delete("todoist_token");
     await store.save();
 
     // Clean up old unencrypted localStorage if present

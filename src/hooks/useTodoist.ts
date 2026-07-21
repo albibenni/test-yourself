@@ -1,62 +1,35 @@
 import { useState, useCallback } from "react";
-import { TodoistApi, type AddTaskArgs } from "@doist/todoist-sdk";
 import { load } from "@tauri-apps/plugin-store";
-import { z } from "zod";
 import { STORE_FILENAME } from "../constants";
-
-export const ProjectSchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-  })
-  .passthrough();
-
-export type Project = z.infer<typeof ProjectSchema>;
-
-const ProjectsResponseSchema = z.union([
-  z.object({ results: z.array(ProjectSchema) }).transform((val) => val.results),
-  z.array(ProjectSchema),
-]);
-
-export const TaskSchema = z
-  .object({
-    id: z.string(),
-    content: z.string(),
-    due: z
-      .object({
-        date: z.string(),
-      })
-      .nullable()
-      .optional(),
-  })
-  .passthrough();
-
-export type Task = z.infer<typeof TaskSchema>;
-
-const TasksResponseSchema = z.union([
-  z.object({ results: z.array(TaskSchema) }).transform((val) => val.results),
-  z.array(TaskSchema),
-]);
+import { TodoistProvider } from "../providers/TodoistProvider";
+import type {
+  TaskProvider,
+  Task,
+  Project,
+  AddTaskArgs,
+} from "../providers/TaskProvider";
+import { getSecureToken } from "../utils/secureStore";
 
 export function useTodoist() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getApi = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false } as any);
+  const getProvider = async (): Promise<TaskProvider> => {
+    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
+    const store = await load(STORE_FILENAME, { autoSave: false });
     const token =
+      (await getSecureToken("todoist_token")) ||
       (await store.get<string>("todoist_token")) ||
       localStorage.getItem("todoist_token");
     if (!token) {
-      throw new Error(
-        "Missing Todoist token. Please configure it in settings.",
-      );
+      throw new Error("Missing API token. Please configure it in settings.");
     }
-    return new TodoistApi(token);
+    return new TodoistProvider(token);
   };
 
   const getVaultName = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false } as any);
+    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
+    const store = await load(STORE_FILENAME, { autoSave: false });
     return (
       (await store.get<string>("obsidian_vault")) ||
       localStorage.getItem("obsidian_vault") ||
@@ -68,12 +41,10 @@ export function useTodoist() {
     setLoading(true);
     setError("");
     try {
-      const api = await getApi();
-      const response = await api.getProjects();
-      const parsed = ProjectsResponseSchema.parse(response);
-      return parsed;
+      const provider = await getProvider();
+      return await provider.getProjects();
     } catch (err: unknown) {
-      setError("Failed to fetch Todoist projects. Check your token.");
+      setError("Failed to fetch projects. Check your token.");
       throw err;
     } finally {
       setLoading(false);
@@ -84,12 +55,10 @@ export function useTodoist() {
     setLoading(true);
     setError("");
     try {
-      const api = await getApi();
-      const response = await api.getTasks();
-      const parsed = TasksResponseSchema.parse(response);
-      return parsed;
+      const provider = await getProvider();
+      return await provider.getTasks();
     } catch (err: unknown) {
-      setError("Failed to fetch Todoist tasks.");
+      setError("Failed to fetch tasks.");
       throw err;
     } finally {
       setLoading(false);
@@ -101,9 +70,8 @@ export function useTodoist() {
       setLoading(true);
       setError("");
       try {
-        const api = await getApi();
-        const response = await api.addTask(taskDetails);
-        return TaskSchema.parse(response);
+        const provider = await getProvider();
+        return await provider.addTask(taskDetails);
       } catch (err: unknown) {
         setError("Failed to create task.");
         throw err;
@@ -115,7 +83,8 @@ export function useTodoist() {
   );
 
   const getDefaultSettings = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false } as any);
+    // @ts-expect-error - Tauri plugin-store LoadOptions types are sometimes incomplete
+    const store = await load(STORE_FILENAME, { autoSave: false });
     return {
       defaultDate:
         (await store.get<string>("default_todoist_date")) || "tomorrow",
