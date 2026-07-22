@@ -24,6 +24,7 @@ interface SettingsModalProps {
   onAccentChange: (accent: AccentColor) => void;
   onTextColorChange: (textColor: TextColor) => void;
   updateAvailable?: string | null;
+  onSaveSuccess?: () => void;
 }
 
 interface CustomSelectProps<T extends string | number> {
@@ -220,8 +221,10 @@ export function SettingsModal({
   onAccentChange,
   onTextColorChange,
   updateAvailable,
+  onSaveSuccess,
 }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
+  const [initialTodoistToken, setInitialTodoistToken] = useState("");
   const [vaultName, setVaultName] = useState("");
 
   const [defaultDate, setDefaultDate] = useState("tomorrow");
@@ -233,6 +236,7 @@ export function SettingsModal({
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
   );
   const [appVersion, setAppVersion] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const [prevUpdateAvailable, setPrevUpdateAvailable] =
     useState(updateAvailable);
@@ -288,12 +292,13 @@ export function SettingsModal({
         const vault = await store.get<string>("obsidian_vault");
 
         // Fallback to window.localStorage for backward compatibility initially
-        setTodoistToken(
+        const loadedToken =
           secureToken ||
-            fallbackToken ||
-            window.localStorage.getItem("todoist_token") ||
-            "",
-        );
+          fallbackToken ||
+          window.localStorage.getItem("todoist_token") ||
+          "";
+        setTodoistToken(loadedToken);
+        setInitialTodoistToken(loadedToken);
         setVaultName(
           vault || window.localStorage.getItem("obsidian_vault") || "",
         );
@@ -342,21 +347,44 @@ export function SettingsModal({
   }, [isOpen, onClose]);
 
   const handleSave = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
-    await setSecureToken("todoist_token", todoistToken);
-    await store.set("obsidian_vault", vaultName);
-    await store.set("default_todoist_date", defaultDate);
-    await store.set("default_todoist_priority", defaultPriority);
-    await store.set("default_todoist_project", defaultProject);
-    // Clean up old unencrypted token
-    await store.delete("todoist_token");
-    await store.save();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const store = await load(STORE_FILENAME, {
+        autoSave: false,
+        defaults: {},
+      });
+      try {
+        if (todoistToken !== initialTodoistToken) {
+          await setSecureToken("todoist_token", todoistToken);
+          setInitialTodoistToken(todoistToken);
+        }
+        // Clean up old unencrypted token if secure store worked
+        await store.delete("todoist_token");
+      } catch (err) {
+        console.warn(
+          "Secure store unavailable (might need app update). Falling back to standard store.",
+          err,
+        );
+        await store.set("todoist_token", todoistToken);
+      }
+      await store.set("obsidian_vault", vaultName);
+      await store.set("default_todoist_date", defaultDate);
+      await store.set("default_todoist_priority", defaultPriority);
+      await store.set("default_todoist_project", defaultProject);
+      await store.save();
 
-    // Clean up old unencrypted window.localStorage if present
-    window.localStorage.removeItem("todoist_token");
-    window.localStorage.removeItem("obsidian_vault");
+      // Clean up old unencrypted window.localStorage if present
+      window.localStorage.removeItem("todoist_token");
+      window.localStorage.removeItem("obsidian_vault");
 
-    onClose();
+      onSaveSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to save settings", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const selectVaultFolder = async () => {
@@ -664,11 +692,19 @@ export function SettingsModal({
         </div>
 
         <div className="settings-sidebar-footer">
-          <button className="button-secondary" onClick={onClose}>
+          <button
+            className="button-secondary"
+            onClick={onClose}
+            disabled={isSaving}
+          >
             Cancel
           </button>
-          <button className="button-primary" onClick={() => void handleSave()}>
-            Save
+          <button
+            className="button-primary"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

@@ -395,6 +395,7 @@ function App() {
         theme={theme}
         accent={accent}
         textColor={textColor}
+        onSaveSuccess={() => showToast("Settings saved!")}
         onThemeChange={(val) => {
           void saveTheme(val);
         }}

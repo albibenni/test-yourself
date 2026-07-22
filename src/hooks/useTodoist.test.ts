@@ -136,8 +136,8 @@ describe("useTodoist hook", () => {
     let newTask;
     await act(async () => {
       newTask = await result.current.addTask({
-        title: "New task",
-        date: "today",
+        content: "New task",
+        dueString: "today",
       });
     });
 

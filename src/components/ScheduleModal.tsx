@@ -168,6 +168,8 @@ export function ScheduleModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const [isScheduling, setIsScheduling] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       setError("");
@@ -176,7 +178,6 @@ export function ScheduleModal({
         .then((projs) => {
           setProjects(projs);
           if (projs.length > 0) {
-            // Only set default to Inbox if we haven't already set it from presets
             setSelectedProjectId((prev) => prev || projs[0].id);
           }
         })
@@ -197,7 +198,8 @@ export function ScheduleModal({
   }, [isOpen, getProjects, getTasks, setError]);
 
   const handleSchedule = async () => {
-    if (!quiz) return;
+    if (!quiz || isScheduling) return;
+    setIsScheduling(true);
     setError("");
 
     try {
@@ -234,8 +236,9 @@ export function ScheduleModal({
       onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
       onClose();
     } catch (err) {
-      // Error is handled in the hook, but we can catch to prevent unhandled rejection
       console.error(err);
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -735,9 +738,9 @@ export function ScheduleModal({
             <button
               className="button-primary"
               onClick={() => void handleSchedule()}
-              disabled={loading || !!error}
+              disabled={isScheduling || !!error}
             >
-              {loading ? "Adding..." : "Add Task"}
+              {isScheduling ? "Adding..." : "Add Task"}
             </button>
           </div>
         </div>
