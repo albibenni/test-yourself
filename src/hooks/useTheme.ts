@@ -10,7 +10,10 @@ export function useTheme() {
 
   useEffect(() => {
     async function loadSettings() {
-      const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+      const store = await load(STORE_FILENAME, {
+        autoSave: false,
+        defaults: {},
+      });
       const storedTheme = (await store.get<Theme>("app_theme")) || "system";
       const storedAccent =
         (await store.get<AccentColor>("app_accent")) || "blue";

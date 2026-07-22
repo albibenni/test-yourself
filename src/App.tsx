@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
@@ -62,12 +62,16 @@ function App() {
     path: selectedQuizMeta?.path,
     key: resetKey,
   });
+
+  const [visibleCount, setVisibleCount] = useState(10);
+
   if (
     selectedQuizMeta?.path !== prevResetParams.path ||
     resetKey !== prevResetParams.key
   ) {
     setPrevResetParams({ path: selectedQuizMeta?.path, key: resetKey });
     setAnswers({});
+    setVisibleCount(10);
   }
 
   const totalQuestions = activeQuiz?.questions.length || 0;
@@ -76,6 +80,20 @@ function App() {
   const correctCount =
     activeQuiz?.questions.filter((q) => answers[q.id] === q.correct_answer)
       .length || 0;
+
+  const observer = useRef<IntersectionObserver>(null);
+  const lastQuestionElementRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 10, totalQuestions));
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [totalQuestions],
+  );
 
   return (
     <div className="app-wrapper">
@@ -228,15 +246,41 @@ function App() {
               ) : activeQuiz ? (
                 <>
                   <div className="questions-container">
-                    {activeQuiz.questions.map((q) => (
-                      <QuestionCard
-                        key={`${activeQuiz.path}-${q.id}-${resetKey}`}
-                        question={q}
-                        onAnswer={(_isCorrect, letter) =>
-                          setAnswers((prev) => ({ ...prev, [q.id]: letter }))
+                    {activeQuiz.questions
+                      .slice(0, visibleCount)
+                      .map((q, index) => {
+                        if (index === visibleCount - 1) {
+                          return (
+                            <div
+                              ref={lastQuestionElementRef}
+                              key={`${activeQuiz.path}-${q.id}-${resetKey}-wrapper`}
+                            >
+                              <QuestionCard
+                                key={`${activeQuiz.path}-${q.id}-${resetKey}`}
+                                question={q}
+                                onAnswer={(_isCorrect, letter) =>
+                                  setAnswers((prev) => ({
+                                    ...prev,
+                                    [q.id]: letter,
+                                  }))
+                                }
+                              />
+                            </div>
+                          );
                         }
-                      />
-                    ))}
+                        return (
+                          <QuestionCard
+                            key={`${activeQuiz.path}-${q.id}-${resetKey}`}
+                            question={q}
+                            onAnswer={(_isCorrect, letter) =>
+                              setAnswers((prev) => ({
+                                ...prev,
+                                [q.id]: letter,
+                              }))
+                            }
+                          />
+                        );
+                      })}
                   </div>
 
                   {isAllAnswered && (
