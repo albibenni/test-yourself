@@ -142,8 +142,8 @@ export function ScheduleModal({
           else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
           else if (defaultDate === "in 7 days" || defaultDate === "next week")
             setDueDateText("Next Week");
-          else if (defaultDate === "in 14 days" || defaultDate === "in 2 weeks")
-            setDueDateText("In 2 Weeks");
+          else if (defaultDate === "in 30 days" || defaultDate === "next month")
+            setDueDateText("Next Month");
           else setDueDateText(defaultDate);
 
           setTimeout(() => {

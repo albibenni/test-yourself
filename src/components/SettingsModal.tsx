@@ -511,7 +511,7 @@ export function SettingsModal({
                   { label: "Today", value: "today" },
                   { label: "Tomorrow", value: "tomorrow" },
                   { label: "Next Week (7 days)", value: "in 7 days" },
-                  { label: "In 2 Weeks (14 days)", value: "in 14 days" },
+                  { label: "Next Month (30 days)", value: "in 30 days" },
                 ]}
               />
             </div>
