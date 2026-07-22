@@ -112,4 +112,93 @@ describe("useTodoist hook", () => {
     );
     expect(result.current.loading).toBe(false);
   });
+
+  it("fetches tasks successfully using the provider", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+
+    const { result } = renderHook(() => useTodoist());
+
+    let tasks;
+    await act(async () => {
+      tasks = await result.current.getTasks();
+    });
+
+    expect(tasks).toEqual([]);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe("");
+  });
+
+  it("adds a task successfully using the provider", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+
+    const { result } = renderHook(() => useTodoist());
+
+    let newTask;
+    await act(async () => {
+      newTask = await result.current.addTask({
+        title: "New task",
+        date: "today",
+      });
+    });
+
+    expect(newTask).toEqual({ id: "2", content: "New task" });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe("");
+  });
+
+  it("gets the vault name correctly from store, then local storage, then fallback", async () => {
+    // 1. From store
+    mockStoreGet.mockImplementation(async (key: string) => {
+      if (key === "obsidian_vault") return "StoreVault";
+      return null;
+    });
+
+    const { result } = renderHook(() => useTodoist());
+
+    let vaultName;
+    await act(async () => {
+      vaultName = await result.current.getVaultName();
+    });
+    expect(vaultName).toBe("StoreVault");
+
+    // 2. From localStorage
+    mockStoreGet.mockResolvedValue(null);
+    vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
+      k === "obsidian_vault" ? "LocalVault" : null,
+    );
+
+    await act(async () => {
+      vaultName = await result.current.getVaultName();
+    });
+    expect(vaultName).toBe("LocalVault");
+
+    // 3. Fallback
+    vi.mocked(window.localStorage.getItem).mockReturnValue(null);
+    await act(async () => {
+      vaultName = await result.current.getVaultName();
+    });
+    expect(vaultName).toBe("Vault");
+  });
+
+  it("gets default settings correctly from the store", async () => {
+    mockStoreGet.mockImplementation(async (key: string) => {
+      if (key === "default_todoist_date") return "today";
+      if (key === "default_todoist_priority") return 2;
+      if (key === "default_todoist_project") return "proj_123";
+      return null;
+    });
+
+    const { result } = renderHook(() => useTodoist());
+
+    let settings;
+    await act(async () => {
+      settings = await result.current.getDefaultSettings();
+    });
+
+    expect(settings).toEqual({
+      defaultDate: "today",
+      defaultPriority: 2,
+      defaultProject: "proj_123",
+    });
+  });
 });
