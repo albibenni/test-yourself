@@ -34,7 +34,7 @@ export function useQuizzes() {
   useEffect(() => {
     async function initStore() {
       try {
-        const store = await load(STORE_FILENAME, { autoSave: false });
+        const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
         setStoreInstance(store);
 
         const localPath = window.localStorage.getItem(STORE_KEY_BASE_PATH);

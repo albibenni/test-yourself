@@ -15,7 +15,7 @@ export function useTodoist() {
   const [error, setError] = useState("");
 
   const getProvider = async (): Promise<TaskProvider> => {
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     const token =
       (await getSecureToken("todoist_token")) ||
       (await store.get<string>("todoist_token")) ||
@@ -27,7 +27,7 @@ export function useTodoist() {
   };
 
   const getVaultName = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     return (
       (await store.get<string>("obsidian_vault")) ||
       window.localStorage.getItem("obsidian_vault") ||
@@ -81,7 +81,7 @@ export function useTodoist() {
   );
 
   const getDefaultSettings = async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     return {
       defaultDate:
         (await store.get<string>("default_todoist_date")) || "tomorrow",

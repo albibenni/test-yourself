@@ -10,7 +10,7 @@ export function useTheme() {
 
   useEffect(() => {
     async function loadSettings() {
-      const store = await load(STORE_FILENAME, { autoSave: false });
+      const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
       const storedTheme = (await store.get<Theme>("app_theme")) || "system";
       const storedAccent =
         (await store.get<AccentColor>("app_accent")) || "blue";
@@ -48,21 +48,21 @@ export function useTheme() {
 
   const saveTheme = async (newTheme: Theme) => {
     setTheme(newTheme);
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     await store.set("app_theme", newTheme);
     await store.save();
   };
 
   const saveAccent = async (newAccent: AccentColor) => {
     setAccent(newAccent);
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     await store.set("app_accent", newAccent);
     await store.save();
   };
 
   const saveTextColor = async (newTextColor: TextColor) => {
     setTextColor(newTextColor);
-    const store = await load(STORE_FILENAME, { autoSave: false });
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     await store.set("app_text_color", newTextColor);
     await store.save();
   };
