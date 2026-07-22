@@ -446,6 +446,15 @@ export function ScheduleModal({
     setTaskContent((prev) => prev.replace(/#\S*$/, "").trim() + " ");
   };
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!loading && !error) {
+        void handleSchedule();
+      }
+    }
+  };
+
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(projectSearchQuery),
   );
@@ -474,6 +483,7 @@ export function ScheduleModal({
             className="quick-add-input"
             value={taskContent}
             onChange={handleContentChange}
+            onKeyDown={handleInputKeyDown}
             placeholder="Task name"
             rows={1}
             style={{ resize: "none", overflow: "hidden" }}
@@ -482,6 +492,7 @@ export function ScheduleModal({
             className="quick-add-input quick-add-desc"
             value={taskDescription}
             onChange={(e) => setTaskDescription(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder="Description"
             rows={1}
             style={{ fontSize: "13px", color: "#ccc", resize: "none" }}
