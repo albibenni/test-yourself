@@ -189,4 +189,71 @@ describe("SettingsModal", () => {
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
   });
+
+  it("falls back to standard store if secure store throws an error", async () => {
+    vi.mocked(setSecureToken).mockRejectedValue(
+      new Error("Secure store disabled"),
+    );
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
+
+    const tokenInput = screen.getByPlaceholderText(
+      "Enter your Todoist API token",
+    );
+    fireEvent.change(tokenInput, { target: { value: "new-token-123" } });
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      // Secure store was called but failed
+      expect(setSecureToken).toHaveBeenCalledWith(
+        "todoist_token",
+        "new-token-123",
+      );
+      // Fallback: the token should be saved to the standard store
+      expect(mockStore.set).toHaveBeenCalledWith(
+        "todoist_token",
+        "new-token-123",
+      );
+      expect(mockStore.save).toHaveBeenCalled();
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("handles save failure gracefully and resets isSaving state", async () => {
+    // Force the main store.save to reject
+    mockStore.save.mockRejectedValue(new Error("Disk write error"));
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      // It should log the error
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to save settings",
+        expect.any(Error),
+      );
+      // The modal should NOT close because it failed
+      expect(defaultProps.onClose).not.toHaveBeenCalled();
+      // The button should be re-enabled and text restored
+      expect(saveButton).toHaveTextContent("Save");
+      expect(saveButton).not.toBeDisabled();
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });
