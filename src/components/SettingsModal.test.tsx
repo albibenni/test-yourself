@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SettingsModal } from "./SettingsModal";
@@ -115,6 +115,78 @@ describe("SettingsModal", () => {
     await waitFor(() => {
       expect(open).toHaveBeenCalledWith({ directory: true, multiple: false });
       expect(screen.getByDisplayValue("MyVault")).toBeInTheDocument();
+    });
+  });
+
+  it("does not call setSecureToken if the token has not changed", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue("existing-secure-token"),
+      ).toBeInTheDocument();
+    });
+
+    // Change another setting (e.g., Vault Name)
+    const browseBtn = screen.getByRole("button", { name: "Browse..." });
+    vi.mocked(open).mockResolvedValue("/new/mock/MyVault");
+    fireEvent.click(browseBtn);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("MyVault")).toBeInTheDocument();
+    });
+
+    // Save
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      // The token wasn't modified, so setSecureToken should NOT be called
+      expect(setSecureToken).not.toHaveBeenCalled();
+      expect(mockStore.set).toHaveBeenCalledWith("obsidian_vault", "MyVault");
+      expect(mockStore.save).toHaveBeenCalled();
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("prevents multiple concurrent saves while saving is in progress", async () => {
+    // Make store.save take some time to simulate async delay
+    let resolveSave: (value: unknown) => void;
+    mockStore.save.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+
+    // Click save 3 times rapidly
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+
+    // The button should show "Saving..." and be disabled
+    expect(saveButton).toHaveTextContent("Saving...");
+    expect(saveButton).toBeDisabled();
+
+    // Verify store.save was only called once
+    await waitFor(() => {
+      expect(mockStore.save).toHaveBeenCalledTimes(1);
+    });
+
+    // Resolve the save
+    resolveSave!(true);
+
+    await waitFor(() => {
+      expect(defaultProps.onClose).toHaveBeenCalled();
     });
   });
 });
