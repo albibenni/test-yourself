@@ -116,4 +116,44 @@ describe("ScheduleModal", () => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
   });
+
+  it("does not reset the date when typing '1w' and then hitting Enter", async () => {
+    // To properly simulate the bug where useTodoist might return a new instance of getDefaultSettings on re-render
+    // we could dynamically return a new mock, but the main goal is to test the '1w' parsing and submit.
+    render(<ScheduleModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(mockGetDefaultSettings).toHaveBeenCalled();
+    });
+
+    const input = screen.getByPlaceholderText("Task name");
+
+    fireEvent.change(input, {
+      target: { value: "Review Quiz: React Basics 1w " },
+    });
+
+    // "1w" should be removed from the value due to parsing
+    expect(
+      screen.getByDisplayValue("Review Quiz: React Basics"),
+    ).toBeInTheDocument();
+
+    // Check if UI reflects In 1 Week
+    expect(screen.getByText("In 1 Week")).toBeInTheDocument();
+
+    // Simulate Enter press
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter", charCode: 13 });
+
+    await waitFor(() => {
+      expect(mockAddTask).toHaveBeenCalled();
+    });
+
+    const addTaskCall = mockAddTask.mock.calls[0][0];
+    
+    // Calculate expected date (7 days from now)
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    const expectedDateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    expect(addTaskCall.dueString).toBe(expectedDateString);
+  });
 });
