@@ -323,3 +323,60 @@ impl<'a> QuizParser<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_inline_options_unicode_boundaries() {
+        // Test with emojis and multi-byte characters to ensure string slicing doesn't panic
+        let raw_text = "A) 👨‍👩‍👧‍👦 Family B) 🌍 Earth C) 🚀 Space D) 🦀 Rust";
+        let (question_text, options) = parse_inline_options(raw_text);
+        
+        assert_eq!(question_text, "");
+        assert_eq!(options.len(), 4);
+        assert_eq!(options[0].letter, "A");
+        assert_eq!(options[0].text, "👨‍👩‍👧‍👦 Family");
+        assert_eq!(options[1].letter, "B");
+        assert_eq!(options[1].text, "🌍 Earth");
+        assert_eq!(options[2].letter, "C");
+        assert_eq!(options[2].text, "🚀 Space");
+        assert_eq!(options[3].letter, "D");
+        assert_eq!(options[3].text, "🦀 Rust");
+
+        // Edge case: boundaries right on the edge of multi-byte chars
+        let edge_text = "A) 💡 B) 🦀";
+        let (q_text, opts) = parse_inline_options(edge_text);
+        assert_eq!(q_text, "");
+        assert_eq!(opts.len(), 2);
+        assert_eq!(opts[0].text, "💡");
+        assert_eq!(opts[1].text, "🦀");
+    }
+
+    #[test]
+    fn test_parse_inline_options_malformed() {
+        // No options
+        let raw_text = "This is just a normal sentence without any options.";
+        let (text, options) = parse_inline_options(raw_text);
+        assert_eq!(text, raw_text);
+        assert!(options.is_empty());
+
+        // Options without proper spacing
+        let tight_text = "A)Apple B)Banana";
+        let (text2, options2) = parse_inline_options(tight_text);
+        assert_eq!(text2, tight_text);
+        assert!(options2.is_empty());
+    }
+
+    #[test]
+    fn test_update_solution_mode_switches() {
+        let mut in_solutions = false;
+        
+        update_solution_mode("## solutions", true, &mut in_solutions);
+        assert!(in_solutions);
+
+        update_solution_mode("## some quiz text", true, &mut in_solutions);
+        assert!(!in_solutions); // flipped back to false because of "quiz"
+    }
+}
