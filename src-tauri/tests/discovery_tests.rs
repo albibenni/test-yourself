@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
-use tauri_app_lib::parser::discovery::get_all_quizzes;
+use std::path::Path;
+use tauri_app_lib::parser::discovery::{find_markdown_files, get_all_quizzes};
 use tempfile::tempdir;
 
 #[tokio::test]
@@ -86,4 +87,61 @@ async fn test_discovery_handles_symlink_loops() {
     
     assert_eq!(quizzes.len(), 1);
     assert_eq!(quizzes[0].title, "React");
+}
+
+#[test]
+fn test_finds_only_markdown_files() {
+    let dir = tempdir().unwrap();
+    let base = dir.path();
+
+    File::create(base.join("test.md")).unwrap();
+    File::create(base.join("test.txt")).unwrap();
+    std::fs::create_dir(base.join("dir.md")).unwrap();
+
+    let canonical_base = std::fs::canonicalize(base).unwrap();
+    let files = find_markdown_files(&canonical_base);
+
+    assert_eq!(files.len(), 1);
+    assert_eq!(files[0].0.file_name().unwrap(), "test.md");
+    assert_eq!(files[0].1, "");
+}
+
+#[test]
+fn test_extracts_topic_correctly() {
+    let dir = tempdir().unwrap();
+    let base = dir.path();
+
+    let topic_dir = base.join("Frontend").join("React");
+    std::fs::create_dir_all(&topic_dir).unwrap();
+    File::create(topic_dir.join("hooks.md")).unwrap();
+
+    let canonical_base = std::fs::canonicalize(base).unwrap();
+    let files = find_markdown_files(&canonical_base);
+
+    assert_eq!(files.len(), 1);
+    assert_eq!(files[0].0.file_name().unwrap(), "hooks.md");
+
+    let expected_topic = Path::new("Frontend")
+        .join("React")
+        .to_string_lossy()
+        .into_owned();
+    assert_eq!(files[0].1, expected_topic);
+}
+
+#[test]
+#[cfg(unix)]
+fn test_ignores_symlink_outside_safe_boundary() {
+    use std::os::unix::fs::symlink;
+    let safe_dir = tempdir().unwrap();
+    let unsafe_dir = tempdir().unwrap();
+
+    File::create(unsafe_dir.path().join("evil.md")).unwrap();
+
+    let link_path = safe_dir.path().join("evil_link.md");
+    symlink(unsafe_dir.path().join("evil.md"), &link_path).unwrap();
+
+    let canonical_base = std::fs::canonicalize(safe_dir.path()).unwrap();
+    let files = find_markdown_files(&canonical_base);
+
+    assert_eq!(files.len(), 0);
 }
