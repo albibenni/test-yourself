@@ -225,6 +225,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [todoistToken, setTodoistToken] = useState("");
   const [initialTodoistToken, setInitialTodoistToken] = useState("");
+  const [isTokenInSecureStore, setIsTokenInSecureStore] = useState(false);
   const [vaultName, setVaultName] = useState("");
 
   const [defaultDate, setDefaultDate] = useState("tomorrow");
@@ -288,6 +289,7 @@ export function SettingsModal({
           defaults: {},
         });
         const secureToken = await getSecureToken("todoist_token");
+        setIsTokenInSecureStore(!!secureToken);
         const fallbackToken = await store.get<string>("todoist_token");
         const vault = await store.get<string>("obsidian_vault");
 
@@ -355,9 +357,10 @@ export function SettingsModal({
         defaults: {},
       });
       try {
-        if (todoistToken !== initialTodoistToken) {
+        if (todoistToken !== initialTodoistToken || (todoistToken && !isTokenInSecureStore)) {
           await setSecureToken("todoist_token", todoistToken);
           setInitialTodoistToken(todoistToken);
+          setIsTokenInSecureStore(true);
         }
         // Clean up old unencrypted token if secure store worked
         await store.delete("todoist_token");

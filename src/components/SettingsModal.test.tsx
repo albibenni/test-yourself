@@ -118,7 +118,7 @@ describe("SettingsModal", () => {
     });
   });
 
-  it("does not call setSecureToken if the token has not changed", async () => {
+  it("does not call setSecureToken if the token was already in secure store and hasn't changed", async () => {
     vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
 
     render(<SettingsModal {...defaultProps} />);
@@ -143,11 +143,95 @@ describe("SettingsModal", () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      // The token wasn't modified, so setSecureToken should NOT be called
+      // The token wasn't modified and was in secure store, so setSecureToken should NOT be called
       expect(setSecureToken).not.toHaveBeenCalled();
       expect(mockStore.set).toHaveBeenCalledWith("obsidian_vault", "MyVault");
       expect(mockStore.save).toHaveBeenCalled();
       expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("does not call setSecureToken if the token is changed and then changed back to the original secureToken", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue("existing-secure-token"),
+      ).toBeInTheDocument();
+    });
+
+    // Change token to something else
+    const tokenInput = screen.getByPlaceholderText("Enter your Todoist API token");
+    fireEvent.change(tokenInput, { target: { value: "different-token" } });
+    
+    // Change token back to original
+    fireEvent.change(tokenInput, { target: { value: "existing-secure-token" } });
+
+    // Save
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      // Ultimately, it matches the initial secure token, so skip encryption
+      expect(setSecureToken).not.toHaveBeenCalled();
+    });
+  });
+
+
+
+  it("migrates token to secureStore on save if it was loaded from unencrypted store, even if unmodified", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(null);
+    mockStore.get.mockImplementation(async (key: string) => {
+      if (key === "todoist_token") return "unencrypted-store-token";
+      return null;
+    });
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue("unencrypted-store-token"),
+      ).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(setSecureToken).toHaveBeenCalledWith(
+        "todoist_token",
+        "unencrypted-store-token",
+      );
+      expect(mockStore.delete).toHaveBeenCalledWith("todoist_token");
+    });
+  });
+
+  it("migrates token to secureStore on save if it was loaded from localStorage, even if unmodified", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(null);
+    vi.mocked(window.localStorage.getItem).mockImplementation((key) => {
+      if (key === "todoist_token") return "localstorage-token";
+      return null;
+    });
+
+    render(<SettingsModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue("localstorage-token"),
+      ).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(setSecureToken).toHaveBeenCalledWith(
+        "todoist_token",
+        "localstorage-token",
+      );
+      expect(mockStore.delete).toHaveBeenCalledWith("todoist_token");
     });
   });
 
