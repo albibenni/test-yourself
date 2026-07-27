@@ -213,7 +213,7 @@ function App() {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      void openUrl(`obsidian://open?file=${encodeURIComponent(selectedQuizMeta.path)}`);
+                      void openUrl(`obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`);
                     }}
                     style={{ color: "inherit", textDecoration: "underline", cursor: "pointer" }}
                   >
