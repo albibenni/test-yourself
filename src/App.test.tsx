@@ -270,7 +270,9 @@ describe("App Component", () => {
 
     fireEvent.click(screen.getByText("React Basics"));
 
-    const topicLink = await screen.findByRole("link", { name: "Frontend" });
+    const topicLink = await screen.findByRole("link", {
+      name: "Open topic Frontend in Obsidian",
+    });
     fireEvent.click(topicLink);
 
     expect(openUrl).toHaveBeenCalledWith(

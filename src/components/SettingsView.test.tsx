@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { SettingsModal } from "./SettingsModal";
+import { SettingsView } from "./SettingsView";
 import { load } from "@tauri-apps/plugin-store";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -31,7 +31,7 @@ vi.mock("@tauri-apps/plugin-updater", () => ({
   check: vi.fn().mockResolvedValue(null),
 }));
 
-describe("SettingsModal", () => {
+describe("SettingsView", () => {
   let mockStore: any;
 
   beforeEach(() => {
@@ -58,10 +58,45 @@ describe("SettingsModal", () => {
     onTextColorChange: vi.fn(),
   };
 
+  it("renders tabs and switches between them", async () => {
+    render(<SettingsView {...defaultProps} />);
+
+    // Default tab is Appearance
+    expect(screen.getByRole("heading", { name: "Appearance", level: 2 })).toBeInTheDocument();
+    expect(screen.getByText("Theme")).toBeInTheDocument();
+    
+    // Switch to Integrations
+    fireEvent.click(screen.getByText("Integrations"));
+    expect(screen.getByRole("heading", { name: "Integrations", level: 2 })).toBeInTheDocument();
+    expect(screen.getByText("Obsidian Vault")).toBeInTheDocument();
+    
+    // Switch to About
+    fireEvent.click(screen.getByText("About"));
+    expect(screen.getByRole("heading", { name: "About", level: 2 })).toBeInTheDocument();
+    expect(screen.getByText("App Version")).toBeInTheDocument();
+  });
+
+  it("calls onChange handlers when using segmented controls", async () => {
+    render(<SettingsView {...defaultProps} />);
+
+    // In Appearance tab, click Light theme
+    fireEvent.click(screen.getByRole("button", { name: "Light" }));
+    expect(defaultProps.onThemeChange).toHaveBeenCalledWith("light");
+
+    // Click Stone text tone
+    fireEvent.click(screen.getByRole("button", { name: "Stone" }));
+    expect(defaultProps.onTextColorChange).toHaveBeenCalledWith("stone");
+    
+    // Click purple accent
+    fireEvent.click(screen.getByRole("button", { name: "purple" }));
+    expect(defaultProps.onAccentChange).toHaveBeenCalledWith("purple");
+  });
+
   it("loads secure token if available", async () => {
     vi.mocked(getSecureToken).mockResolvedValue("secure-token-value");
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(
@@ -71,7 +106,8 @@ describe("SettingsModal", () => {
   });
 
   it("saves token via secureStore and cleans up localStorage", async () => {
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     // Wait for initial load
     await waitFor(() => {
@@ -85,7 +121,7 @@ describe("SettingsModal", () => {
     fireEvent.change(tokenInput, { target: { value: "new-token-123" } });
 
     // Save
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -102,7 +138,8 @@ describe("SettingsModal", () => {
   it("selects vault folder via dialog", async () => {
     vi.mocked(open).mockResolvedValue("/new/mock/MyVault");
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     // Wait for initial load
     await waitFor(() => {
@@ -121,7 +158,8 @@ describe("SettingsModal", () => {
   it("does not call setSecureToken if the token was already in secure store and hasn't changed", async () => {
     vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(
@@ -139,7 +177,7 @@ describe("SettingsModal", () => {
     });
 
     // Save
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -154,7 +192,8 @@ describe("SettingsModal", () => {
   it("does not call setSecureToken if the token is changed and then changed back to the original secureToken", async () => {
     vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(
@@ -174,7 +213,7 @@ describe("SettingsModal", () => {
     });
 
     // Save
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -190,7 +229,8 @@ describe("SettingsModal", () => {
       return null;
     });
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(
@@ -198,7 +238,7 @@ describe("SettingsModal", () => {
       ).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -217,7 +257,8 @@ describe("SettingsModal", () => {
       return null;
     });
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(
@@ -225,7 +266,7 @@ describe("SettingsModal", () => {
       ).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -246,13 +287,13 @@ describe("SettingsModal", () => {
       }),
     );
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
 
     await waitFor(() => {
       expect(mockStore.get).toHaveBeenCalled();
     });
 
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
 
     // Click save 3 times rapidly
     fireEvent.click(saveButton);
@@ -281,7 +322,8 @@ describe("SettingsModal", () => {
       new Error("Secure store disabled"),
     );
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getByText("Integrations"));
 
     await waitFor(() => {
       expect(mockStore.get).toHaveBeenCalled();
@@ -292,7 +334,7 @@ describe("SettingsModal", () => {
     );
     fireEvent.change(tokenInput, { target: { value: "new-token-123" } });
 
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -318,13 +360,13 @@ describe("SettingsModal", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    render(<SettingsModal {...defaultProps} />);
+    render(<SettingsView {...defaultProps} />);
 
     await waitFor(() => {
       expect(mockStore.get).toHaveBeenCalled();
     });
 
-    const saveButton = screen.getByRole("button", { name: "Save" });
+    const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -336,7 +378,7 @@ describe("SettingsModal", () => {
       // The modal should NOT close because it failed
       expect(defaultProps.onClose).not.toHaveBeenCalled();
       // The button should be re-enabled and text restored
-      expect(saveButton).toHaveTextContent("Save");
+      expect(saveButton).toHaveTextContent("Save Changes");
       expect(saveButton).not.toBeDisabled();
     });
 

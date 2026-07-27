@@ -9,7 +9,7 @@ import "./App.css";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
-import { SettingsModal } from "./components/SettingsModal";
+import { SettingsView } from "./components/SettingsView";
 import { ScheduleModal } from "./components/ScheduleModal";
 import { DEFAULT_TOPIC } from "./constants";
 
@@ -227,7 +227,25 @@ function App() {
         />
 
         <main className="main-content">
-          {!basePath ? (
+          {isSettingsOpen ? (
+            <SettingsView
+              onClose={() => setIsSettingsOpen(false)}
+              theme={theme}
+              accent={accent}
+              textColor={textColor}
+              onSaveSuccess={() => showToast("Settings saved!")}
+              onThemeChange={(val) => {
+                void saveTheme(val);
+              }}
+              onAccentChange={(val) => {
+                void saveAccent(val);
+              }}
+              onTextColorChange={(val) => {
+                void saveTextColor(val);
+              }}
+              updateAvailable={updateVersion}
+            />
+          ) : !basePath ? (
             <div className="empty-state">
               <div className="header-title-row empty-state-header">
                 <h2 className="empty-state-title">Select Quiz Folder</h2>
@@ -508,24 +526,7 @@ function App() {
         </main>
       </div>
 
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        theme={theme}
-        accent={accent}
-        textColor={textColor}
-        onSaveSuccess={() => showToast("Settings saved!")}
-        onThemeChange={(val) => {
-          void saveTheme(val);
-        }}
-        onAccentChange={(val) => {
-          void saveAccent(val);
-        }}
-        onTextColorChange={(val) => {
-          void saveTextColor(val);
-        }}
-        updateAvailable={updateVersion}
-      />
+
       <ScheduleModal
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
