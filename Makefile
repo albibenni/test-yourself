@@ -1,4 +1,4 @@
-.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release
+.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
 
 # Install dependencies
 install:
@@ -11,6 +11,27 @@ dev:
 # Build the Tauri Desktop App for production (creates the .app)
 build:
 	pnpm tauri build
+
+# Install the app to your local ~/apps folder and register deep links
+install-app:
+	@echo "Building binary..."
+	pnpm tauri build --no-bundle
+	@echo "Installing to ~/apps/test-yourself..."
+	@mkdir -p ~/apps
+	cp src-tauri/target/release/tauri-app ~/apps/test-yourself
+	@echo "Updating desktop file to point to ~/apps/test-yourself..."
+	@mkdir -p ~/.local/share/applications
+	@echo "[Desktop Entry]" > ~/.local/share/applications/testyourself.desktop
+	@echo "Type=Application" >> ~/.local/share/applications/testyourself.desktop
+	@echo "Name=Test Yourself" >> ~/.local/share/applications/testyourself.desktop
+	@echo "Exec=$(HOME)/apps/test-yourself %u" >> ~/.local/share/applications/testyourself.desktop
+	@echo "Icon=$(HOME)/.local/share/icons/testyourself.png" >> ~/.local/share/applications/testyourself.desktop
+	@echo "Terminal=false" >> ~/.local/share/applications/testyourself.desktop
+	@echo "Categories=Utility;" >> ~/.local/share/applications/testyourself.desktop
+	@echo "MimeType=x-scheme-handler/test-yourself;" >> ~/.local/share/applications/testyourself.desktop
+	@update-desktop-database ~/.local/share/applications || true
+	@xdg-mime default testyourself.desktop x-scheme-handler/test-yourself || true
+	@echo "🎉 Successfully installed! You can now run the app from ~/apps/test-yourself"
 
 # Run all tests (Frontend and Backend)
 test: test-ui test-rust

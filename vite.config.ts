@@ -9,6 +9,15 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   base: "./",
   plugins: [react()],
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.message.includes("has been externalized for browser compatibility")) return;
+        warn(warning);
+      }
+    }
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

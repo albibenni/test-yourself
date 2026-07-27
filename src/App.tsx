@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -90,27 +92,44 @@ function App() {
       } catch (e) {
         console.warn("Deep link plugin not found or failed", e);
       }
+      
+      try {
+        const initialUrl = await invoke<string | null>("get_initial_url");
+        if (initialUrl) {
+          try {
+            const u = new URL(initialUrl);
+            if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
+              const quizPath = u.searchParams.get("quiz");
+              if (quizPath) {
+                setPendingQuizLink(quizPath);
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse custom deep link:", e);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to get initial url:", e);
+      }
     }
     void setupDeepLink();
     
     // Also listen to single-instance argv forwards
     let unlistenEvent: (() => void) | undefined;
-    import("@tauri-apps/api/event").then(({ listen }) => {
-      listen<string>("deep-link-received", (event) => {
-        try {
-          const u = new URL(event.payload);
-          if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
-            const quizPath = u.searchParams.get("quiz");
-            if (quizPath) {
-              setPendingQuizLink(quizPath);
-            }
+    listen<string>("deep-link-received", (event) => {
+      try {
+        const u = new URL(event.payload);
+        if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
+          const quizPath = u.searchParams.get("quiz");
+          if (quizPath) {
+            setPendingQuizLink(quizPath);
           }
-        } catch (e) {
-          console.error("Failed to parse custom deep link:", e);
         }
-      }).then(unlistenFn => {
-        unlistenEvent = unlistenFn;
-      }).catch(console.error);
+      } catch (e) {
+        console.error("Failed to parse custom deep link:", e);
+      }
+    }).then(unlistenFn => {
+      unlistenEvent = unlistenFn;
     }).catch(console.error);
 
     return () => {

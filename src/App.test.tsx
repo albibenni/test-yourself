@@ -33,6 +33,17 @@ vi.mock("@tauri-apps/plugin-deep-link", () => ({
   getCurrent: vi.fn().mockResolvedValue(null),
 }));
 
+export let mockListenCallback: (event: any) => void = () => {};
+
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn((event, cb) => {
+    if (event === "deep-link-received") {
+      mockListenCallback = cb;
+    }
+    return Promise.resolve(vi.fn());
+  }),
+}));
+
 const mockQuizzes = [
   {
     title: "React Basics",
@@ -82,6 +93,7 @@ describe("App Component", () => {
           mockQuizzes.find((q) => q.path === path) || null,
         );
       }
+      if (cmd === "get_initial_url") return Promise.resolve(null);
       return Promise.resolve(null);
     });
     vi.mocked(load).mockResolvedValue({
@@ -262,5 +274,44 @@ describe("App Component", () => {
     fireEvent.click(topicLink);
 
     expect(openUrl).toHaveBeenCalledWith("obsidian://open?path=%2Fpath%2Freact.md");
+  });
+
+  it("opens a quiz when launched with deep link (get_initial_url)", async () => {
+    vi.mocked(invoke).mockImplementation((cmd: string, _args?: unknown) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
+      // Mock the initial URL containing the deep link to React Basics
+      if (cmd === "get_initial_url") return Promise.resolve("test-yourself://open?quiz=%2Fpath%2Freact.md");
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 })
+      ).toBeInTheDocument();
+    });
+    
+    expect(screen.getByPlaceholderText("Search by topic or title...")).toHaveValue("");
+  });
+
+  it("opens a quiz when receiving deep-link-received event", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    // Simulate the secondary instance forwarding the deep link
+    await act(async () => {
+      mockListenCallback({ payload: "test-yourself://open?quiz=%2Fpath%2Freact.md" });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 })
+      ).toBeInTheDocument();
+    });
   });
 });

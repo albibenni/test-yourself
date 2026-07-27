@@ -8,6 +8,13 @@ fn greet(name: &str) -> String {
 
 use tauri_plugin_store::StoreExt;
 
+struct InitialUrl(std::sync::Mutex<Option<String>>);
+
+#[tauri::command]
+fn get_initial_url(state: tauri::State<InitialUrl>) -> Option<String> {
+    state.0.lock().unwrap().take()
+}
+
 #[tauri::command]
 async fn get_quizzes(app_handle: tauri::AppHandle) -> Result<Vec<models::QuizMetadata>, String> {
     let store = app_handle
@@ -61,6 +68,17 @@ pub fn run() {
     }
 
     builder
+        .setup(|app| {
+            let mut found_url = None;
+            for arg in std::env::args() {
+                if arg.starts_with("test-yourself://") {
+                    found_url = Some(arg);
+                }
+            }
+            use tauri::Manager;
+            app.manage(InitialUrl(std::sync::Mutex::new(found_url)));
+            Ok(())
+        })
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -88,7 +106,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             get_quizzes,
-            get_quiz_content
+            get_quiz_content,
+            get_initial_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
