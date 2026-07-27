@@ -180,7 +180,7 @@ export function ScheduleModal({
             setSelectedProjectId((prev) => prev || projs[0].id);
           }
         })
-        .catch(console.error);
+        .catch(console.warn);
 
       getTasks()
         .then((tasks) => {
@@ -192,7 +192,7 @@ export function ScheduleModal({
           });
           setTaskCounts(counts);
         })
-        .catch(console.error);
+        .catch(console.warn);
     }
   }, [isOpen, getProjects, getTasks, setError]);
 
@@ -230,7 +230,7 @@ export function ScheduleModal({
       onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
       onClose();
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setIsScheduling(false);
     }

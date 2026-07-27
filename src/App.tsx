@@ -6,12 +6,18 @@ import { listen } from "@tauri-apps/api/event";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
+import { lazy, Suspense } from "react";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
-import { SettingsView } from "./components/SettingsView";
-import { ScheduleModal } from "./components/ScheduleModal";
 import { DEFAULT_TOPIC } from "./constants";
+
+const SettingsView = lazy(() =>
+  import("./components/SettingsView").then((m) => ({ default: m.SettingsView })),
+);
+const ScheduleModal = lazy(() =>
+  import("./components/ScheduleModal").then((m) => ({ default: m.ScheduleModal })),
+);
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -84,7 +90,7 @@ function App() {
                 }
               }
             } catch (e) {
-              console.error("Failed to parse deep link:", e);
+              console.warn("Failed to parse deep link:", e);
             }
           }
         };
@@ -109,7 +115,7 @@ function App() {
               }
             }
           } catch (e) {
-            console.error("Failed to parse custom deep link:", e);
+            console.warn("Failed to parse custom deep link:", e);
           }
         }
       } catch (e) {
@@ -130,13 +136,13 @@ function App() {
           }
         }
       } catch (e) {
-        console.error("Failed to parse custom deep link:", e);
+        console.warn("Failed to parse custom deep link:", e);
       }
     })
       .then((unlistenFn) => {
         unlistenEvent = unlistenFn;
       })
-      .catch(console.error);
+      .catch((e) => console.warn("Failed to listen to deep link:", e));
 
     return () => {
       if (unlisten) unlisten();
@@ -228,23 +234,25 @@ function App() {
 
         <main className="main-content">
           {isSettingsOpen ? (
-            <SettingsView
-              onClose={() => setIsSettingsOpen(false)}
-              theme={theme}
-              accent={accent}
-              textColor={textColor}
-              onSaveSuccess={() => showToast("Settings saved!")}
-              onThemeChange={(val) => {
-                void saveTheme(val);
-              }}
-              onAccentChange={(val) => {
-                void saveAccent(val);
-              }}
-              onTextColorChange={(val) => {
-                void saveTextColor(val);
-              }}
-              updateAvailable={updateVersion}
-            />
+            <Suspense fallback={<div style={{ padding: "2rem" }}>Loading Settings...</div>}>
+              <SettingsView
+                onClose={() => setIsSettingsOpen(false)}
+                theme={theme}
+                accent={accent}
+                textColor={textColor}
+                onSaveSuccess={() => showToast("Settings saved!")}
+                onThemeChange={(val) => {
+                  void saveTheme(val);
+                }}
+                onAccentChange={(val) => {
+                  void saveAccent(val);
+                }}
+                onTextColorChange={(val) => {
+                  void saveTextColor(val);
+                }}
+                updateAvailable={updateVersion}
+              />
+            </Suspense>
           ) : !basePath ? (
             <div className="empty-state">
               <div className="header-title-row empty-state-header">
@@ -527,14 +535,18 @@ function App() {
       </div>
 
 
-      <ScheduleModal
-        isOpen={isScheduleOpen}
-        onClose={() => setIsScheduleOpen(false)}
-        quiz={selectedQuizMeta}
-        onSuccess={(dateText) =>
-          showToast(`Task created successfully for ${dateText}!`)
-        }
-      />
+      {isScheduleOpen && (
+        <Suspense fallback={null}>
+          <ScheduleModal
+            isOpen={isScheduleOpen}
+            onClose={() => setIsScheduleOpen(false)}
+            quiz={selectedQuizMeta}
+            onSuccess={(dateText) =>
+              showToast(`Task created successfully for ${dateText}!`)
+            }
+          />
+        </Suspense>
+      )}
 
       {toastMessage && (
         <div role="status" aria-live="polite" className="toast-notification">

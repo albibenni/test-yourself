@@ -106,7 +106,7 @@ export function SettingsView({
         const version = await getVersion();
         setAppVersion(version);
       } catch (err) {
-        console.error("Failed to fetch app version", err);
+        console.warn("Failed to fetch app version", err);
       }
     }
     void fetchVersion();
@@ -174,7 +174,7 @@ export function SettingsView({
         const projs = await provider.getProjects();
         setProjects(projs);
       } catch (err) {
-        console.error("Failed to fetch projects for settings", err);
+        console.warn("Failed to fetch projects for settings", err);
       } finally {
         setLoadingProjects(false);
       }
@@ -219,7 +219,7 @@ export function SettingsView({
       onSaveSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Failed to save settings", error);
+      console.warn("Failed to save settings", error);
     } finally {
       setIsSaving(false);
     }
@@ -240,7 +240,7 @@ export function SettingsView({
         }
       }
     } catch (err) {
-      console.error("Failed to select vault directory", err);
+      console.warn("Failed to select vault directory", err);
     }
   };
 

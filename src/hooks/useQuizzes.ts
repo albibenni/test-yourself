@@ -50,9 +50,9 @@ export function useQuizzes() {
           await store.save();
           setBasePath(localPath);
         }
-        console.error("INIT STORE RESULT:", { localPath, savedPath });
+        // console.warn("INIT STORE RESULT:", { localPath, savedPath });
       } catch (err) {
-        console.error("Failed to load store:", err);
+        console.warn("Failed to load store:", err);
       }
     }
     void initStore();
@@ -72,7 +72,7 @@ export function useQuizzes() {
         const fetchedQuizzes = z.array(QuizMetadataSchema).parse(rawData);
         setQuizzes(fetchedQuizzes);
       } catch (error) {
-        console.error("Failed to load quizzes:", error);
+        console.warn("Failed to load quizzes:", error);
       } finally {
         setLoading(false);
         console.log("basePath", basePath);
@@ -97,7 +97,7 @@ export function useQuizzes() {
         const fetchedQuiz = QuizSchema.parse(rawData);
         setActiveQuiz(fetchedQuiz);
       } catch (error) {
-        console.error("Failed to load active quiz:", error);
+        console.warn("Failed to load active quiz:", error);
         setActiveQuiz(null);
       } finally {
         setLoadingActiveQuiz(false);
@@ -149,7 +149,7 @@ export function useQuizzes() {
         return mergedQuizzes;
       });
     } catch (error) {
-      console.error("Failed to sync quizzes:", error);
+      console.warn("Failed to sync quizzes:", error);
     } finally {
       setIsSyncing(false);
     }

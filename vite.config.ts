@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -8,10 +9,17 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   base: "./",
-  plugins: [react()],
+  plugins: [react(), cssInjectedByJsPlugin()],
   build: {
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "zod", "clsx"],
+          todoist: ["@doist/todoist-sdk"],
+          tauri: ["@tauri-apps/api", "@tauri-apps/plugin-dialog", "@tauri-apps/plugin-store", "@tauri-apps/plugin-updater", "@tauri-apps/plugin-deep-link", "@tauri-apps/plugin-process", "@tauri-apps/plugin-opener", "@tauri-apps/plugin-stronghold"],
+        },
+      },
       onwarn(warning, warn) {
         if (
           warning.message.includes(
