@@ -43,6 +43,7 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
               )}
               onClick={() => handleSelect(opt.letter)}
               disabled={isAnswered}
+              aria-pressed={isAnswered && opt.letter === selectedLetter}
             >
               <span className="option-letter">{opt.letter}.</span>
               <span className="option-text">{opt.text}</span>
@@ -53,6 +54,8 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
 
       {isAnswered && (
         <div
+          role="status"
+          aria-live="polite"
           className={clsx("feedback-block", isCorrect ? "success" : "error")}
         >
           <div className="feedback-title">

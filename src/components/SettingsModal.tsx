@@ -32,6 +32,7 @@ interface CustomSelectProps<T extends string | number> {
   options: { label: React.ReactNode; value: T }[];
   onChange: (value: T) => void;
   disabled?: boolean;
+  ariaLabel?: string;
 }
 
 function CustomSelect<T extends string | number>({
@@ -39,6 +40,7 @@ function CustomSelect<T extends string | number>({
   options,
   onChange,
   disabled,
+  ariaLabel,
 }: CustomSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,7 @@ function CustomSelect<T extends string | number>({
         className="custom-select-button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        aria-label={ariaLabel}
         style={{
           opacity: disabled ? 0.5 : 1,
           cursor: disabled ? "not-allowed" : "pointer",
@@ -475,9 +478,10 @@ export function SettingsModal({
             storageKey="todoist"
           >
             <div className="form-group">
-              <label>Obsidian Vault Name</label>
+              <label htmlFor="vault-input">Obsidian Vault Name</label>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <input
+                  id="vault-input"
                   type="text"
                   style={{ flex: 1 }}
                   placeholder="e.g. MyVault"
@@ -495,8 +499,9 @@ export function SettingsModal({
             </div>
 
             <div className="form-group">
-              <label>API Token</label>
+              <label htmlFor="token-input">API Token</label>
               <input
+                id="token-input"
                 type="password"
                 placeholder="Enter your Todoist API token"
                 value={todoistToken}
@@ -511,6 +516,7 @@ export function SettingsModal({
             <div className="form-group">
               <label>Default Schedule Date</label>
               <CustomSelect
+                ariaLabel="Default Schedule Date"
                 value={defaultDate}
                 onChange={setDefaultDate}
                 options={[
@@ -525,6 +531,7 @@ export function SettingsModal({
             <div className="form-group">
               <label>Default Priority</label>
               <CustomSelect
+                ariaLabel="Default Priority"
                 value={defaultPriority}
                 onChange={(val) => setDefaultPriority(Number(val))}
                 options={[
@@ -548,6 +555,7 @@ export function SettingsModal({
             <div className="form-group">
               <label>Default Project</label>
               <CustomSelect
+                ariaLabel="Default Project"
                 value={defaultProject}
                 onChange={setDefaultProject}
                 disabled={loadingProjects}
@@ -568,6 +576,7 @@ export function SettingsModal({
             <div className="form-group">
               <label>Theme</label>
               <CustomSelect<ThemeType>
+                ariaLabel="Theme"
                 value={theme}
                 onChange={onThemeChange}
                 options={[
@@ -581,6 +590,7 @@ export function SettingsModal({
             <div className="form-group">
               <label>Text Tone</label>
               <CustomSelect<TextColor>
+                ariaLabel="Text Tone"
                 value={textColor}
                 onChange={onTextColorChange}
                 options={[

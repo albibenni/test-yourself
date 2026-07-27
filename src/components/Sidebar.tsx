@@ -81,6 +81,7 @@ export function Sidebar({
           onClick={handleSync}
           disabled={isSyncing}
           title="Sync Quizzes"
+          aria-label="Sync Quizzes"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -120,6 +121,7 @@ export function Sidebar({
           type="text"
           className="search-input"
           placeholder="Search by topic or title..."
+          aria-label="Search quizzes"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleInputKeyDown}
@@ -158,7 +160,15 @@ export function Sidebar({
                       flatQuizzes[focusedQuizIndex]?.path === quiz.path &&
                         "focused",
                     )}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedQuiz(quiz)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedQuiz(quiz);
+                      }
+                    }}
                   >
                     {quiz.title}
                   </div>

@@ -318,6 +318,7 @@ function App() {
                   Topic:{" "}
                   <a
                     href="#"
+                    aria-label={`Open topic ${selectedQuizMeta.topic || DEFAULT_TOPIC} in Obsidian`}
                     onClick={(e) => {
                       e.preventDefault();
                       void openUrl(
@@ -535,7 +536,7 @@ function App() {
       />
 
       {toastMessage && (
-        <div className="toast-notification">
+        <div role="status" aria-live="polite" className="toast-notification">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"

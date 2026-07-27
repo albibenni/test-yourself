@@ -1,8 +1,23 @@
-.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
+.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app setup-hooks
 
 # Install dependencies
 install:
 	pnpm install
+
+# Setup git pre-push hook
+setup-hooks:
+	@echo "Installing pre-push hook..."
+	@mkdir -p .git/hooks
+	@echo "#!/bin/sh" > .git/hooks/pre-push
+	@echo "echo 'Running pre-push checks...'" >> .git/hooks/pre-push
+	@echo "make format || { echo 'Format failed!'; exit 1; }" >> .git/hooks/pre-push
+	@echo "make lint || { echo 'Lint failed!'; exit 1; }" >> .git/hooks/pre-push
+	@echo "make test || { echo 'Tests failed!'; exit 1; }" >> .git/hooks/pre-push
+	@echo "# Using --no-bundle to prevent local OS packager failures (like linuxdeploy on Arch)" >> .git/hooks/pre-push
+	@echo "pnpm tauri build --no-bundle || { echo 'Build failed!'; exit 1; }" >> .git/hooks/pre-push
+	@echo "echo '✅ All checks passed! Pushing...'" >> .git/hooks/pre-push
+	@chmod +x .git/hooks/pre-push
+	@echo "🎉 Git pre-push hook installed successfully!"
 
 # Run the Tauri Desktop App in development mode
 dev:

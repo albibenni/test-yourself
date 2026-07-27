@@ -467,8 +467,8 @@ export function ScheduleModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content quick-add-modal">
-        {error && <div className="error-message">{error}</div>}
+      <div className="modal-content quick-add-modal" role="dialog" aria-modal="true" aria-label="Schedule Task">
+        {error && <div className="error-message" role="alert" aria-live="assertive">{error}</div>}
 
         <div
           className="quick-add-input-wrapper"
@@ -482,6 +482,7 @@ export function ScheduleModal({
             onChange={handleContentChange}
             onKeyDown={handleInputKeyDown}
             placeholder="Task name"
+            aria-label="Task name"
             rows={1}
             style={{ resize: "none", overflow: "hidden" }}
           />
@@ -491,6 +492,7 @@ export function ScheduleModal({
             onChange={(e) => setTaskDescription(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder="Description"
+            aria-label="Task description"
             rows={1}
             style={{ fontSize: "13px", color: "#ccc", resize: "none" }}
           />
@@ -518,6 +520,8 @@ export function ScheduleModal({
               <button
                 className="action-pill date-pill"
                 onClick={() => setShowCalendar(!showCalendar)}
+                aria-label="Select due date"
+                aria-expanded={showCalendar}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -544,6 +548,8 @@ export function ScheduleModal({
               <button
                 className="action-pill"
                 onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                aria-label="Select priority"
+                aria-expanded={showPriorityDropdown}
               >
                 <svg
                   className="action-icon flag-icon"
@@ -608,6 +614,8 @@ export function ScheduleModal({
                   setShowProjectSelectDropdown(!showProjectSelectDropdown)
                 }
                 disabled={loading || projects.length === 0}
+                aria-label="Select project"
+                aria-expanded={showProjectSelectDropdown}
               >
                 <svg
                   className="action-icon"
