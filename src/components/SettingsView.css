@@ -181,11 +181,28 @@
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  background-color: color-mix(in srgb, var(--text-primary) 5%, transparent);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 1rem;
   transition: all 0.2s ease;
+  width: 100%;
+}
+
+select.settings-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+  padding-right: 2.5rem;
+}
+
+/* Ensure the text is visible even if SVG is black/white by forcing text color in the options if needed, but styling select options is limited. The background color fix helps WebKit. */
+select.settings-input option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .settings-input:focus {
