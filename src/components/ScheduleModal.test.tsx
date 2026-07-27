@@ -12,7 +12,6 @@ describe("ScheduleModal", () => {
   let mockGetProjects: any;
   let mockGetTasks: any;
   let mockAddTask: any;
-  let mockGetVaultName: any;
   let mockGetDefaultSettings: any;
 
   const mockQuiz = {
@@ -29,7 +28,6 @@ describe("ScheduleModal", () => {
     mockGetProjects = vi.fn().mockResolvedValue([{ id: "p1", name: "Inbox" }]);
     mockGetTasks = vi.fn().mockResolvedValue([]);
     mockAddTask = vi.fn().mockResolvedValue({ id: "t1" });
-    mockGetVaultName = vi.fn().mockResolvedValue("MyVault");
     mockGetDefaultSettings = vi.fn().mockResolvedValue({
       defaultDate: "tomorrow",
       defaultPriority: 4,
@@ -40,7 +38,6 @@ describe("ScheduleModal", () => {
       getProjects: mockGetProjects,
       getTasks: mockGetTasks,
       addTask: mockAddTask,
-      getVaultName: mockGetVaultName,
       getDefaultSettings: mockGetDefaultSettings,
       loading: false,
       error: "",
@@ -103,11 +100,10 @@ describe("ScheduleModal", () => {
     fireEvent.click(addBtn);
 
     await waitFor(() => {
-      expect(mockGetVaultName).toHaveBeenCalled();
       expect(mockAddTask).toHaveBeenCalledWith({
         content: "Review Quiz: React Basics",
         description:
-          "[Open in Obsidian](obsidian://open?vault=MyVault&file=Frontend%2FReact%20Basics.md)",
+          "[Open Quiz](test-yourself://open?quiz=Frontend%2FReact%20Basics.md)",
         dueString: expect.any(String), // e.g. "2026-07-22"
         priority: 4,
         projectId: "p1",

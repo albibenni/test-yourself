@@ -42,6 +42,8 @@ function App() {
     void checkForUpdates();
   }, []);
 
+  const [pendingQuizLink, setPendingQuizLink] = useState<string | null>(null);
+
   const {
     loading,
     isSyncing,
@@ -56,6 +58,56 @@ function App() {
     handleSync,
     groupedQuizzes,
   } = useQuizzes();
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    async function setupDeepLink() {
+      try {
+        const { onOpenUrl, getCurrent } = await import("@tauri-apps/plugin-deep-link");
+        
+        const handleUrls = (urls: string[] | null) => {
+          if (!urls) return;
+          for (const url of urls) {
+            try {
+              const u = new URL(url);
+              if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
+                const quizPath = u.searchParams.get("quiz");
+                if (quizPath) {
+                  setPendingQuizLink(quizPath);
+                }
+              }
+            } catch (e) {
+              console.error("Failed to parse deep link:", e);
+            }
+          }
+        };
+
+        const currentUrls = await getCurrent();
+        handleUrls(currentUrls);
+
+        unlisten = await onOpenUrl(handleUrls);
+      } catch (e) {
+        console.warn("Deep link plugin not found or failed", e);
+      }
+    }
+    void setupDeepLink();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pendingQuizLink && groupedQuizzes && Object.keys(groupedQuizzes).length > 0) {
+      const allQuizzes = Object.values(groupedQuizzes).flat();
+      const targetQuiz = allQuizzes.find(
+        (q) => q.path.endsWith(pendingQuizLink) || q.path === pendingQuizLink
+      );
+      if (targetQuiz) {
+        setSelectedQuizMeta(targetQuiz);
+        setPendingQuizLink(null);
+      }
+    }
+  }, [pendingQuizLink, groupedQuizzes, setSelectedQuizMeta]);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 

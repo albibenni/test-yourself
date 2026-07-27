@@ -37,7 +37,6 @@ export function ScheduleModal({
     getProjects,
     getTasks,
     addTask,
-    getVaultName,
     getDefaultSettings,
     loading,
     error,
@@ -203,18 +202,13 @@ export function ScheduleModal({
     setError("");
 
     try {
-      const vaultName = await getVaultName();
-
       const relativePath = quiz.topic
         ? `${quiz.topic}/${quiz.title}.md`
         : `${quiz.title}.md`;
-      const encodedVault = encodeURIComponent(vaultName);
-      const encodedFile = encodeURIComponent(relativePath);
-
-      const obsidianLink = `obsidian://open?vault=${encodedVault}&file=${encodedFile}`;
+      const deepLink = `test-yourself://open?quiz=${encodeURIComponent(relativePath)}`;
       const finalDescription = taskDescription.trim()
-        ? `${taskDescription}\n\n[Open in Obsidian](${obsidianLink})`
-        : `[Open in Obsidian](${obsidianLink})`;
+        ? `${taskDescription}\n\n[Open Quiz](${deepLink})`
+        : `[Open Quiz](${deepLink})`;
 
       await addTask({
         content: taskContent,
@@ -731,7 +725,6 @@ export function ScheduleModal({
             <button
               className="button-secondary"
               onClick={onClose}
-              disabled={loading}
             >
               Cancel
             </button>

@@ -7,23 +7,37 @@ let cachedClient: Client | null = null;
 const FIXED_VAULT_KEY = "test-yourself-local-encryption-key";
 const CLIENT_NAME = "test-yourself-client";
 
+let initPromise: Promise<{ stronghold: Stronghold; store: any }> | null = null;
+
 export async function getSecureStore() {
   if (cachedClient && cachedStronghold) {
     return { stronghold: cachedStronghold, store: cachedClient.getStore() };
   }
-
-  const dir = await appDataDir();
-  const vaultPath = `${dir}/secrets.hold`;
-
-  cachedStronghold = await Stronghold.load(vaultPath, FIXED_VAULT_KEY);
-
-  try {
-    cachedClient = await cachedStronghold.loadClient(CLIENT_NAME);
-  } catch {
-    cachedClient = await cachedStronghold.createClient(CLIENT_NAME);
+  if (initPromise) {
+    return initPromise;
   }
 
-  return { stronghold: cachedStronghold, store: cachedClient.getStore() };
+  initPromise = (async () => {
+    const dir = await appDataDir();
+    const vaultPath = `${dir}/secrets.hold`;
+
+    cachedStronghold = await Stronghold.load(vaultPath, FIXED_VAULT_KEY);
+
+    try {
+      cachedClient = await cachedStronghold.loadClient(CLIENT_NAME);
+    } catch {
+      cachedClient = await cachedStronghold.createClient(CLIENT_NAME);
+    }
+
+    return { stronghold: cachedStronghold, store: cachedClient.getStore() };
+  })();
+
+  try {
+    return await initPromise;
+  } catch (e) {
+    initPromise = null;
+    throw e;
+  }
 }
 
 export async function getSecureToken(key: string): Promise<string | null> {

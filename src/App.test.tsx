@@ -24,6 +24,15 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
   open: vi.fn(),
 }));
 
+vi.mock("@tauri-apps/plugin-opener", () => ({
+  openUrl: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/plugin-deep-link", () => ({
+  onOpenUrl: vi.fn().mockResolvedValue(vi.fn()),
+  getCurrent: vi.fn().mockResolvedValue(null),
+}));
+
 const mockQuizzes = [
   {
     title: "React Basics",
@@ -236,5 +245,22 @@ describe("App Component", () => {
     await waitFor(() => {
       expect(open).toHaveBeenCalledWith({ directory: true, multiple: false });
     });
+  });
+
+  it("opens Obsidian with absolute path when clicking the Topic link", async () => {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("React Basics"));
+
+    const topicLink = await screen.findByRole("link", { name: "Frontend" });
+    fireEvent.click(topicLink);
+
+    expect(openUrl).toHaveBeenCalledWith("obsidian://open?path=%2Fpath%2Freact.md");
   });
 });
