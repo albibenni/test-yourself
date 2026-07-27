@@ -121,8 +121,10 @@ export function SettingsView({
         setUpdateStatus(`Downloading update v${update.version}...`);
         await update.downloadAndInstall();
         setUpdateStatus("Update installed. Restarting...");
-        await invoke("prepare_relaunch");
-        await relaunch();
+        const handledByLinux = await invoke<boolean>("custom_linux_relaunch");
+        if (!handledByLinux) {
+          await relaunch();
+        }
       } else {
         setUpdateStatus("App is up to date!");
         setTimeout(() => setUpdateStatus(""), 3000);

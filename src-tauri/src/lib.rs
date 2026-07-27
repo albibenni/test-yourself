@@ -108,17 +108,26 @@ pub fn run() {
             get_quizzes,
             get_quiz_content,
             get_initial_url,
-            prepare_relaunch
+            custom_linux_relaunch
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[tauri::command]
-fn prepare_relaunch() {
+fn custom_linux_relaunch(app: tauri::AppHandle) -> bool {
     #[cfg(target_os = "linux")]
     {
-        std::env::remove_var("APPIMAGE");
-        std::env::remove_var("APPDIR");
+        if let Ok(exe) = std::env::current_exe() {
+            std::env::remove_var("APPDIR");
+            let mut cmd = std::process::Command::new(exe);
+            let _ = cmd.spawn();
+        }
+        app.exit(0);
+        return true;
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        return false;
     }
 }
