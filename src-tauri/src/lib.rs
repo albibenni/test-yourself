@@ -49,13 +49,6 @@ pub async fn get_quiz_content_inner(path: String, topic: String) -> Result<model
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[cfg(target_os = "linux")]
-    {
-        // Fix for blank screen on Linux after autoupdate/restart
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
-    }
-
     let mut builder = tauri::Builder::default();
 
     #[cfg(desktop)]
@@ -114,8 +107,18 @@ pub fn run() {
             greet,
             get_quizzes,
             get_quiz_content,
-            get_initial_url
+            get_initial_url,
+            prepare_relaunch
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn prepare_relaunch() {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::remove_var("APPIMAGE");
+        std::env::remove_var("APPDIR");
+    }
 }

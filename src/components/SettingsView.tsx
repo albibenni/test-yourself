@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { getVersion } from "@tauri-apps/api/app";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { invoke } from "@tauri-apps/api/core";
 import { load } from "@tauri-apps/plugin-store";
 import { TodoistProvider } from "../providers/TodoistProvider";
 import { check } from "@tauri-apps/plugin-updater";
@@ -120,6 +121,7 @@ export function SettingsView({
         setUpdateStatus(`Downloading update v${update.version}...`);
         await update.downloadAndInstall();
         setUpdateStatus("Update installed. Restarting...");
+        await invoke("prepare_relaunch");
         await relaunch();
       } else {
         setUpdateStatus("App is up to date!");
