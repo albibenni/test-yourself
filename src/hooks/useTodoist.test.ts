@@ -146,39 +146,7 @@ describe("useTodoist hook", () => {
     expect(result.current.error).toBe("");
   });
 
-  it("gets the vault name correctly from store, then local storage, then fallback", async () => {
-    // 1. From store
-    mockStoreGet.mockImplementation(async (key: string) => {
-      if (key === "obsidian_vault") return "StoreVault";
-      return null;
-    });
 
-    const { result } = renderHook(() => useTodoist());
-
-    let vaultName;
-    await act(async () => {
-      vaultName = await result.current.getVaultName();
-    });
-    expect(vaultName).toBe("StoreVault");
-
-    // 2. From localStorage
-    mockStoreGet.mockResolvedValue(null);
-    vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
-      k === "obsidian_vault" ? "LocalVault" : null,
-    );
-
-    await act(async () => {
-      vaultName = await result.current.getVaultName();
-    });
-    expect(vaultName).toBe("LocalVault");
-
-    // 3. Fallback
-    vi.mocked(window.localStorage.getItem).mockReturnValue(null);
-    await act(async () => {
-      vaultName = await result.current.getVaultName();
-    });
-    expect(vaultName).toBe("Vault");
-  });
 
   it("gets default settings correctly from the store", async () => {
     mockStoreGet.mockImplementation(async (key: string) => {

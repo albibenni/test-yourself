@@ -46,10 +46,16 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             use tauri::Manager;
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_focus();
+            }
+            for arg in argv {
+                if arg.starts_with("test-yourself://") {
+                    use tauri::Emitter;
+                    let _ = app.emit("deep-link-received", arg);
+                }
             }
         }));
     }

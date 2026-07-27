@@ -26,14 +26,6 @@ export function useTodoist() {
     return new TodoistProvider(token);
   };
 
-  const getVaultName = useCallback(async () => {
-    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
-    return (
-      (await store.get<string>("obsidian_vault")) ||
-      window.localStorage.getItem("obsidian_vault") ||
-      "Vault"
-    );
-  }, []);
 
   const getProjects = useCallback(async (): Promise<Project[]> => {
     setLoading(true);
@@ -96,7 +88,6 @@ export function useTodoist() {
     getProjects,
     getTasks,
     addTask,
-    getVaultName,
     getDefaultSettings,
     loading,
     error,

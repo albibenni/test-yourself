@@ -57,6 +57,7 @@ function App() {
     selectFolder,
     handleSync,
     groupedQuizzes,
+    quizzes,
   } = useQuizzes();
 
   useEffect(() => {
@@ -91,23 +92,52 @@ function App() {
       }
     }
     void setupDeepLink();
+    
+    // Also listen to single-instance argv forwards
+    let unlistenEvent: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen<string>("deep-link-received", (event) => {
+        try {
+          const u = new URL(event.payload);
+          if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
+            const quizPath = u.searchParams.get("quiz");
+            if (quizPath) {
+              setPendingQuizLink(quizPath);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse custom deep link:", e);
+        }
+      }).then(unlistenFn => {
+        unlistenEvent = unlistenFn;
+      }).catch(console.error);
+    }).catch(console.error);
+
     return () => {
       if (unlisten) unlisten();
+      if (unlistenEvent) unlistenEvent();
     };
   }, []);
 
   useEffect(() => {
-    if (pendingQuizLink && groupedQuizzes && Object.keys(groupedQuizzes).length > 0) {
-      const allQuizzes = Object.values(groupedQuizzes).flat();
-      const targetQuiz = allQuizzes.find(
-        (q) => q.path.endsWith(pendingQuizLink) || q.path === pendingQuizLink
-      );
+    if (pendingQuizLink && quizzes && quizzes.length > 0) {
+      const normalizedPending = pendingQuizLink.replace(/\\/g, "/");
+      const targetQuiz = quizzes.find((q) => {
+        const normalizedPath = q.path.replace(/\\/g, "/");
+        return (
+          normalizedPath.endsWith(normalizedPending) ||
+          normalizedPath === normalizedPending
+        );
+      });
       if (targetQuiz) {
         setSelectedQuizMeta(targetQuiz);
+        setSearchQuery(""); // Clear search so it appears in sidebar
         setPendingQuizLink(null);
+      } else {
+        console.warn("Quiz not found for deep link:", pendingQuizLink);
       }
     }
-  }, [pendingQuizLink, groupedQuizzes, setSelectedQuizMeta]);
+  }, [pendingQuizLink, quizzes, setSelectedQuizMeta, setSearchQuery]);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
