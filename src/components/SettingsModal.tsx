@@ -357,7 +357,10 @@ export function SettingsModal({
         defaults: {},
       });
       try {
-        if (todoistToken !== initialTodoistToken || (todoistToken && !isTokenInSecureStore)) {
+        if (
+          todoistToken !== initialTodoistToken ||
+          (todoistToken && !isTokenInSecureStore)
+        ) {
           await setSecureToken("todoist_token", todoistToken);
           setInitialTodoistToken(todoistToken);
           setIsTokenInSecureStore(true);

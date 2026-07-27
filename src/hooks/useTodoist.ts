@@ -26,7 +26,6 @@ export function useTodoist() {
     return new TodoistProvider(token);
   };
 
-
   const getProjects = useCallback(async (): Promise<Project[]> => {
     setLoading(true);
     setError("");

@@ -13,10 +13,15 @@ export default defineConfig(async () => ({
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
       onwarn(warning, warn) {
-        if (warning.message.includes("has been externalized for browser compatibility")) return;
+        if (
+          warning.message.includes(
+            "has been externalized for browser compatibility",
+          )
+        )
+          return;
         warn(warning);
-      }
-    }
+      },
+    },
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

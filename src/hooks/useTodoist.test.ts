@@ -146,8 +146,6 @@ describe("useTodoist hook", () => {
     expect(result.current.error).toBe("");
   });
 
-
-
   it("gets default settings correctly from the store", async () => {
     mockStoreGet.mockImplementation(async (key: string) => {
       if (key === "default_todoist_date") return "today";

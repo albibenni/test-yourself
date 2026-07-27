@@ -1,7 +1,7 @@
 use std::io::Write;
 use tauri_app_lib::models::Quiz;
-use tauri_app_lib::parser::parse_quiz_file;
 use tauri_app_lib::parser::core::{parse_inline_options, update_solution_mode};
+use tauri_app_lib::parser::parse_quiz_file;
 use tempfile::NamedTempFile;
 
 async fn parse_string(content: &str) -> Option<Quiz> {
@@ -104,7 +104,7 @@ fn test_parse_inline_options_unicode_boundaries() {
     // Test with emojis and multi-byte characters to ensure string slicing doesn't panic
     let raw_text = "A) 👨‍👩‍👧‍👦 Family B) 🌍 Earth C) 🚀 Space D) 🦀 Rust";
     let (question_text, options) = parse_inline_options(raw_text);
-    
+
     assert_eq!(question_text, "");
     assert_eq!(options.len(), 4);
     assert_eq!(options[0].letter, "A");
@@ -143,7 +143,7 @@ fn test_parse_inline_options_malformed() {
 #[test]
 fn test_update_solution_mode_switches() {
     let mut in_solutions = false;
-    
+
     update_solution_mode("## solutions", true, &mut in_solutions);
     assert!(in_solutions);
 

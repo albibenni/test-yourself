@@ -261,7 +261,7 @@ describe("App Component", () => {
 
   it("opens Obsidian with absolute path when clicking the Topic link", async () => {
     const { openUrl } = await import("@tauri-apps/plugin-opener");
-    
+
     render(<App />);
 
     await waitFor(() => {
@@ -273,7 +273,9 @@ describe("App Component", () => {
     const topicLink = await screen.findByRole("link", { name: "Frontend" });
     fireEvent.click(topicLink);
 
-    expect(openUrl).toHaveBeenCalledWith("obsidian://open?path=%2Fpath%2Freact.md");
+    expect(openUrl).toHaveBeenCalledWith(
+      "obsidian://open?path=%2Fpath%2Freact.md",
+    );
   });
 
   it("opens a quiz when launched with deep link (get_initial_url)", async () => {
@@ -281,7 +283,8 @@ describe("App Component", () => {
       if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
       if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
       // Mock the initial URL containing the deep link to React Basics
-      if (cmd === "get_initial_url") return Promise.resolve("test-yourself://open?quiz=%2Fpath%2Freact.md");
+      if (cmd === "get_initial_url")
+        return Promise.resolve("test-yourself://open?quiz=%2Fpath%2Freact.md");
       return Promise.resolve(null);
     });
 
@@ -289,11 +292,13 @@ describe("App Component", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "React Basics", level: 1 })
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
       ).toBeInTheDocument();
     });
-    
-    expect(screen.getByPlaceholderText("Search by topic or title...")).toHaveValue("");
+
+    expect(
+      screen.getByPlaceholderText("Search by topic or title..."),
+    ).toHaveValue("");
   });
 
   it("opens a quiz when receiving deep-link-received event", async () => {
@@ -305,12 +310,14 @@ describe("App Component", () => {
 
     // Simulate the secondary instance forwarding the deep link
     await act(async () => {
-      mockListenCallback({ payload: "test-yourself://open?quiz=%2Fpath%2Freact.md" });
+      mockListenCallback({
+        payload: "test-yourself://open?quiz=%2Fpath%2Freact.md",
+      });
     });
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "React Basics", level: 1 })
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
       ).toBeInTheDocument();
     });
   });

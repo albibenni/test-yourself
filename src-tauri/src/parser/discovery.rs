@@ -97,4 +97,3 @@ pub async fn get_all_quizzes(base_dir: &str) -> Vec<Quiz> {
     // Now process the markdown files asynchronously
     parse_quizzes(md_files).await
 }
-

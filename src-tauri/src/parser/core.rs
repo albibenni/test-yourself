@@ -323,4 +323,3 @@ impl<'a> QuizParser<'a> {
         }
     }
 }
-

@@ -144,7 +144,7 @@ describe("ScheduleModal", () => {
     });
 
     const addTaskCall = mockAddTask.mock.calls[0][0];
-    
+
     // Calculate expected date (7 days from now)
     const d = new Date();
     d.setDate(d.getDate() + 7);

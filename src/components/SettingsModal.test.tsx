@@ -163,11 +163,15 @@ describe("SettingsModal", () => {
     });
 
     // Change token to something else
-    const tokenInput = screen.getByPlaceholderText("Enter your Todoist API token");
+    const tokenInput = screen.getByPlaceholderText(
+      "Enter your Todoist API token",
+    );
     fireEvent.change(tokenInput, { target: { value: "different-token" } });
-    
+
     // Change token back to original
-    fireEvent.change(tokenInput, { target: { value: "existing-secure-token" } });
+    fireEvent.change(tokenInput, {
+      target: { value: "existing-secure-token" },
+    });
 
     // Save
     const saveButton = screen.getByRole("button", { name: "Save" });
@@ -178,8 +182,6 @@ describe("SettingsModal", () => {
       expect(setSecureToken).not.toHaveBeenCalled();
     });
   });
-
-
 
   it("migrates token to secureStore on save if it was loaded from unencrypted store, even if unmodified", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(null);

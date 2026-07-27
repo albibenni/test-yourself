@@ -722,10 +722,7 @@ export function ScheduleModal({
           </div>
 
           <div className="quick-add-footer">
-            <button
-              className="button-secondary"
-              onClick={onClose}
-            >
+            <button className="button-secondary" onClick={onClose}>
               Cancel
             </button>
             <button

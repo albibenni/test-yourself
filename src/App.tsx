@@ -66,14 +66,18 @@ function App() {
     let unlisten: (() => void) | undefined;
     async function setupDeepLink() {
       try {
-        const { onOpenUrl, getCurrent } = await import("@tauri-apps/plugin-deep-link");
-        
+        const { onOpenUrl, getCurrent } =
+          await import("@tauri-apps/plugin-deep-link");
+
         const handleUrls = (urls: string[] | null) => {
           if (!urls) return;
           for (const url of urls) {
             try {
               const u = new URL(url);
-              if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
+              if (
+                u.protocol === "test-yourself:" &&
+                u.searchParams.has("quiz")
+              ) {
                 const quizPath = u.searchParams.get("quiz");
                 if (quizPath) {
                   setPendingQuizLink(quizPath);
@@ -92,7 +96,7 @@ function App() {
       } catch (e) {
         console.warn("Deep link plugin not found or failed", e);
       }
-      
+
       try {
         const initialUrl = await invoke<string | null>("get_initial_url");
         if (initialUrl) {
@@ -113,7 +117,7 @@ function App() {
       }
     }
     void setupDeepLink();
-    
+
     // Also listen to single-instance argv forwards
     let unlistenEvent: (() => void) | undefined;
     listen<string>("deep-link-received", (event) => {
@@ -128,9 +132,11 @@ function App() {
       } catch (e) {
         console.error("Failed to parse custom deep link:", e);
       }
-    }).then(unlistenFn => {
-      unlistenEvent = unlistenFn;
-    }).catch(console.error);
+    })
+      .then((unlistenFn) => {
+        unlistenEvent = unlistenFn;
+      })
+      .catch(console.error);
 
     return () => {
       if (unlisten) unlisten();
@@ -314,9 +320,15 @@ function App() {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      void openUrl(`obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`);
+                      void openUrl(
+                        `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`,
+                      );
                     }}
-                    style={{ color: "inherit", textDecoration: "underline", cursor: "pointer" }}
+                    style={{
+                      color: "inherit",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                    }}
                   >
                     {selectedQuizMeta.topic || DEFAULT_TOPIC}
                   </a>
