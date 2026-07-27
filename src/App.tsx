@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { check } from "@tauri-apps/plugin-updater";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -209,8 +210,12 @@ function App() {
                 <p>
                   Topic:{" "}
                   <a
-                    href={`obsidian://open?file=${encodeURIComponent(selectedQuizMeta.path)}`}
-                    style={{ color: "inherit", textDecoration: "underline" }}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void openUrl(`obsidian://open?file=${encodeURIComponent(selectedQuizMeta.path)}`);
+                    }}
+                    style={{ color: "inherit", textDecoration: "underline", cursor: "pointer" }}
                   >
                     {selectedQuizMeta.topic || DEFAULT_TOPIC}
                   </a>

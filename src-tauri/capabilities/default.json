@@ -8,6 +8,10 @@
     "opener:default",
     "dialog:default",
     "store:default",
-    "stronghold:default"
+    "stronghold:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "obsidian://*" }]
+    }
   ]
 }
