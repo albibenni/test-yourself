@@ -33,6 +33,16 @@ export function Sidebar({
     "quizzes",
   );
 
+  useEffect(() => {
+    if (selectedQuiz) {
+      if (selectedQuiz.is_worksheet && activeTab !== "worksheets") {
+        setActiveTab("worksheets");
+      } else if (!selectedQuiz.is_worksheet && activeTab !== "quizzes") {
+        setActiveTab("quizzes");
+      }
+    }
+  }, [selectedQuiz, activeTab]);
+
   const filteredGroupedQuizzes = useMemo(() => {
     const filtered: Record<string, QuizMetadata[]> = {};
     for (const [topic, quizzes] of Object.entries(groupedQuizzes)) {

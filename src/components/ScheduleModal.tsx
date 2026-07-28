@@ -95,7 +95,8 @@ export function ScheduleModal({
   ) {
     setPrevResetParams({ isOpen, quizPath: quiz?.path });
     if (isOpen && quiz) {
-      setTaskContent(`Review Quiz: ${quiz.title}`);
+      const prefix = quiz.is_worksheet ? "Review Worksheet" : "Review Quiz";
+      setTaskContent(`${prefix}: ${quiz.title}`);
       setTaskDescription("");
       setShowCalendar(false);
       setCurrentMonth(new Date());
