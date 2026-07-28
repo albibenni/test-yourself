@@ -42,4 +42,16 @@ The application uses the API Token you provide in Settings to authenticate with 
 
 ### Security
 
-Your Todoist API token is stored securely in your local environment (`localStorage` via the Tauri webview). It is never transmitted anywhere other than directly to the official Todoist REST API endpoints over secure HTTPS.
+Your Todoist API token is stored securely in an encrypted, local vault using the Tauri Stronghold plugin (`@tauri-apps/plugin-stronghold`). It is never transmitted anywhere other than directly to the official Todoist REST API endpoints over secure HTTPS.
+
+## 3. Deep Linking (Custom URL Scheme)
+
+The app registers a custom URL scheme (`test-yourself://`) so you can launch it and directly open a specific quiz or worksheet from anywhere on your system.
+
+### How it works
+
+You can trigger a deep link via the browser or terminal:
+`test-yourself://open?quiz=<Encoded-Path/To/Quiz.md>`
+
+- The application listens for `get_initial_url` on startup, or the `deep-link-received` event if already running.
+- It will automatically navigate to the target quiz or worksheet.

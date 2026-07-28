@@ -1,18 +1,24 @@
 # Test Yourself
 
-A fast, desktop-based quiz application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" allows you to point to a local folder of Markdown-based quizzes to test your knowledge, review topics, and schedule follow-ups.
+A fast, desktop-based quiz application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" allows you to point to a local folder of Markdown-based quizzes and worksheets to test your knowledge, review topics, and schedule follow-ups.
 
 ## Key Features
 
-- **Local-First**: Works directly with your local directory of markdown quizzes.
-- **Interactive Quizzes**: Parses markdown into an interactive Q&A format.
+- **Local-First**: Works directly with your local directory of markdown quizzes and worksheets.
+- **Interactive Quizzes & Worksheets**: Parses standard markdown into an interactive Q&A format, and `.worksheet.md` into fill-in-the-blank exercises.
 - **Dark & Glassmorphic UI**: Beautiful, eye-friendly design.
 - **Keyboard Navigation**: Optimized for keyboard-heavy workflows.
-- **Powerful Integrations**: Built-in support for Todoist and Obsidian to schedule your review sessions.
+- **Powerful Integrations**: Built-in support for Todoist, Obsidian, and custom deep links.
 
 ## Download & Install
 
 You can download the latest pre-compiled installers for **macOS**, **Windows**, and **Linux** directly from the [Releases page](../../releases/latest).
+
+**Arch Linux**:
+You can install and update the app directly from the AUR using `yay`:
+```bash
+yay -S test-yourself
+```
 
 Learn more about the app and other projects at **[albertobenatti.dev](https://albertobenatti.dev)**.
 
