@@ -1,4 +1,8 @@
-import { Stronghold, type Client } from "@tauri-apps/plugin-stronghold";
+import {
+  Stronghold,
+  type Client,
+  type Store,
+} from "@tauri-apps/plugin-stronghold";
 import { appDataDir } from "@tauri-apps/api/path";
 
 let cachedStronghold: Stronghold | null = null;
@@ -7,7 +11,8 @@ let cachedClient: Client | null = null;
 const FIXED_VAULT_KEY = "test-yourself-local-encryption-key";
 const CLIENT_NAME = "test-yourself-client";
 
-let initPromise: Promise<{ stronghold: Stronghold; store: any }> | null = null;
+let initPromise: Promise<{ stronghold: Stronghold; store: Store }> | null =
+  null;
 
 export async function getSecureStore() {
   if (cachedClient && cachedStronghold) {

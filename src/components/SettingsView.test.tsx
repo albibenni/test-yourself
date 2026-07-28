@@ -58,7 +58,7 @@ describe("SettingsView", () => {
     onTextColorChange: vi.fn(),
   };
 
-  it("renders tabs and switches between them", async () => {
+  it("renders tabs and switches between them", () => {
     render(<SettingsView {...defaultProps} />);
 
     // Default tab is Appearance
@@ -82,7 +82,7 @@ describe("SettingsView", () => {
     expect(screen.getByText("App Version")).toBeInTheDocument();
   });
 
-  it("calls onChange handlers when using segmented controls", async () => {
+  it("calls onChange handlers when using segmented controls", () => {
     render(<SettingsView {...defaultProps} />);
 
     // In Appearance tab, click Light theme
@@ -230,9 +230,10 @@ describe("SettingsView", () => {
 
   it("migrates token to secureStore on save if it was loaded from unencrypted store, even if unmodified", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(null);
-    mockStore.get.mockImplementation(async (key: string) => {
-      if (key === "todoist_token") return "unencrypted-store-token";
-      return null;
+    mockStore.get.mockImplementation((key: string) => {
+      if (key === "todoist_token")
+        return Promise.resolve("unencrypted-store-token");
+      return Promise.resolve(null);
     });
 
     render(<SettingsView {...defaultProps} />);

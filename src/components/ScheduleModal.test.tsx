@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ScheduleModal } from "./ScheduleModal";
 import * as useTodoistModule from "../hooks/useTodoist";
@@ -9,10 +9,10 @@ vi.mock("../hooks/useTodoist", () => ({
 }));
 
 describe("ScheduleModal", () => {
-  let mockGetProjects: any;
-  let mockGetTasks: any;
-  let mockAddTask: any;
-  let mockGetDefaultSettings: any;
+  let mockGetProjects: Mock;
+  let mockGetTasks: Mock;
+  let mockAddTask: Mock;
+  let mockGetDefaultSettings: Mock;
 
   const mockQuiz = {
     title: "React Basics",
@@ -143,7 +143,7 @@ describe("ScheduleModal", () => {
       expect(mockAddTask).toHaveBeenCalled();
     });
 
-    const addTaskCall = mockAddTask.mock.calls[0][0];
+    const addTaskCall = mockAddTask.mock.calls[0][0] as { dueString?: string };
 
     // Calculate expected date (7 days from now)
     const d = new Date();

@@ -39,7 +39,10 @@ pub async fn parse_quiz_metadata(
     })
 }
 
-pub async fn parse_worksheet_file(filepath: &Path, topic: &str) -> Option<crate::models::Worksheet> {
+pub async fn parse_worksheet_file(
+    filepath: &Path,
+    topic: &str,
+) -> Option<crate::models::Worksheet> {
     let content = tokio::fs::read_to_string(filepath).await.ok()?;
 
     let metadata = tokio::fs::metadata(filepath).await.ok()?;

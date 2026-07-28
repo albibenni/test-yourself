@@ -33,10 +33,10 @@ vi.mock("@tauri-apps/plugin-deep-link", () => ({
   getCurrent: vi.fn().mockResolvedValue(null),
 }));
 
-export let mockListenCallback: (event: any) => void = () => {};
+export let mockListenCallback: (event: { payload: string }) => void = () => {};
 
 vi.mock("@tauri-apps/api/event", () => ({
-  listen: vi.fn((event, cb) => {
+  listen: vi.fn((event: string, cb: (e: { payload: string }) => void) => {
     if (event === "deep-link-received") {
       mockListenCallback = cb;
     }
@@ -130,9 +130,7 @@ describe("App Component", () => {
     });
 
     // Find the search input
-    const searchInput = screen.getByPlaceholderText(
-      "Search...",
-    );
+    const searchInput = screen.getByPlaceholderText("Search...");
     expect(searchInput).toBeInTheDocument();
 
     // Type in the search input to filter by title
@@ -281,7 +279,7 @@ describe("App Component", () => {
   });
 
   it("opens a quiz when launched with deep link (get_initial_url)", async () => {
-    vi.mocked(invoke).mockImplementation((cmd: string, _args?: unknown) => {
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
       if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
       if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
       // Mock the initial URL containing the deep link to React Basics
@@ -298,9 +296,7 @@ describe("App Component", () => {
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByPlaceholderText("Search..."),
-    ).toHaveValue("");
+    expect(screen.getByPlaceholderText("Search...")).toHaveValue("");
   });
 
   it("opens a quiz when receiving deep-link-received event", async () => {
@@ -311,7 +307,7 @@ describe("App Component", () => {
     });
 
     // Simulate the secondary instance forwarding the deep link
-    await act(async () => {
+    act(() => {
       mockListenCallback({
         payload: "test-yourself://open?quiz=%2Fpath%2Freact.md",
       });

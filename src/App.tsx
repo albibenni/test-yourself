@@ -167,9 +167,11 @@ function App() {
         );
       });
       if (targetQuiz) {
-        setSelectedQuizMeta(targetQuiz);
-        setSearchQuery(""); // Clear search so it appears in sidebar
-        setPendingQuizLink(null);
+        setTimeout(() => {
+          setSelectedQuizMeta(targetQuiz);
+          setSearchQuery(""); // Clear search so it appears in sidebar
+          setPendingQuizLink(null);
+        }, 0);
       } else {
         console.warn("Quiz not found for deep link:", pendingQuizLink);
       }

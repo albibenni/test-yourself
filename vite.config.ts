@@ -17,7 +17,16 @@ export default defineConfig(async () => ({
         manualChunks: {
           vendor: ["react", "react-dom", "zod", "clsx"],
           todoist: ["@doist/todoist-sdk"],
-          tauri: ["@tauri-apps/api", "@tauri-apps/plugin-dialog", "@tauri-apps/plugin-store", "@tauri-apps/plugin-updater", "@tauri-apps/plugin-deep-link", "@tauri-apps/plugin-process", "@tauri-apps/plugin-opener", "@tauri-apps/plugin-stronghold"],
+          tauri: [
+            "@tauri-apps/api",
+            "@tauri-apps/plugin-dialog",
+            "@tauri-apps/plugin-store",
+            "@tauri-apps/plugin-updater",
+            "@tauri-apps/plugin-deep-link",
+            "@tauri-apps/plugin-process",
+            "@tauri-apps/plugin-opener",
+            "@tauri-apps/plugin-stronghold",
+          ],
         },
       },
       onwarn(warning, warn) {
