@@ -197,6 +197,7 @@ function App() {
         setTimeout(() => {
           showToast(`Quiz not found for deep link: ${normalizedPending}`);
         }, 0);
+        alert(`Deep link quiz not found in library: ${normalizedPending}`);
         console.warn("Quiz not found for deep link:", pendingQuizLink);
       }
     }

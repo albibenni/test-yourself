@@ -114,6 +114,9 @@ export function useQuizzes() {
         }
       } catch (error) {
         console.warn("Failed to load active content:", error);
+        alert(
+          `Failed to load quiz content! Your markdown file might have a syntax error.\n\nError details: ${String(error)}`,
+        );
         setActiveQuiz(null);
         setActiveWorksheet(null);
       } finally {
