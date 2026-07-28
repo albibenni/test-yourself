@@ -187,15 +187,17 @@ function App() {
         });
       }
       if (targetQuiz) {
-        showToast(`Deep link found: ${targetQuiz.title}`);
         setTimeout(() => {
+          showToast(`Deep link found: ${targetQuiz.title}`);
           setSelectedQuizMeta(targetQuiz);
           setSearchQuery(""); // Clear search so it appears in sidebar
           setPendingQuizLink(null);
           setIsSettingsOpen(false);
         }, 0);
       } else {
-        showToast(`Quiz not found for deep link: ${normalizedPending}`);
+        setTimeout(() => {
+          showToast(`Quiz not found for deep link: ${normalizedPending}`);
+        }, 0);
         console.warn("Quiz not found for deep link:", pendingQuizLink);
       }
     }
@@ -258,18 +260,20 @@ function App() {
           loading={loading}
           groupedQuizzes={groupedQuizzes}
           selectedQuiz={selectedQuizMeta}
-          setSelectedQuiz={async (quiz) => {
-            if (isSettingsOpen) {
-              if (isSettingsDirty) {
-                const userConfirmed = await confirm(
-                  "You have unsaved settings. Are you sure you want to discard your changes and continue?",
-                  { title: "Unsaved Changes", kind: "warning" },
-                );
-                if (!userConfirmed) return;
+          setSelectedQuiz={(quiz) => {
+            void (async () => {
+              if (isSettingsOpen) {
+                if (isSettingsDirty) {
+                  const userConfirmed = await confirm(
+                    "You have unsaved settings. Are you sure you want to discard your changes and continue?",
+                    { title: "Unsaved Changes", kind: "warning" },
+                  );
+                  if (!userConfirmed) return;
+                }
+                setIsSettingsOpen(false);
               }
-              setIsSettingsOpen(false);
-            }
-            setSelectedQuizMeta(quiz);
+              setSelectedQuizMeta(quiz);
+            })();
           }}
           handleSync={() => void handleSync()}
           isSyncing={isSyncing}

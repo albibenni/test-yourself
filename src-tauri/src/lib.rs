@@ -151,7 +151,7 @@ fn custom_linux_relaunch(app: tauri::AppHandle) -> bool {
             let _ = cmd.spawn();
         }
         app.exit(0);
-        return true;
+        true
     }
     #[cfg(not(target_os = "linux"))]
     {

@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo 'Running pre-push checks...'
+make test || { echo 'Tests failed!'; exit 1; }
+# Using --no-bundle to prevent local OS packager failures (like linuxdeploy on Arch)
+pnpm tauri build --no-bundle || { echo 'Build failed!'; exit 1; }
+echo '✅ All checks passed! Pushing...'

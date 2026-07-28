@@ -1,0 +1,22 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running formatting and linting for the entire app..."
+
+# Format and lint frontend
+npx prettier . --write
+npx eslint . --fix
+
+# Format and lint backend
+cd src-tauri
+cargo fmt
+cargo clippy --fix --allow-dirty --allow-no-vcs
+cd ..
+
+# Re-stage any files that were already staged in case the formatters modified them
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | xargs -I {} git add "{}"
+fi
+
+echo "Pre-commit checks passed!"
