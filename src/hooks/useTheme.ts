@@ -56,28 +56,43 @@ export function useTheme() {
   const saveTheme = async (newTheme: Theme) => {
     setTheme(newTheme);
     try {
-      const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+      const store = await load(STORE_FILENAME, {
+        autoSave: false,
+        defaults: {},
+      });
       await store.set("app_theme", newTheme);
       await store.save();
-    } catch (e) { console.warn("Failed to save theme", e); }
+    } catch (e) {
+      console.warn("Failed to save theme", e);
+    }
   };
 
   const saveAccent = async (newAccent: AccentColor) => {
     setAccent(newAccent);
     try {
-      const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+      const store = await load(STORE_FILENAME, {
+        autoSave: false,
+        defaults: {},
+      });
       await store.set("app_accent", newAccent);
       await store.save();
-    } catch (e) { console.warn("Failed to save accent", e); }
+    } catch (e) {
+      console.warn("Failed to save accent", e);
+    }
   };
 
   const saveTextColor = async (newTextColor: TextColor) => {
     setTextColor(newTextColor);
     try {
-      const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+      const store = await load(STORE_FILENAME, {
+        autoSave: false,
+        defaults: {},
+      });
       await store.set("app_text_color", newTextColor);
       await store.save();
-    } catch (e) { console.warn("Failed to save text color", e); }
+    } catch (e) {
+      console.warn("Failed to save text color", e);
+    }
   };
 
   return { theme, accent, textColor, saveTheme, saveAccent, saveTextColor };

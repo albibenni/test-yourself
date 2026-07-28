@@ -10,13 +10,18 @@ import { lazy, Suspense } from "react";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
+import { WorksheetViewer } from "./components/WorksheetViewer";
 import { DEFAULT_TOPIC } from "./constants";
 
 const SettingsView = lazy(() =>
-  import("./components/SettingsView").then((m) => ({ default: m.SettingsView })),
+  import("./components/SettingsView").then((m) => ({
+    default: m.SettingsView,
+  })),
 );
 const ScheduleModal = lazy(() =>
-  import("./components/ScheduleModal").then((m) => ({ default: m.ScheduleModal })),
+  import("./components/ScheduleModal").then((m) => ({
+    default: m.ScheduleModal,
+  })),
 );
 
 function App() {
@@ -58,6 +63,7 @@ function App() {
     selectedQuizMeta,
     setSelectedQuizMeta,
     activeQuiz,
+    activeWorksheet,
     loadingActiveQuiz,
     searchQuery,
     setSearchQuery,
@@ -234,7 +240,11 @@ function App() {
 
         <main className="main-content">
           {isSettingsOpen ? (
-            <Suspense fallback={<div style={{ padding: "2rem" }}>Loading Settings...</div>}>
+            <Suspense
+              fallback={
+                <div style={{ padding: "2rem" }}>Loading Settings...</div>
+              }
+            >
               <SettingsView
                 onClose={() => setIsSettingsOpen(false)}
                 theme={theme}
@@ -373,7 +383,9 @@ function App() {
                       fontSize: "0.9rem",
                     }}
                   >
-                    {answeredCount} of {totalQuestions} answered
+                    {selectedQuizMeta.is_worksheet
+                      ? "Worksheet"
+                      : `${answeredCount} of ${totalQuestions} answered`}
                   </span>
                 </p>
               </div>
@@ -386,8 +398,13 @@ function App() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  Loading quiz questions...
+                  Loading content...
                 </div>
+              ) : activeWorksheet ? (
+                <WorksheetViewer
+                  key={`${activeWorksheet.path}-${resetKey}`}
+                  worksheet={activeWorksheet}
+                />
               ) : activeQuiz ? (
                 <>
                   <div className="questions-container">
@@ -533,7 +550,6 @@ function App() {
           )}
         </main>
       </div>
-
 
       {isScheduleOpen && (
         <Suspense fallback={null}>

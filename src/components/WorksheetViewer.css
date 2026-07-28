@@ -1,0 +1,79 @@
+.worksheet-viewer {
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.worksheet-content {
+  margin-bottom: 2rem;
+  white-space: pre-wrap;
+}
+
+.worksheet-blank-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 4px;
+  vertical-align: top;
+}
+
+.worksheet-input {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 1rem;
+  text-align: center;
+  min-width: 60px;
+  transition: all 0.2s ease;
+}
+
+.worksheet-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.worksheet-input.correct {
+  border-color: var(--success-color);
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.worksheet-input.incorrect {
+  border-color: var(--error-color);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+  text-decoration: line-through;
+}
+
+.worksheet-correction {
+  font-size: 0.85rem;
+  color: var(--success-color);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.worksheet-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.worksheet-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.worksheet-results .score {
+  font-size: 1.2rem;
+  font-weight: 600;
+}

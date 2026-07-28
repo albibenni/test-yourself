@@ -61,7 +61,7 @@ describe("Sidebar Component", () => {
       />,
     );
 
-    expect(screen.getByText("Loading quizzes...")).toBeInTheDocument();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows empty state when there are no quizzes and no search query", () => {
@@ -120,7 +120,7 @@ describe("Sidebar Component", () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText("Search by topic or title...");
+    const input = screen.getByPlaceholderText("Search...");
     fireEvent.change(input, { target: { value: "React" } });
     expect(setSearchQuery).toHaveBeenCalledWith("React");
   });

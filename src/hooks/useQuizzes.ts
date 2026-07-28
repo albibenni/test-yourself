@@ -7,8 +7,10 @@ import { z } from "zod";
 import {
   QuizSchema,
   QuizMetadataSchema,
+  WorksheetSchema,
   type Quiz,
   type QuizMetadata,
+  type Worksheet,
 } from "../types";
 import {
   STORE_FILENAME,
@@ -24,6 +26,9 @@ export function useQuizzes() {
     null,
   );
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
+  const [activeWorksheet, setActiveWorksheet] = useState<Worksheet | null>(
+    null,
+  );
   const [loadingActiveQuiz, setLoadingActiveQuiz] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,15 +95,27 @@ export function useQuizzes() {
       }
       setLoadingActiveQuiz(true);
       try {
-        const rawData = await invoke("get_quiz_content", {
-          path: selectedQuizMeta.path,
-          topic: selectedQuizMeta.topic,
-        });
-        const fetchedQuiz = QuizSchema.parse(rawData);
-        setActiveQuiz(fetchedQuiz);
+        if (selectedQuizMeta.is_worksheet) {
+          const rawData = await invoke("get_worksheet_content", {
+            path: selectedQuizMeta.path,
+            topic: selectedQuizMeta.topic,
+          });
+          const fetchedWorksheet = WorksheetSchema.parse(rawData);
+          setActiveWorksheet(fetchedWorksheet);
+          setActiveQuiz(null);
+        } else {
+          const rawData = await invoke("get_quiz_content", {
+            path: selectedQuizMeta.path,
+            topic: selectedQuizMeta.topic,
+          });
+          const fetchedQuiz = QuizSchema.parse(rawData);
+          setActiveQuiz(fetchedQuiz);
+          setActiveWorksheet(null);
+        }
       } catch (error) {
-        console.warn("Failed to load active quiz:", error);
+        console.warn("Failed to load active content:", error);
         setActiveQuiz(null);
+        setActiveWorksheet(null);
       } finally {
         setLoadingActiveQuiz(false);
       }
@@ -182,6 +199,7 @@ export function useQuizzes() {
     selectedQuizMeta,
     setSelectedQuizMeta,
     activeQuiz,
+    activeWorksheet,
     loadingActiveQuiz,
     searchQuery,
     setSearchQuery,

@@ -47,6 +47,16 @@ pub async fn get_quiz_content_inner(path: String, topic: String) -> Result<model
     }
 }
 
+#[tauri::command]
+async fn get_worksheet_content(path: String, topic: String) -> Result<models::Worksheet, String> {
+    let path_buf = std::path::PathBuf::from(&path);
+    if let Some(ws) = parser::markdown::parse_worksheet_file(&path_buf, &topic).await {
+        Ok(ws)
+    } else {
+        Err(format!("Could not parse worksheet: {}", path))
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -107,6 +117,7 @@ pub fn run() {
             greet,
             get_quizzes,
             get_quiz_content,
+            get_worksheet_content,
             get_initial_url,
             is_arch_linux,
             custom_linux_relaunch

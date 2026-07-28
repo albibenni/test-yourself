@@ -29,12 +29,28 @@ export function Sidebar({
 }: SidebarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<"quizzes" | "worksheets">(
+    "quizzes",
+  );
+
+  const filteredGroupedQuizzes = useMemo(() => {
+    const filtered: Record<string, QuizMetadata[]> = {};
+    for (const [topic, quizzes] of Object.entries(groupedQuizzes)) {
+      const matching = quizzes.filter((q) =>
+        activeTab === "quizzes" ? !q.is_worksheet : q.is_worksheet,
+      );
+      if (matching.length > 0) {
+        filtered[topic] = matching;
+      }
+    }
+    return filtered;
+  }, [groupedQuizzes, activeTab]);
 
   const flatQuizzes = useMemo(() => {
-    return Object.entries(groupedQuizzes)
+    return Object.entries(filteredGroupedQuizzes)
       .sort(([a], [b]) => a.localeCompare(b))
       .flatMap(([, quizzes]) => quizzes);
-  }, [groupedQuizzes]);
+  }, [filteredGroupedQuizzes]);
 
   const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
   if (searchQuery !== prevSearchQuery) {
@@ -120,18 +136,78 @@ export function Sidebar({
           ref={searchInputRef}
           type="text"
           className="search-input"
-          placeholder="Search by topic or title..."
-          aria-label="Search quizzes"
+          placeholder="Search..."
+          aria-label="Search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleInputKeyDown}
         />
       </div>
-      <hr className="sidebar-divider" />
+      <div
+        style={{
+          display: "flex",
+          borderBottom: "1px solid var(--border-color)",
+          margin: "0",
+        }}
+      >
+        <button
+          style={{
+            flex: 1,
+            padding: "0.75rem 0.5rem",
+            background: "none",
+            border: "none",
+            borderBottom:
+              activeTab === "quizzes"
+                ? "2px solid var(--accent-color)"
+                : "2px solid transparent",
+            color:
+              activeTab === "quizzes"
+                ? "var(--text-primary)"
+                : "var(--text-secondary)",
+            fontWeight: activeTab === "quizzes" ? 600 : 400,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            fontSize: "0.9rem",
+          }}
+          onClick={() => {
+            setActiveTab("quizzes");
+            setFocusedQuizIndex(0);
+          }}
+        >
+          Quizzes
+        </button>
+        <button
+          style={{
+            flex: 1,
+            padding: "0.75rem 0.5rem",
+            background: "none",
+            border: "none",
+            borderBottom:
+              activeTab === "worksheets"
+                ? "2px solid var(--accent-color)"
+                : "2px solid transparent",
+            color:
+              activeTab === "worksheets"
+                ? "var(--text-primary)"
+                : "var(--text-secondary)",
+            fontWeight: activeTab === "worksheets" ? 600 : 400,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            fontSize: "0.9rem",
+          }}
+          onClick={() => {
+            setActiveTab("worksheets");
+            setFocusedQuizIndex(0);
+          }}
+        >
+          Worksheets
+        </button>
+      </div>
+      <hr className="sidebar-divider" style={{ marginTop: 0 }} />
       <div className="sidebar-content">
         {loading ? (
-          <div className="loading">Loading quizzes...</div>
-        ) : Object.keys(groupedQuizzes).length === 0 ? (
+          <div className="loading">Loading...</div>
+        ) : Object.keys(filteredGroupedQuizzes).length === 0 ? (
           <div
             className="sidebar-empty"
             style={{
@@ -142,11 +218,11 @@ export function Sidebar({
             }}
           >
             {searchQuery
-              ? "No quizzes match your search."
-              : "No quizzes found in this folder."}
+              ? `No ${activeTab} match your search.`
+              : `No ${activeTab} found in this folder.`}
           </div>
         ) : (
-          Object.entries(groupedQuizzes)
+          Object.entries(filteredGroupedQuizzes)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([topic, topicQuizzes]) => (
               <div key={topic} className="topic-group">
@@ -189,7 +265,12 @@ export function Sidebar({
             "color-mix(in srgb, var(--text-primary) 2%, transparent)",
         }}
       >
-        {flatQuizzes.length} {flatQuizzes.length === 1 ? "quiz" : "quizzes"}
+        {flatQuizzes.length}{" "}
+        {flatQuizzes.length === 1
+          ? activeTab === "quizzes"
+            ? "quiz"
+            : "worksheet"
+          : activeTab}
       </div>
     </aside>
   );

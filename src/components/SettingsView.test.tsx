@@ -62,17 +62,23 @@ describe("SettingsView", () => {
     render(<SettingsView {...defaultProps} />);
 
     // Default tab is Appearance
-    expect(screen.getByRole("heading", { name: "Appearance", level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Appearance", level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Theme")).toBeInTheDocument();
-    
+
     // Switch to Integrations
     fireEvent.click(screen.getByText("Integrations"));
-    expect(screen.getByRole("heading", { name: "Integrations", level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Integrations", level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Obsidian Vault")).toBeInTheDocument();
-    
+
     // Switch to About
     fireEvent.click(screen.getByText("About"));
-    expect(screen.getByRole("heading", { name: "About", level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "About", level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("App Version")).toBeInTheDocument();
   });
 
@@ -86,7 +92,7 @@ describe("SettingsView", () => {
     // Click Stone text tone
     fireEvent.click(screen.getByRole("button", { name: "Stone" }));
     expect(defaultProps.onTextColorChange).toHaveBeenCalledWith("stone");
-    
+
     // Click purple accent
     fireEvent.click(screen.getByRole("button", { name: "purple" }));
     expect(defaultProps.onAccentChange).toHaveBeenCalledWith("purple");

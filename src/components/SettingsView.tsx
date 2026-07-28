@@ -94,7 +94,7 @@ export function SettingsView({
   const [defaultProject, setDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  
+
   const [updateStatus, setUpdateStatus] = useState(
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
   );
@@ -230,7 +230,7 @@ export function SettingsView({
       onSaveSuccess?.();
       onClose();
     } catch (error) {
-      console.warn("Failed to save settings", error);
+      console.error("Failed to save settings", error);
     } finally {
       setIsSaving(false);
     }
@@ -261,25 +261,73 @@ export function SettingsView({
       label: "Appearance",
       subtitle: "Interface theme",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-      )
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      ),
     },
     {
       id: "todoist",
       label: "Integrations",
       subtitle: "API and vault",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-      )
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      ),
     },
     {
       id: "about",
       label: "About",
       subtitle: "Updates & info",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-      )
-    }
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -293,8 +341,20 @@ export function SettingsView({
             </p>
           </div>
           <div className="settings-actions-top">
-            <button className="button-secondary" onClick={onClose} disabled={isSaving}>Cancel</button>
-            <button className="button-primary" onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</button>
+            <button
+              className="button-secondary"
+              onClick={onClose}
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              className="button-primary"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
+            </button>
           </div>
         </div>
       </div>
@@ -320,21 +380,29 @@ export function SettingsView({
           {activeTab === "appearance" && (
             <div className="settings-section">
               <h2 className="settings-section-title">Appearance</h2>
-              <p className="settings-section-subtitle">Adapt the interface to your needs on this device.</p>
-              
-              <SettingsCard title="Theme" subtitle="Scale the text and contrast across the interface.">
+              <p className="settings-section-subtitle">
+                Adapt the interface to your needs on this device.
+              </p>
+
+              <SettingsCard
+                title="Theme"
+                subtitle="Scale the text and contrast across the interface."
+              >
                 <SegmentedControl
                   value={theme}
                   onChange={onThemeChange}
                   options={[
                     { label: "System", value: "system" },
                     { label: "Light", value: "light" },
-                    { label: "Dark", value: "dark" }
+                    { label: "Dark", value: "dark" },
                   ]}
                 />
               </SettingsCard>
 
-              <SettingsCard title="Text Tone" subtitle="Choose the primary text color scheme.">
+              <SettingsCard
+                title="Text Tone"
+                subtitle="Choose the primary text color scheme."
+              >
                 <SegmentedControl
                   value={textColor}
                   onChange={onTextColorChange}
@@ -343,13 +411,23 @@ export function SettingsView({
                     { label: "Zinc", value: "zinc" },
                     { label: "Neutral", value: "neutral" },
                     { label: "Stone", value: "stone" },
-                    { label: "Accent", value: "accent" }
+                    { label: "Accent", value: "accent" },
                   ]}
                 />
               </SettingsCard>
 
-              <SettingsCard title="Accent Color" subtitle="Select the primary brand color for buttons and highlights.">
-                <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", padding: "0.5rem 0" }}>
+              <SettingsCard
+                title="Accent Color"
+                subtitle="Select the primary brand color for buttons and highlights."
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    flexWrap: "wrap",
+                    padding: "0.5rem 0",
+                  }}
+                >
                   {[
                     { id: "blue", color: "#3b82f6" },
                     { id: "purple", color: "#a855f7" },
@@ -368,10 +446,16 @@ export function SettingsView({
                         height: "36px",
                         borderRadius: "50%",
                         backgroundColor: a.color,
-                        border: accent === a.id ? "3px solid var(--text-primary)" : "3px solid transparent",
+                        border:
+                          accent === a.id
+                            ? "3px solid var(--text-primary)"
+                            : "3px solid transparent",
                         cursor: "pointer",
                         outline: "none",
-                        boxShadow: accent === a.id ? "0 0 0 2px var(--bg-surface)" : "0 2px 5px rgba(0,0,0,0.1)",
+                        boxShadow:
+                          accent === a.id
+                            ? "0 0 0 2px var(--bg-surface)"
+                            : "0 2px 5px rgba(0,0,0,0.1)",
                         transition: "all 0.2s ease",
                       }}
                       aria-label={a.id}
@@ -385,9 +469,14 @@ export function SettingsView({
           {activeTab === "todoist" && (
             <div className="settings-section">
               <h2 className="settings-section-title">Integrations</h2>
-              <p className="settings-section-subtitle">Manage your connections to external services.</p>
+              <p className="settings-section-subtitle">
+                Manage your connections to external services.
+              </p>
 
-              <SettingsCard title="Obsidian Vault" subtitle="Used to generate obsidian://open links to your quizzes.">
+              <SettingsCard
+                title="Obsidian Vault"
+                subtitle="Used to generate obsidian://open links to your quizzes."
+              >
                 <div className="settings-input-group">
                   <input
                     type="text"
@@ -396,11 +485,19 @@ export function SettingsView({
                     value={vaultName}
                     onChange={(e) => setVaultName(e.target.value)}
                   />
-                  <button className="button-secondary" onClick={() => void selectVaultFolder()}>Browse...</button>
+                  <button
+                    className="button-secondary"
+                    onClick={() => void selectVaultFolder()}
+                  >
+                    Browse...
+                  </button>
                 </div>
               </SettingsCard>
 
-              <SettingsCard title="Todoist API Token" subtitle="Find this in Todoist Settings > Integrations > Developer.">
+              <SettingsCard
+                title="Todoist API Token"
+                subtitle="Find this in Todoist Settings > Integrations > Developer."
+              >
                 <input
                   type="password"
                   className="settings-input"
@@ -410,8 +507,17 @@ export function SettingsView({
                 />
               </SettingsCard>
 
-              <SettingsCard title="Todoist Defaults" subtitle="Set default scheduling options for tasks.">
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <SettingsCard
+                title="Todoist Defaults"
+                subtitle="Set default scheduling options for tasks."
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1.5rem",
+                  }}
+                >
                   <div>
                     <label className="settings-label">Default Date</label>
                     <SegmentedControl
@@ -431,9 +537,18 @@ export function SettingsView({
                       value={defaultPriority}
                       onChange={(val) => setDefaultPriority(Number(val))}
                       options={[
-                        { label: <span style={{ color: "#d1453b" }}>P1</span>, value: 4 },
-                        { label: <span style={{ color: "#eb8909" }}>P2</span>, value: 3 },
-                        { label: <span style={{ color: "#246fe0" }}>P3</span>, value: 2 },
+                        {
+                          label: <span style={{ color: "#d1453b" }}>P1</span>,
+                          value: 4,
+                        },
+                        {
+                          label: <span style={{ color: "#eb8909" }}>P2</span>,
+                          value: 3,
+                        },
+                        {
+                          label: <span style={{ color: "#246fe0" }}>P3</span>,
+                          value: 2,
+                        },
                         { label: "P4", value: 1 },
                       ]}
                     />
@@ -447,7 +562,11 @@ export function SettingsView({
                       disabled={loadingProjects}
                     >
                       <option value="">Inbox (Default)</option>
-                      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -458,16 +577,40 @@ export function SettingsView({
           {activeTab === "about" && (
             <div className="settings-section">
               <h2 className="settings-section-title">About</h2>
-              <p className="settings-section-subtitle">Information and updates.</p>
+              <p className="settings-section-subtitle">
+                Information and updates.
+              </p>
 
-              <SettingsCard title="App Version" subtitle={isArchLinux ? "Managed by your system package manager." : (updateStatus || "Check for new versions of Test Yourself.")}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>v{appVersion}</span>
+              <SettingsCard
+                title="App Version"
+                subtitle={
+                  isArchLinux
+                    ? "Managed by your system package manager."
+                    : updateStatus || "Check for new versions of Test Yourself."
+                }
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>
+                    v{appVersion}
+                  </span>
                   {isArchLinux ? (
-                    <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Run yay -S test-yourself to update</span>
+                    <span
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      Run yay -S test-yourself to update
+                    </span>
                   ) : (
-                    <button 
-                      className="button-primary" 
+                    <button
+                      className="button-primary"
                       onClick={() => void handleCheckUpdate()}
                       disabled={
                         !!updateStatus &&
@@ -476,7 +619,9 @@ export function SettingsView({
                         !updateStatus.startsWith("Failed")
                       }
                     >
-                      {updateAvailable || updateStatus.startsWith("Update v") ? "Install Update" : "Check for Updates"}
+                      {updateAvailable || updateStatus.startsWith("Update v")
+                        ? "Install Update"
+                        : "Check for Updates"}
                     </button>
                   )}
                 </div>

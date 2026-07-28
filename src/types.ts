@@ -29,8 +29,18 @@ export const QuizMetadataSchema = z.object({
   path: z.string(),
   topic: z.string(),
   last_modified: z.number(),
+  is_worksheet: z.boolean().optional(),
 });
 export type QuizMetadata = z.infer<typeof QuizMetadataSchema>;
+
+export const WorksheetSchema = z.object({
+  title: z.string(),
+  path: z.string(),
+  topic: z.string(),
+  content: z.string(),
+  last_modified: z.number(),
+});
+export type Worksheet = z.infer<typeof WorksheetSchema>;
 
 export type ThemeType = "system" | "light" | "dark";
 export type TextColor = "slate" | "zinc" | "neutral" | "stone" | "accent";

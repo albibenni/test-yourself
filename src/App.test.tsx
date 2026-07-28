@@ -112,7 +112,7 @@ describe("App Component", () => {
       }),
     );
     render(<App />);
-    expect(await screen.findByText("Loading quizzes...")).toBeInTheDocument();
+    expect(await screen.findByText("Loading...")).toBeInTheDocument();
 
     await act(async () => {
       resolvePromise(mockQuizzes);
@@ -131,7 +131,7 @@ describe("App Component", () => {
 
     // Find the search input
     const searchInput = screen.getByPlaceholderText(
-      "Search by topic or title...",
+      "Search...",
     );
     expect(searchInput).toBeInTheDocument();
 
@@ -213,7 +213,7 @@ describe("App Component", () => {
 
   it("handles invoke errors gracefully", async () => {
     vi.mocked(invoke).mockRejectedValue(new Error("Failed to load"));
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     render(<App />);
 
@@ -299,7 +299,7 @@ describe("App Component", () => {
     });
 
     expect(
-      screen.getByPlaceholderText("Search by topic or title..."),
+      screen.getByPlaceholderText("Search..."),
     ).toHaveValue("");
   });
 

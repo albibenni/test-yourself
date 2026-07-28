@@ -31,4 +31,14 @@ pub struct QuizMetadata {
     pub path: PathBuf,
     pub topic: String,
     pub last_modified: u64,
+    pub is_worksheet: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Worksheet {
+    pub title: String,
+    pub path: PathBuf,
+    pub topic: String,
+    pub content: String,
+    pub last_modified: u64,
 }

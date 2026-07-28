@@ -35,6 +35,39 @@ pub async fn parse_quiz_metadata(
         path: filepath.to_path_buf(),
         topic: topic.to_string(),
         last_modified,
+        is_worksheet: filepath.to_string_lossy().ends_with(".worksheet.md"),
+    })
+}
+
+pub async fn parse_worksheet_file(filepath: &Path, topic: &str) -> Option<crate::models::Worksheet> {
+    let content = tokio::fs::read_to_string(filepath).await.ok()?;
+
+    let metadata = tokio::fs::metadata(filepath).await.ok()?;
+    let last_modified = metadata
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+
+    let file_stem = filepath.file_stem()?.to_string_lossy().to_string();
+    let title = file_stem.replace(".worksheet", "");
+
+    // Strip YAML frontmatter if present
+    let mut actual_content = content.as_str();
+    if actual_content.starts_with("---") {
+        // Find the second "---"
+        if let Some(end_idx) = actual_content[3..].find("---") {
+            actual_content = &actual_content[3 + end_idx + 3..];
+        }
+    }
+
+    Some(crate::models::Worksheet {
+        title,
+        path: filepath.to_path_buf(),
+        topic: topic.to_string(),
+        content: actual_content.trim_start().to_string(),
+        last_modified,
     })
 }
 

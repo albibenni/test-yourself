@@ -467,8 +467,17 @@ export function ScheduleModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content quick-add-modal" role="dialog" aria-modal="true" aria-label="Schedule Task">
-        {error && <div className="error-message" role="alert" aria-live="assertive">{error}</div>}
+      <div
+        className="modal-content quick-add-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Schedule Task"
+      >
+        {error && (
+          <div className="error-message" role="alert" aria-live="assertive">
+            {error}
+          </div>
+        )}
 
         <div
           className="quick-add-input-wrapper"

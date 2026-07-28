@@ -36,8 +36,10 @@ pub async fn parse_quizzes(md_files: Vec<(PathBuf, String)>) -> Vec<Quiz> {
     let mut quizzes = Vec::new();
 
     for (path, topic) in md_files {
-        if let Some(quiz) = parse_quiz_file(&path, &topic).await {
-            quizzes.push(quiz);
+        if !path.to_string_lossy().ends_with(".worksheet.md") {
+            if let Some(quiz) = parse_quiz_file(&path, &topic).await {
+                quizzes.push(quiz);
+            }
         }
     }
 
@@ -50,13 +52,26 @@ pub async fn parse_quizzes_metadata(
     let mut metadata = Vec::new();
 
     for (path, topic) in md_files {
-        if let Some(quiz) = parse_quiz_file(&path, &topic).await {
-            metadata.push(crate::models::QuizMetadata {
-                title: quiz.title,
-                path: quiz.path,
-                topic: quiz.topic,
-                last_modified: quiz.last_modified,
-            });
+        if path.to_string_lossy().ends_with(".worksheet.md") {
+            if let Some(ws) = super::markdown::parse_worksheet_file(&path, &topic).await {
+                metadata.push(crate::models::QuizMetadata {
+                    title: ws.title,
+                    path: ws.path,
+                    topic: ws.topic,
+                    last_modified: ws.last_modified,
+                    is_worksheet: true,
+                });
+            }
+        } else {
+            if let Some(quiz) = parse_quiz_file(&path, &topic).await {
+                metadata.push(crate::models::QuizMetadata {
+                    title: quiz.title,
+                    path: quiz.path,
+                    topic: quiz.topic,
+                    last_modified: quiz.last_modified,
+                    is_worksheet: false,
+                });
+            }
         }
     }
 
