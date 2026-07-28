@@ -35,13 +35,13 @@ export function Sidebar({
 
   useEffect(() => {
     if (selectedQuiz) {
-      if (selectedQuiz.is_worksheet && activeTab !== "worksheets") {
+      if (selectedQuiz.is_worksheet) {
         setTimeout(() => setActiveTab("worksheets"), 0);
-      } else if (!selectedQuiz.is_worksheet && activeTab !== "quizzes") {
+      } else {
         setTimeout(() => setActiveTab("quizzes"), 0);
       }
     }
-  }, [selectedQuiz, activeTab]);
+  }, [selectedQuiz]);
 
   const filteredGroupedQuizzes = useMemo(() => {
     const filtered: Record<string, QuizMetadata[]> = {};

@@ -203,9 +203,10 @@ export function ScheduleModal({
     setError("");
 
     try {
+      const extension = quiz.is_worksheet ? ".worksheet.md" : ".md";
       const relativePath = quiz.topic
-        ? `${quiz.topic}/${quiz.title}.md`
-        : `${quiz.title}.md`;
+        ? `${quiz.topic}/${quiz.title}${extension}`
+        : `${quiz.title}${extension}`;
       const deepLink = `test-yourself://open?quiz=${encodeURIComponent(relativePath)}`;
       const finalDescription = taskDescription.trim()
         ? `${taskDescription}\n\n[Open Quiz](${deepLink})`

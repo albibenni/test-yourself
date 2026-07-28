@@ -159,13 +159,31 @@ function App() {
   useEffect(() => {
     if (pendingQuizLink && quizzes && quizzes.length > 0) {
       const normalizedPending = pendingQuizLink.replace(/\\/g, "/");
-      const targetQuiz = quizzes.find((q) => {
+      let targetQuiz = quizzes.find((q) => {
         const normalizedPath = q.path.replace(/\\/g, "/");
         return (
           normalizedPath.endsWith(normalizedPending) ||
           normalizedPath === normalizedPending
         );
       });
+
+      if (
+        !targetQuiz &&
+        normalizedPending.endsWith(".md") &&
+        !normalizedPending.endsWith(".worksheet.md")
+      ) {
+        const fallbackPending = normalizedPending.replace(
+          /\.md$/,
+          ".worksheet.md",
+        );
+        targetQuiz = quizzes.find((q) => {
+          const normalizedPath = q.path.replace(/\\/g, "/");
+          return (
+            normalizedPath.endsWith(fallbackPending) ||
+            normalizedPath === fallbackPending
+          );
+        });
+      }
       if (targetQuiz) {
         setTimeout(() => {
           setSelectedQuizMeta(targetQuiz);
