@@ -187,12 +187,15 @@ function App() {
         });
       }
       if (targetQuiz) {
+        showToast(`Deep link found: ${targetQuiz.title}`);
         setTimeout(() => {
           setSelectedQuizMeta(targetQuiz);
           setSearchQuery(""); // Clear search so it appears in sidebar
           setPendingQuizLink(null);
+          setIsSettingsOpen(false);
         }, 0);
       } else {
+        showToast(`Quiz not found for deep link: ${normalizedPending}`);
         console.warn("Quiz not found for deep link:", pendingQuizLink);
       }
     }
@@ -258,7 +261,10 @@ function App() {
           setSelectedQuiz={async (quiz) => {
             if (isSettingsOpen) {
               if (isSettingsDirty) {
-                const userConfirmed = await confirm("You have unsaved settings. Are you sure you want to discard your changes and continue?", { title: "Unsaved Changes", kind: "warning" });
+                const userConfirmed = await confirm(
+                  "You have unsaved settings. Are you sure you want to discard your changes and continue?",
+                  { title: "Unsaved Changes", kind: "warning" },
+                );
                 if (!userConfirmed) return;
               }
               setIsSettingsOpen(false);

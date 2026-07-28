@@ -95,7 +95,8 @@ export function SettingsView({
   const [defaultDate, setDefaultDate] = useState("tomorrow");
   const [initialDefaultDate, setInitialDefaultDate] = useState("tomorrow");
   const [defaultPriority, setDefaultPriority] = useState<number>(4);
-  const [initialDefaultPriority, setInitialDefaultPriority] = useState<number>(4);
+  const [initialDefaultPriority, setInitialDefaultPriority] =
+    useState<number>(4);
   const [defaultProject, setDefaultProject] = useState("");
   const [initialDefaultProject, setInitialDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
@@ -168,7 +169,8 @@ export function SettingsView({
         "";
       setTodoistToken(loadedToken);
       setInitialTodoistToken(loadedToken);
-      const loadedVault = vault || window.localStorage.getItem("obsidian_vault") || "";
+      const loadedVault =
+        vault || window.localStorage.getItem("obsidian_vault") || "";
       setVaultName(loadedVault);
       setInitialVaultName(loadedVault);
 
