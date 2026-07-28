@@ -12,7 +12,7 @@ A fast, desktop-based quiz application built with **Tauri**, **React**, and **Ty
 
 ## Download & Install
 
-You can download the latest pre-compiled installers for **macOS**, **Windows**, and **Linux** directly from the [Releases page](../../releases/latest).
+You can download the latest pre-compiled installers for **macOS**, **Windows**, and **Linux** directly from the [project's website](https://albertobenatti.dev/projects/test-yourself) or the [Releases page](../../releases/latest).
 
 **Arch Linux**:
 You can install and update the app directly from the AUR using `yay`:
