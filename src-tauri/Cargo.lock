@@ -4540,30 +4540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-app"
-version = "2.0.4"
-dependencies = [
- "pulldown-cmark",
- "regex",
- "rust-argon2 3.0.0",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-deep-link",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-single-instance",
- "tauri-plugin-store",
- "tauri-plugin-stronghold",
- "tauri-plugin-updater",
- "tempfile",
- "tokio",
- "walkdir",
-]
-
-[[package]]
 name = "tauri-build"
 version = "2.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4943,6 +4919,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fed54709c5b3a53d09bb1c113ea4f5ceafd1e772ddcb0030a82e1d56c087b08"
 dependencies = [
  "new_debug_unreachable",
+]
+
+[[package]]
+name = "test-yourself"
+version = "2.1.0"
+dependencies = [
+ "pulldown-cmark",
+ "regex",
+ "rust-argon2 3.0.0",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-store",
+ "tauri-plugin-stronghold",
+ "tauri-plugin-updater",
+ "tempfile",
+ "tokio",
+ "walkdir",
 ]
 
 [[package]]
