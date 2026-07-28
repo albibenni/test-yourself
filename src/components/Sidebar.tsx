@@ -36,9 +36,9 @@ export function Sidebar({
   useEffect(() => {
     if (selectedQuiz) {
       if (selectedQuiz.is_worksheet && activeTab !== "worksheets") {
-        setActiveTab("worksheets");
+        setTimeout(() => setActiveTab("worksheets"), 0);
       } else if (!selectedQuiz.is_worksheet && activeTab !== "quizzes") {
-        setActiveTab("quizzes");
+        setTimeout(() => setActiveTab("quizzes"), 0);
       }
     }
   }, [selectedQuiz, activeTab]);
