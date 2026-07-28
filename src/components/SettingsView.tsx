@@ -26,6 +26,7 @@ interface SettingsViewProps {
   onTextColorChange: (textColor: TextColor) => void;
   updateAvailable?: string | null;
   onSaveSuccess?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 function SegmentedControl<T extends string | number>({
@@ -82,16 +83,21 @@ export function SettingsView({
   onTextColorChange,
   updateAvailable,
   onSaveSuccess,
+  onDirtyChange,
 }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState("appearance");
   const [todoistToken, setTodoistToken] = useState("");
   const [initialTodoistToken, setInitialTodoistToken] = useState("");
   const [isTokenInSecureStore, setIsTokenInSecureStore] = useState(false);
   const [vaultName, setVaultName] = useState("");
+  const [initialVaultName, setInitialVaultName] = useState("");
 
   const [defaultDate, setDefaultDate] = useState("tomorrow");
+  const [initialDefaultDate, setInitialDefaultDate] = useState("tomorrow");
   const [defaultPriority, setDefaultPriority] = useState<number>(4);
+  const [initialDefaultPriority, setInitialDefaultPriority] = useState<number>(4);
   const [defaultProject, setDefaultProject] = useState("");
+  const [initialDefaultProject, setInitialDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
 
@@ -162,19 +168,50 @@ export function SettingsView({
         "";
       setTodoistToken(loadedToken);
       setInitialTodoistToken(loadedToken);
-      setVaultName(
-        vault || window.localStorage.getItem("obsidian_vault") || "",
-      );
+      const loadedVault = vault || window.localStorage.getItem("obsidian_vault") || "";
+      setVaultName(loadedVault);
+      setInitialVaultName(loadedVault);
 
       const defDate = await store.get<string>("default_todoist_date");
       const defPri = await store.get<number>("default_todoist_priority");
       const defProj = await store.get<string>("default_todoist_project");
-      if (defDate) setDefaultDate(defDate);
-      if (defPri !== undefined) setDefaultPriority(defPri);
-      if (defProj !== undefined) setDefaultProject(defProj);
+      if (defDate) {
+        setDefaultDate(defDate);
+        setInitialDefaultDate(defDate);
+      }
+      if (defPri !== undefined) {
+        setDefaultPriority(defPri);
+        setInitialDefaultPriority(defPri);
+      }
+      if (defProj !== undefined) {
+        setDefaultProject(defProj);
+        setInitialDefaultProject(defProj);
+      }
     }
     void fetchSettings();
   }, []);
+
+  useEffect(() => {
+    const isDirty =
+      todoistToken !== initialTodoistToken ||
+      vaultName !== initialVaultName ||
+      defaultDate !== initialDefaultDate ||
+      defaultPriority !== initialDefaultPriority ||
+      defaultProject !== initialDefaultProject;
+    onDirtyChange?.(isDirty);
+  }, [
+    todoistToken,
+    initialTodoistToken,
+    vaultName,
+    initialVaultName,
+    defaultDate,
+    initialDefaultDate,
+    defaultPriority,
+    initialDefaultPriority,
+    defaultProject,
+    initialDefaultProject,
+    onDirtyChange,
+  ]);
 
   useEffect(() => {
     async function fetchProjects() {
@@ -226,6 +263,12 @@ export function SettingsView({
 
       window.localStorage.removeItem("todoist_token");
       window.localStorage.removeItem("obsidian_vault");
+
+      setInitialTodoistToken(todoistToken);
+      setInitialVaultName(vaultName);
+      setInitialDefaultDate(defaultDate);
+      setInitialDefaultPriority(defaultPriority);
+      setInitialDefaultProject(defaultProject);
 
       onSaveSuccess?.();
       onClose();

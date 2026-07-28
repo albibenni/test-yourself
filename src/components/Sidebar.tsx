@@ -11,7 +11,7 @@ interface SidebarProps {
   loading: boolean;
   groupedQuizzes: Record<string, QuizMetadata[]>;
   selectedQuiz: QuizMetadata | null;
-  setSelectedQuiz: Dispatch<SetStateAction<QuizMetadata | null>>;
+  setSelectedQuiz: (quiz: QuizMetadata) => void;
   handleSync: () => void;
   isSyncing: boolean;
 }

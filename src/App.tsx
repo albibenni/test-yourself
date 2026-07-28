@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { confirm } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useQuizzes } from "./hooks/useQuizzes";
@@ -27,6 +28,7 @@ const ScheduleModal = lazy(() =>
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsDirty, setIsSettingsDirty] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -253,7 +255,16 @@ function App() {
           loading={loading}
           groupedQuizzes={groupedQuizzes}
           selectedQuiz={selectedQuizMeta}
-          setSelectedQuiz={setSelectedQuizMeta}
+          setSelectedQuiz={async (quiz) => {
+            if (isSettingsOpen) {
+              if (isSettingsDirty) {
+                const userConfirmed = await confirm("You have unsaved settings. Are you sure you want to discard your changes and continue?", { title: "Unsaved Changes", kind: "warning" });
+                if (!userConfirmed) return;
+              }
+              setIsSettingsOpen(false);
+            }
+            setSelectedQuizMeta(quiz);
+          }}
           handleSync={() => void handleSync()}
           isSyncing={isSyncing}
         />
@@ -281,6 +292,7 @@ function App() {
                   void saveTextColor(val);
                 }}
                 updateAvailable={updateVersion}
+                onDirtyChange={setIsSettingsDirty}
               />
             </Suspense>
           ) : !basePath ? (
