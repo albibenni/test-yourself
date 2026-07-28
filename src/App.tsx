@@ -188,8 +188,7 @@ function App() {
       }
       if (targetQuiz) {
         setTimeout(() => {
-          showToast(`Deep link found: ${targetQuiz.title}`);
-          setSelectedQuizMeta(targetQuiz);
+          setSelectedQuizMeta({ ...targetQuiz });
           setSearchQuery(""); // Clear search so it appears in sidebar
           setPendingQuizLink(null);
           setIsSettingsOpen(false);
