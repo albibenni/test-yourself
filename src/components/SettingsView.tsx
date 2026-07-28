@@ -99,6 +99,7 @@ export function SettingsView({
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
   );
   const [appVersion, setAppVersion] = useState<string>("");
+  const [isArchLinux, setIsArchLinux] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -106,6 +107,12 @@ export function SettingsView({
       try {
         const version = await getVersion();
         setAppVersion(version);
+        try {
+          const isArch = await invoke<boolean>("is_arch_linux");
+          setIsArchLinux(isArch);
+        } catch (err) {
+          console.warn("is_arch_linux command not found or failed", err);
+        }
       } catch (err) {
         console.warn("Failed to fetch app version", err);
       }
@@ -453,21 +460,25 @@ export function SettingsView({
               <h2 className="settings-section-title">About</h2>
               <p className="settings-section-subtitle">Information and updates.</p>
 
-              <SettingsCard title="App Version" subtitle={updateStatus || "Check for new versions of Test Yourself."}>
+              <SettingsCard title="App Version" subtitle={isArchLinux ? "Managed by your system package manager." : (updateStatus || "Check for new versions of Test Yourself.")}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>v{appVersion}</span>
-                  <button 
-                    className="button-primary" 
-                    onClick={() => void handleCheckUpdate()}
-                    disabled={
-                      !!updateStatus &&
-                      updateStatus !== "App is up to date!" &&
-                      !updateStatus.startsWith("Update v") &&
-                      !updateStatus.startsWith("Failed")
-                    }
-                  >
-                    {updateAvailable || updateStatus.startsWith("Update v") ? "Install Update" : "Check for Updates"}
-                  </button>
+                  {isArchLinux ? (
+                    <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Run yay -S test-yourself to update</span>
+                  ) : (
+                    <button 
+                      className="button-primary" 
+                      onClick={() => void handleCheckUpdate()}
+                      disabled={
+                        !!updateStatus &&
+                        updateStatus !== "App is up to date!" &&
+                        !updateStatus.startsWith("Update v") &&
+                        !updateStatus.startsWith("Failed")
+                      }
+                    >
+                      {updateAvailable || updateStatus.startsWith("Update v") ? "Install Update" : "Check for Updates"}
+                    </button>
+                  )}
                 </div>
               </SettingsCard>
             </div>

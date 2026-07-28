@@ -108,10 +108,26 @@ pub fn run() {
             get_quizzes,
             get_quiz_content,
             get_initial_url,
+            is_arch_linux,
             custom_linux_relaunch
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn is_arch_linux() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(content) = std::fs::read_to_string("/etc/os-release") {
+            return content.contains("ID=arch") || content.contains("ID_LIKE=arch");
+        }
+        false
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
 }
 
 #[tauri::command]
