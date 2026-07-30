@@ -12,6 +12,36 @@
   white-space: pre-wrap;
 }
 
+.worksheet-phrase {
+  white-space: pre-wrap;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+.worksheet-code-block {
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-family:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95rem;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .worksheet-code-block {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.worksheet-code-block code {
+  font-family: inherit;
+}
+
 .worksheet-blank-container {
   display: inline-flex;
   flex-direction: column;
