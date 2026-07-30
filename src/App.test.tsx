@@ -33,6 +33,10 @@ vi.mock("@tauri-apps/plugin-deep-link", () => ({
   getCurrent: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@tauri-apps/plugin-os", () => ({
+  type: vi.fn().mockReturnValue("linux"),
+}));
+
 export let mockListenCallback: (event: { payload: string }) => void = () => {};
 
 vi.mock("@tauri-apps/api/event", () => ({
@@ -106,11 +110,14 @@ describe("App Component", () => {
   it("shows loading state initially", async () => {
     // We mock a pending promise to see the loading state
     let resolvePromise: (val: any) => void = () => {};
-    vi.mocked(invoke).mockReturnValue(
-      new Promise((resolve) => {
-        resolvePromise = resolve;
-      }),
-    );
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") {
+        return new Promise((resolve) => {
+          resolvePromise = resolve;
+        });
+      }
+      return Promise.resolve(null);
+    });
     render(<App />);
     expect(await screen.findByText("Loading...")).toBeInTheDocument();
 
@@ -269,7 +276,7 @@ describe("App Component", () => {
     fireEvent.click(screen.getByText("React Basics"));
 
     const topicLink = await screen.findByRole("link", {
-      name: "Open topic Frontend in Obsidian",
+      name: "Open topic Frontend",
     });
     fireEvent.click(topicLink);
 

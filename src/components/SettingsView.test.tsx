@@ -6,6 +6,10 @@ import { load } from "@tauri-apps/plugin-store";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import { open } from "@tauri-apps/plugin-dialog";
 
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock("@tauri-apps/plugin-store", () => ({
   load: vi.fn(),
 }));

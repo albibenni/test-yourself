@@ -36,7 +36,7 @@ describe("WorksheetViewer", () => {
     fireEvent.change(inputs[1], { target: { value: "worksheet" } });
 
     // Check answers
-    fireEvent.click(screen.getByRole("button", { name: /check answers/i }));
+    fireEvent.click(screen.getByRole("button", { name: /check all answers/i }));
 
     // Check score
     expect(screen.getByText("Score: 2 / 2")).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe("WorksheetViewer", () => {
     fireEvent.change(inputs[0], { target: { value: "TEST" } }); // Correct (case insensitive)
     fireEvent.change(inputs[1], { target: { value: "wrong" } }); // Incorrect
 
-    fireEvent.click(screen.getByRole("button", { name: /check answers/i }));
+    fireEvent.click(screen.getByRole("button", { name: /check all answers/i }));
 
     expect(screen.getByText("Score: 1 / 2")).toBeInTheDocument();
     expect(inputs[0]).toHaveClass("correct");
@@ -72,7 +72,7 @@ describe("WorksheetViewer", () => {
 
     // Type an answer
     fireEvent.change(inputs[0], { target: { value: "test" } });
-    fireEvent.click(screen.getByRole("button", { name: /check answers/i }));
+    fireEvent.click(screen.getByRole("button", { name: /check all answers/i }));
 
     // Click Try Again
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
