@@ -14,6 +14,7 @@ interface SidebarProps {
   setSelectedQuiz: (quiz: QuizMetadata) => void;
   handleSync: () => void;
   isSyncing: boolean;
+  setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export function Sidebar({
@@ -26,6 +27,7 @@ export function Sidebar({
   setSelectedQuiz,
   handleSync,
   isSyncing,
+  setIsSidebarOpen,
 }: SidebarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
@@ -90,13 +92,17 @@ export function Sidebar({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        setIsSidebarOpen(true);
+        // Add a small delay to allow the sidebar to become visible before focusing
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 50);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setIsSidebarOpen]);
 
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>

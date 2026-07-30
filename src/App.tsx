@@ -278,6 +278,7 @@ function App() {
           }}
           handleSync={() => void handleSync()}
           isSyncing={isSyncing}
+          setIsSidebarOpen={setIsSidebarOpen}
         />
 
         <main className="main-content">

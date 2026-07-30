@@ -37,6 +37,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -58,6 +59,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -76,6 +78,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -96,6 +99,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -117,6 +121,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -138,6 +143,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={setSelectedQuiz}
         handleSync={vi.fn()}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
@@ -158,6 +164,7 @@ describe("Sidebar Component", () => {
         setSelectedQuiz={vi.fn()}
         handleSync={handleSync}
         isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
       />,
     );
 
