@@ -59,7 +59,7 @@ async fn get_worksheet_content(path: String, topic: String) -> Result<models::Wo
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_os::init());
 
     #[cfg(desktop)]
     {

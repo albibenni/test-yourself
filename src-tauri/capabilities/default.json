@@ -11,7 +11,12 @@
     "stronghold:default",
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "obsidian://*" }]
-    }
+      "allow": [
+        {
+          "url": "obsidian://*"
+        }
+      ]
+    },
+    "os:default"
   ]
 }

@@ -4,6 +4,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { type as osType } from "@tauri-apps/plugin-os";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -396,12 +397,19 @@ function App() {
                   Topic:{" "}
                   <a
                     href="#"
-                    aria-label={`Open topic ${selectedQuizMeta.topic || DEFAULT_TOPIC} in Obsidian`}
+                    aria-label={`Open topic ${selectedQuizMeta.topic || DEFAULT_TOPIC}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      void openUrl(
-                        `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`,
-                      );
+                      const platform = osType();
+                      if (platform === "windows") {
+                        void openUrl(
+                          `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path.replace(/\\/g, "/"))}`,
+                        );
+                      } else {
+                        void openUrl(
+                          `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`,
+                        );
+                      }
                     }}
                     style={{
                       color: "inherit",

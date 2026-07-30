@@ -33,6 +33,7 @@ tauri-plugin-stronghold = "2.3.1"
 rust-argon2 = "3.0.0"
 tauri-plugin-deep-link = "2.4.9"
 tauri-plugin-single-instance = { version = "2.4.3", features = ["deep-link"] }
+tauri-plugin-os = "2"
 
 [dev-dependencies]
 tempfile = "3"
