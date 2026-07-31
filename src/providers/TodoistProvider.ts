@@ -1,4 +1,4 @@
-import { TodoistApi } from "@doist/todoist-sdk";
+import { type GetTasksArgs, TodoistApi } from "@doist/todoist-sdk";
 import { z } from "zod";
 import {
   type AddTaskArgs,
@@ -19,6 +19,16 @@ const TasksResponseSchema = z.union([
   z.array(TaskSchema),
 ]);
 
+const GetTasksArgsSchema = z
+  .object({
+    filter: z.string().optional(),
+    projectId: z.string().optional(),
+    sectionId: z.string().optional(),
+    label: z.string().optional(),
+    lang: z.string().optional(),
+  })
+  .optional() as z.ZodType<GetTasksArgs | undefined>;
+
 export class TodoistProvider implements TaskProvider {
   private api: TodoistApi;
   private token: string;
@@ -34,9 +44,8 @@ export class TodoistProvider implements TaskProvider {
   }
 
   async getTasks(args?: { filter?: string }): Promise<Task[]> {
-    const response = await this.api.getTasks(
-      args as Parameters<TodoistApi["getTasks"]>[0],
-    );
+    const validArgs = GetTasksArgsSchema.parse(args);
+    const response = await this.api.getTasks(validArgs);
     return TasksResponseSchema.parse(response);
   }
 
