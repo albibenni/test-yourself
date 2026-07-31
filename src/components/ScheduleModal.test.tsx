@@ -12,8 +12,10 @@ vi.mock("../hooks/useTodoist", () => ({
 describe("ScheduleModal", () => {
   let mockGetProjects: Mock;
   let mockGetTasks: Mock;
+  let mockSearchTasks: Mock;
   let mockAddTask: Mock;
   let mockGetDefaultSettings: Mock;
+  let mockOnCheckResult: Mock;
 
   const mockQuiz = {
     title: "React Basics",
@@ -23,12 +25,23 @@ describe("ScheduleModal", () => {
     questions: [],
   };
 
+  const defaultProps = {
+    isOpen: true,
+    onClose: vi.fn(),
+    quiz: mockQuiz,
+    onSuccess: vi.fn(),
+    onCheckResult: vi.fn(),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockGetProjects = vi.fn().mockResolvedValue([{ id: "p1", name: "Inbox" }]);
     mockGetTasks = vi.fn().mockResolvedValue([]);
+    mockSearchTasks = vi.fn().mockResolvedValue([]);
     mockAddTask = vi.fn().mockResolvedValue({ id: "t1" });
+    mockOnCheckResult = vi.fn();
+    defaultProps.onCheckResult = mockOnCheckResult;
     mockGetDefaultSettings = vi.fn().mockResolvedValue({
       defaultDate: "tomorrow",
       defaultPriority: 4,
@@ -38,6 +51,7 @@ describe("ScheduleModal", () => {
     vi.mocked(useTodoistModule.useTodoist).mockReturnValue({
       getProjects: mockGetProjects,
       getTasks: mockGetTasks,
+      searchTasks: mockSearchTasks,
       addTask: mockAddTask,
       getDefaultSettings: mockGetDefaultSettings,
       loading: false,
@@ -45,13 +59,6 @@ describe("ScheduleModal", () => {
       setError: vi.fn(),
     });
   });
-
-  const defaultProps = {
-    isOpen: true,
-    onClose: vi.fn(),
-    quiz: mockQuiz,
-    onSuccess: vi.fn(),
-  };
 
   it("renders correctly with quiz details and fetches defaults", async () => {
     render(<ScheduleModal {...defaultProps} />);
@@ -152,5 +159,51 @@ describe("ScheduleModal", () => {
     const expectedDateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
     expect(addTaskCall.dueString).toBe(expectedDateString);
+  });
+
+  describe("Check Schedule Button", () => {
+    it("calls searchTasks and shows 'Not currently scheduled.' when no match", async () => {
+      mockSearchTasks.mockResolvedValue([]);
+      render(<ScheduleModal {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(mockGetDefaultSettings).toHaveBeenCalled();
+      });
+
+      const checkBtn = screen.getByRole("button", { name: "Check" });
+      fireEvent.click(checkBtn);
+
+      await waitFor(() => {
+        expect(mockSearchTasks).toHaveBeenCalledWith("React Basics");
+      });
+
+      expect(mockOnCheckResult).toHaveBeenCalledWith(
+        "Not currently scheduled.",
+      );
+    });
+
+    it("calls searchTasks and shows the scheduled dates when matches found", async () => {
+      mockSearchTasks.mockResolvedValue([
+        { content: "Review Quiz: React Basics", due: { date: "2026-08-20" } },
+        { content: "Review Quiz: React Basics", due: { date: "2026-08-25" } },
+        { content: "Other Quiz", due: { date: "2026-09-01" } },
+      ]);
+      render(<ScheduleModal {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(mockGetDefaultSettings).toHaveBeenCalled();
+      });
+
+      const checkBtn = screen.getByRole("button", { name: "Check" });
+      fireEvent.click(checkBtn);
+
+      await waitFor(() => {
+        expect(mockSearchTasks).toHaveBeenCalledWith("React Basics");
+      });
+
+      expect(mockOnCheckResult).toHaveBeenCalledWith(
+        "Already scheduled for: 2026-08-20, 2026-08-25",
+      );
+    });
   });
 });

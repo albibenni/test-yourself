@@ -618,6 +618,7 @@ function App() {
             onSuccess={(dateText) =>
               showToast(`Task created successfully for ${dateText}!`)
             }
+            onCheckResult={(msg) => showToast(msg)}
           />
         </Suspense>
       )}

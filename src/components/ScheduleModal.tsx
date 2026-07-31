@@ -7,6 +7,7 @@ interface ScheduleModalProps {
   onClose: () => void;
   quiz: QuizMetadata | null;
   onSuccess?: (dateText: string) => void;
+  onCheckResult?: (message: string) => void;
 }
 
 interface Project {
@@ -23,6 +24,7 @@ export function ScheduleModal({
   onClose,
   quiz,
   onSuccess,
+  onCheckResult,
 }: ScheduleModalProps) {
   const [taskContent, setTaskContent] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -36,6 +38,7 @@ export function ScheduleModal({
   const {
     getProjects,
     getTasks,
+    searchTasks,
     addTask,
     getDefaultSettings,
     loading,
@@ -169,6 +172,45 @@ export function ScheduleModal({
   }, [isOpen, onClose]);
 
   const [isScheduling, setIsScheduling] = useState(false);
+  const [isCheckingSchedule, setIsCheckingSchedule] = useState(false);
+
+  const handleCheckSchedule = async () => {
+    if (!quiz || isCheckingSchedule) return;
+    setIsCheckingSchedule(true);
+    setError("");
+    try {
+      const prefix = quiz.is_worksheet ? "Review Worksheet" : "Review Quiz";
+      const expectedContent = `${prefix}: ${quiz.title}`;
+
+      // Use the dedicated v1 filter endpoint to accurately search all tasks, avoiding pagination limits
+      const tasks = await searchTasks(quiz.title);
+
+      const foundTasks = tasks.filter((t) =>
+        t.content.includes(expectedContent),
+      );
+      if (foundTasks.length > 0) {
+        const dates = foundTasks.map((t) => {
+          if (t.due && t.due.date) {
+            return t.due.date;
+          }
+          return "No date";
+        });
+        const uniqueDates = Array.from(new Set(dates)).sort();
+        const msg = `Already scheduled for: ${uniqueDates.join(", ")}`;
+        onCheckResult?.(msg);
+      } else {
+        const msg = "Not currently scheduled.";
+        onCheckResult?.(msg);
+      }
+    } catch (err) {
+      console.warn("Failed to check schedule:", err);
+      const msg = "Failed to check Todoist tasks.";
+      setError(msg);
+      onCheckResult?.(msg);
+    } finally {
+      setIsCheckingSchedule(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -219,17 +261,25 @@ export function ScheduleModal({
         priority: priority,
         projectId: selectedProjectId || undefined,
       });
-      const [y, m, d] = dueDateString.split("-");
-      const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-      const month = dateObj.toLocaleString("en-US", { month: "long" });
-      const dayNum = dateObj.getDate();
-      const getOrdinal = (n: number) => {
-        const s = ["th", "st", "nd", "rd"];
-        const v = n % 100;
-        return n + (s[(v - 20) % 10] || s[v] || s[0]);
-      };
-
-      onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
+      const parts = dueDateString.split("-");
+      if (parts.length === 3) {
+        const [y, m, d] = parts;
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        if (!isNaN(dateObj.getTime())) {
+          const month = dateObj.toLocaleString("en-US", { month: "long" });
+          const dayNum = dateObj.getDate();
+          const getOrdinal = (n: number) => {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+          };
+          onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
+        } else {
+          onSuccess?.(dueDateString);
+        }
+      } else {
+        onSuccess?.(dueDateString);
+      }
       onClose();
     } catch (err) {
       console.warn(err);
@@ -740,17 +790,57 @@ export function ScheduleModal({
             </div>
           </div>
 
-          <div className="quick-add-footer">
-            <button className="button-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              className="button-primary"
-              onClick={() => void handleSchedule()}
-              disabled={isScheduling || !!error}
-            >
-              {isScheduling ? "Adding..." : "Add Task"}
-            </button>
+          <div
+            className="quick-add-footer"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <button
+                className="button-secondary"
+                onClick={() => void handleCheckSchedule()}
+                disabled={isCheckingSchedule}
+                title="Check if scheduled"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.4rem 0.75rem",
+                  fontSize: "0.85rem",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                {isCheckingSchedule ? "Checking..." : "Check"}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button className="button-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                className="button-primary"
+                onClick={() => void handleSchedule()}
+                disabled={isScheduling || !!error}
+              >
+                {isScheduling ? "Adding..." : "Add Task"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -34,6 +34,7 @@ export interface AddTaskArgs {
 
 export interface TaskProvider {
   getProjects(): Promise<Project[]>;
-  getTasks(): Promise<Task[]>;
+  getTasks(args?: { filter?: string }): Promise<Task[]>;
+  searchTasks(query: string): Promise<Task[]>;
   addTask(task: AddTaskArgs): Promise<Task>;
 }

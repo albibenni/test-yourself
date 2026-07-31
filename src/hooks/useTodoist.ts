@@ -40,19 +40,39 @@ export function useTodoist() {
     }
   }, [getProvider]);
 
-  const getTasks = useCallback(async (): Promise<Task[]> => {
-    setLoading(true);
-    setError("");
-    try {
-      const provider = await getProvider();
-      return await provider.getTasks();
-    } catch (err: unknown) {
-      setError("Failed to fetch tasks.");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [getProvider]);
+  const getTasks = useCallback(
+    async (args?: { filter?: string }): Promise<Task[]> => {
+      setLoading(true);
+      setError("");
+      try {
+        const provider = await getProvider();
+        return await provider.getTasks(args);
+      } catch (err: unknown) {
+        setError("Failed to fetch tasks.");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getProvider],
+  );
+
+  const searchTasks = useCallback(
+    async (query: string): Promise<Task[]> => {
+      setLoading(true);
+      setError("");
+      try {
+        const provider = await getProvider();
+        return await provider.searchTasks(query);
+      } catch (err: unknown) {
+        setError("Failed to search tasks.");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getProvider],
+  );
 
   const addTask = useCallback(
     async (taskDetails: AddTaskArgs): Promise<Task> => {
@@ -86,6 +106,7 @@ export function useTodoist() {
   return {
     getProjects,
     getTasks,
+    searchTasks,
     addTask,
     getDefaultSettings,
     loading,

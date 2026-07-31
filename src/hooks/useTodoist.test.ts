@@ -21,6 +21,9 @@ vi.mock("../providers/TodoistProvider", () => {
       return {
         getProjects: vi.fn().mockResolvedValue([{ id: "1", name: "Inbox" }]),
         getTasks: vi.fn().mockResolvedValue([]),
+        searchTasks: vi
+          .fn()
+          .mockResolvedValue([{ id: "3", content: "Searched task" }]),
         addTask: vi.fn().mockResolvedValue({ id: "2", content: "New task" }),
       };
     }),
@@ -127,6 +130,45 @@ describe("useTodoist hook", () => {
     expect(tasks).toEqual([]);
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBe("");
+  });
+
+  it("searches tasks successfully using the provider", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+
+    const { result } = renderHook(() => useTodoist());
+
+    let tasks;
+    await act(async () => {
+      tasks = await result.current.searchTasks("my search query");
+    });
+
+    expect(tasks).toEqual([{ id: "3", content: "Searched task" }]);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe("");
+  });
+
+  it("sets error when searchTasks fails", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+
+    // Force searchTasks to throw
+    vi.mocked(TodoistProvider).mockImplementationOnce(function () {
+      return {
+        getProjects: vi.fn(),
+        getTasks: vi.fn(),
+        searchTasks: vi.fn().mockRejectedValue(new Error("API Error")),
+        addTask: vi.fn(),
+      } as unknown as TodoistProvider;
+    });
+
+    const { result } = renderHook(() => useTodoist());
+
+    await act(async () => {
+      await expect(result.current.searchTasks("test")).rejects.toThrow(
+        "API Error",
+      );
+    });
+
+    expect(result.current.error).toBe("Failed to search tasks.");
   });
 
   it("adds a task successfully using the provider", async () => {
