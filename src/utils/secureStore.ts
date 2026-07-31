@@ -1,9 +1,9 @@
+import { appDataDir } from "@tauri-apps/api/path";
 import {
-  Stronghold,
   type Client,
   type Store,
+  Stronghold,
 } from "@tauri-apps/plugin-stronghold";
-import { appDataDir } from "@tauri-apps/api/path";
 
 let cachedStronghold: Stronghold | null = null;
 let cachedClient: Client | null = null;

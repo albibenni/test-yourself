@@ -3,8 +3,7 @@
 echo "Running formatting and linting for the entire app..."
 
 # Format and lint frontend
-npx prettier . --write
-npx eslint . --fix
+npx @biomejs/biome check --write .
 
 # Format and lint backend
 cd src-tauri

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { clsx } from "clsx";
-import type { QuizMetadata } from "../types";
+import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { APP_TITLE, DEFAULT_TOPIC } from "../constants";
+import type { QuizMetadata } from "../types";
 
 interface SidebarProps {
   isSidebarOpen: boolean;

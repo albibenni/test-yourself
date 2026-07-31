@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTodoist } from "../hooks/useTodoist";
 import type { QuizMetadata } from "../types";
 
@@ -463,7 +463,7 @@ export function ScheduleModal({
       inputRef.current.style.height = "auto";
       inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
     }
-  }, [taskContent, isOpen]);
+  }, []);
 
   if (!isOpen || !quiz) return null;
 

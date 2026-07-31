@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Sidebar } from "./Sidebar";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { Quiz } from "../types";
+import { Sidebar } from "./Sidebar";
 
 const mockQuizzes: Record<string, Quiz[]> = {
   Frontend: [

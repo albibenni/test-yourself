@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { ScheduleModal } from "./ScheduleModal";
+
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import * as useTodoistModule from "../hooks/useTodoist";
+import { ScheduleModal } from "./ScheduleModal";
 
 vi.mock("../hooks/useTodoist", () => ({
   useTodoist: vi.fn(),

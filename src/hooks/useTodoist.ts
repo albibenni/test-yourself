@@ -1,20 +1,20 @@
-import { useState, useCallback } from "react";
 import { load } from "@tauri-apps/plugin-store";
+import { useCallback, useState } from "react";
 import { STORE_FILENAME } from "../constants";
-import { TodoistProvider } from "../providers/TodoistProvider";
 import type {
-  TaskProvider,
-  Task,
-  Project,
   AddTaskArgs,
+  Project,
+  Task,
+  TaskProvider,
 } from "../providers/TaskProvider";
+import { TodoistProvider } from "../providers/TodoistProvider";
 import { getSecureToken } from "../utils/secureStore";
 
 export function useTodoist() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getProvider = async (): Promise<TaskProvider> => {
+  const getProvider = useCallback(async (): Promise<TaskProvider> => {
     const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     const token =
       (await getSecureToken("todoist_token")) ||
@@ -24,7 +24,7 @@ export function useTodoist() {
       throw new Error("Missing API token. Please configure it in settings.");
     }
     return new TodoistProvider(token);
-  };
+  }, []);
 
   const getProjects = useCallback(async (): Promise<Project[]> => {
     setLoading(true);
@@ -38,7 +38,7 @@ export function useTodoist() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getProvider]);
 
   const getTasks = useCallback(async (): Promise<Task[]> => {
     setLoading(true);
@@ -52,7 +52,7 @@ export function useTodoist() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getProvider]);
 
   const addTask = useCallback(
     async (taskDetails: AddTaskArgs): Promise<Task> => {
@@ -68,7 +68,7 @@ export function useTodoist() {
         setLoading(false);
       }
     },
-    [],
+    [getProvider],
   );
 
   const getDefaultSettings = useCallback(async () => {

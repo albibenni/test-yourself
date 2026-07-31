@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { check } from "@tauri-apps/plugin-updater";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { confirm } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { confirm } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { type as osType } from "@tauri-apps/plugin-os";
+import { check } from "@tauri-apps/plugin-updater";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
 import { lazy, Suspense } from "react";
-import { TopBar } from "./components/TopBar";
-import { Sidebar } from "./components/Sidebar";
 import { QuestionCard } from "./components/QuestionCard";
+import { Sidebar } from "./components/Sidebar";
+import { TopBar } from "./components/TopBar";
 import { WorksheetViewer } from "./components/WorksheetViewer";
 import { DEFAULT_TOPIC } from "./constants";
 
@@ -36,10 +36,10 @@ function App() {
   const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } =
     useTheme();
 
-  const showToast = (message: string) => {
+  const showToast = useCallback((message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3000);
-  };
+  }, []);
 
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
 
@@ -56,7 +56,7 @@ function App() {
       }
     }
     void checkForUpdates();
-  }, []);
+  }, [showToast]);
 
   const [pendingQuizLink, setPendingQuizLink] = useState<string | null>(null);
 
@@ -81,8 +81,9 @@ function App() {
     let unlisten: (() => void) | undefined;
     async function setupDeepLink() {
       try {
-        const { onOpenUrl, getCurrent } =
-          await import("@tauri-apps/plugin-deep-link");
+        const { onOpenUrl, getCurrent } = await import(
+          "@tauri-apps/plugin-deep-link"
+        );
 
         const handleUrls = (urls: string[] | null) => {
           if (!urls) return;
@@ -202,7 +203,13 @@ function App() {
         console.warn("Quiz not found for deep link:", pendingQuizLink);
       }
     }
-  }, [pendingQuizLink, quizzes, setSelectedQuizMeta, setSearchQuery]);
+  }, [
+    pendingQuizLink,
+    quizzes,
+    setSelectedQuizMeta,
+    setSearchQuery,
+    showToast,
+  ]);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
 import { getVersion } from "@tauri-apps/api/app";
-import { relaunch } from "@tauri-apps/plugin-process";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
-import { TodoistProvider } from "../providers/TodoistProvider";
 import { check } from "@tauri-apps/plugin-updater";
+import React, { useEffect, useState } from "react";
 import { STORE_FILENAME } from "../constants";
-import type { ThemeType, TextColor, AccentColor } from "../types";
+import { TodoistProvider } from "../providers/TodoistProvider";
+import type { AccentColor, TextColor, ThemeType } from "../types";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import "./SettingsView.css";
 

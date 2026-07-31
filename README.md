@@ -16,6 +16,7 @@ You can download the latest pre-compiled installers for **macOS**, **Windows**, 
 
 **Arch Linux**:
 You can install and update the app directly from the AUR using `yay`:
+
 ```bash
 yay -S test-yourself
 ```

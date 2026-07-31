@@ -45,4 +45,10 @@ export type Worksheet = z.infer<typeof WorksheetSchema>;
 export type ThemeType = "system" | "light" | "dark";
 export type TextColor = "slate" | "zinc" | "neutral" | "stone" | "accent";
 export type AccentColor =
-  "blue" | "purple" | "green" | "deep-green" | "rose" | "red-brick" | "orange";
+  | "blue"
+  | "purple"
+  | "green"
+  | "deep-green"
+  | "rose"
+  | "red-brick"
+  | "orange";

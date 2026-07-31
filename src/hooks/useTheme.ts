@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
 import { load } from "@tauri-apps/plugin-store";
+import { useEffect, useState } from "react";
 import { STORE_FILENAME } from "../constants";
-import type { ThemeType as Theme, AccentColor, TextColor } from "../types";
+import type { AccentColor, TextColor, ThemeType as Theme } from "../types";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("system");

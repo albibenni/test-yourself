@@ -1,11 +1,11 @@
 import { TodoistApi } from "@doist/todoist-sdk";
 import { z } from "zod";
 import {
-  type TaskProvider,
-  type Project,
-  type Task,
   type AddTaskArgs,
+  type Project,
   ProjectSchema,
+  type Task,
+  type TaskProvider,
   TaskSchema,
 } from "./TaskProvider";
 

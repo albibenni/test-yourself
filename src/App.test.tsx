@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import { load } from "@tauri-apps/plugin-store";
 import {
+  act,
+  fireEvent,
   render,
   screen,
-  fireEvent,
   waitFor,
-  act,
 } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { invoke } from "@tauri-apps/api/core";
-import { load } from "@tauri-apps/plugin-store";
-import { open } from "@tauri-apps/plugin-dialog";
 
 // Mock Tauri invoke
 vi.mock("@tauri-apps/api/core", () => ({
@@ -37,7 +37,9 @@ vi.mock("@tauri-apps/plugin-os", () => ({
   type: vi.fn().mockReturnValue("linux"),
 }));
 
-export let mockListenCallback: (event: { payload: string }) => void = () => {};
+export let mockListenCallback: (event: { payload: string }) => void = () => {
+  /* intentionally empty */
+};
 
 vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn((event: string, cb: (e: { payload: string }) => void) => {
@@ -109,7 +111,9 @@ describe("App Component", () => {
 
   it("shows loading state initially", async () => {
     // We mock a pending promise to see the loading state
-    let resolvePromise: (val: any) => void = () => {};
+    let resolvePromise: (val: unknown) => void = () => {
+      /* intentionally empty */
+    };
     vi.mocked(invoke).mockImplementation((cmd: string) => {
       if (cmd === "get_quizzes") {
         return new Promise((resolve) => {
@@ -218,7 +222,9 @@ describe("App Component", () => {
 
   it("handles invoke errors gracefully", async () => {
     vi.mocked(invoke).mockRejectedValue(new Error("Failed to load"));
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {
+      /* intentionally empty */
+    });
 
     render(<App />);
 

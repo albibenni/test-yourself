@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useTodoist } from "./useTodoist";
+
 import { load } from "@tauri-apps/plugin-store";
-import { getSecureToken } from "../utils/secureStore";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TodoistProvider } from "../providers/TodoistProvider";
+import { getSecureToken } from "../utils/secureStore";
+import { useTodoist } from "./useTodoist";
 
 vi.mock("@tauri-apps/plugin-store", () => ({
   load: vi.fn(),
@@ -27,7 +28,7 @@ vi.mock("../providers/TodoistProvider", () => {
 });
 
 describe("useTodoist hook", () => {
-  let mockStoreGet: any;
+  let mockStoreGet: import("vitest").Mock;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,9 +42,9 @@ describe("useTodoist hook", () => {
 
   it("prioritizes secureStore token over fallback store or localStorage", async () => {
     vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
-    mockStoreGet.mockImplementation(async (key: string) => {
-      if (key === "todoist_token") return "store-token-456";
-      return null;
+    mockStoreGet.mockImplementation((key: string) => {
+      if (key === "todoist_token") return Promise.resolve("store-token-456");
+      return Promise.resolve(null);
     });
     vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
       k === "todoist_token" ? "local-token-789" : null,
@@ -62,9 +63,9 @@ describe("useTodoist hook", () => {
 
   it("falls back to plugin-store token if secure token is missing", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(null);
-    mockStoreGet.mockImplementation(async (key: string) => {
-      if (key === "todoist_token") return "store-token-456";
-      return null;
+    mockStoreGet.mockImplementation((key: string) => {
+      if (key === "todoist_token") return Promise.resolve("store-token-456");
+      return Promise.resolve(null);
     });
     vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
       k === "todoist_token" ? "local-token-789" : null,
@@ -147,11 +148,11 @@ describe("useTodoist hook", () => {
   });
 
   it("gets default settings correctly from the store", async () => {
-    mockStoreGet.mockImplementation(async (key: string) => {
-      if (key === "default_todoist_date") return "today";
-      if (key === "default_todoist_priority") return 2;
-      if (key === "default_todoist_project") return "proj_123";
-      return null;
+    mockStoreGet.mockImplementation((key: string) => {
+      if (key === "default_todoist_date") return Promise.resolve("today");
+      if (key === "default_todoist_priority") return Promise.resolve(2);
+      if (key === "default_todoist_project") return Promise.resolve("proj_123");
+      return Promise.resolve(null);
     });
 
     const { result } = renderHook(() => useTodoist());

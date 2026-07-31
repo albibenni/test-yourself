@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { QuestionCard } from "./QuestionCard";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import type { QuizQuestion } from "../types";
+import { QuestionCard } from "./QuestionCard";
 
 const mockQuestion: QuizQuestion = {
   id: "1",

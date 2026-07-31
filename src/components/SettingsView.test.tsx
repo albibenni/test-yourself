@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { SettingsView } from "./SettingsView";
-import { load } from "@tauri-apps/plugin-store";
-import { getSecureToken, setSecureToken } from "../utils/secureStore";
+
 import { open } from "@tauri-apps/plugin-dialog";
+import { load } from "@tauri-apps/plugin-store";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getSecureToken, setSecureToken } from "../utils/secureStore";
+import { SettingsView } from "./SettingsView";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn().mockResolvedValue(false),
@@ -36,7 +37,7 @@ vi.mock("@tauri-apps/plugin-updater", () => ({
 }));
 
 describe("SettingsView", () => {
-  let mockStore: any;
+  let mockStore: unknown;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,8 +55,11 @@ describe("SettingsView", () => {
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
+    // biome-ignore lint/suspicious/noExplicitAny: mock type
     theme: "system" as any,
+    // biome-ignore lint/suspicious/noExplicitAny: mock type
     accent: "blue" as any,
+    // biome-ignore lint/suspicious/noExplicitAny: mock type
     textColor: "slate" as any,
     onThemeChange: vi.fn(),
     onAccentChange: vi.fn(),
@@ -369,7 +373,9 @@ describe("SettingsView", () => {
     mockStore.save.mockRejectedValue(new Error("Disk write error"));
     const consoleErrorSpy = vi
       .spyOn(console, "error")
-      .mockImplementation(() => {});
+      .mockImplementation(() => {
+        /* intentionally empty */
+      });
 
     render(<SettingsView {...defaultProps} />);
 
