@@ -1,28 +1,6 @@
-import { z } from "zod";
+import type { Project, Task } from "../schemas";
 
-export const ProjectSchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-  })
-  .passthrough();
-
-export type Project = z.infer<typeof ProjectSchema>;
-
-export const TaskSchema = z
-  .object({
-    id: z.string(),
-    content: z.string(),
-    due: z
-      .object({
-        date: z.string(),
-      })
-      .nullable()
-      .optional(),
-  })
-  .passthrough();
-
-export type Task = z.infer<typeof TaskSchema>;
+export type { Project, Task };
 
 export interface AddTaskArgs {
   content: string;

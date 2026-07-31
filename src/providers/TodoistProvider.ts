@@ -1,33 +1,11 @@
-import { type GetTasksArgs, TodoistApi } from "@doist/todoist-sdk";
-import { z } from "zod";
+import { TodoistApi } from "@doist/todoist-sdk";
 import {
-  type AddTaskArgs,
-  type Project,
-  ProjectSchema,
-  type Task,
-  type TaskProvider,
+  GetTasksArgsSchema,
+  ProjectsResponseSchema,
   TaskSchema,
-} from "./TaskProvider";
-
-const ProjectsResponseSchema = z.union([
-  z.object({ results: z.array(ProjectSchema) }).transform((val) => val.results),
-  z.array(ProjectSchema),
-]);
-
-const TasksResponseSchema = z.union([
-  z.object({ results: z.array(TaskSchema) }).transform((val) => val.results),
-  z.array(TaskSchema),
-]);
-
-const GetTasksArgsSchema = z
-  .object({
-    filter: z.string().optional(),
-    projectId: z.string().optional(),
-    sectionId: z.string().optional(),
-    label: z.string().optional(),
-    lang: z.string().optional(),
-  })
-  .optional() as z.ZodType<GetTasksArgs | undefined>;
+  TasksResponseSchema,
+} from "../schemas";
+import type { AddTaskArgs, Project, Task, TaskProvider } from "./TaskProvider";
 
 export class TodoistProvider implements TaskProvider {
   private api: TodoistApi;

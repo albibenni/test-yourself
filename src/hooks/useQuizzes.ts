@@ -3,7 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type { Store } from "@tauri-apps/plugin-store";
 import { load } from "@tauri-apps/plugin-store";
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
+
 import {
   STORE_FILENAME,
   STORE_KEY_BASE_PATH,
@@ -12,11 +12,11 @@ import {
 import {
   type Quiz,
   type QuizMetadata,
-  QuizMetadataSchema,
+  QuizMetadataArraySchema,
   QuizSchema,
   type Worksheet,
   WorksheetSchema,
-} from "../types";
+} from "../schemas";
 
 export function useQuizzes() {
   const [quizzes, setQuizzes] = useState<QuizMetadata[]>([]);
@@ -74,7 +74,7 @@ export function useQuizzes() {
       setLoading(true);
       try {
         const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
-        const fetchedQuizzes = z.array(QuizMetadataSchema).parse(rawData);
+        const fetchedQuizzes = QuizMetadataArraySchema.parse(rawData);
         setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.warn("Failed to load quizzes:", error);
@@ -146,7 +146,7 @@ export function useQuizzes() {
     setIsSyncing(true);
     try {
       const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
-      const fetchedQuizzes = z.array(QuizMetadataSchema).parse(rawData);
+      const fetchedQuizzes = QuizMetadataArraySchema.parse(rawData);
 
       setQuizzes((prevQuizzes) => {
         const prevQuizMap = new Map(prevQuizzes.map((q) => [q.path, q]));
