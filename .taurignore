@@ -1,0 +1,6 @@
+src-tauri/target/
+node_modules/
+.git/
+dist/
+coverage/
+.husky/

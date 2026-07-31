@@ -37,7 +37,12 @@ vi.mock("@tauri-apps/plugin-updater", () => ({
 }));
 
 describe("SettingsView", () => {
-  let mockStore: unknown;
+  let mockStore: {
+    get: import("vitest").Mock;
+    set: import("vitest").Mock;
+    save: import("vitest").Mock;
+    delete: import("vitest").Mock;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,7 +53,9 @@ describe("SettingsView", () => {
       save: vi.fn().mockResolvedValue(true),
       delete: vi.fn().mockResolvedValue(true),
     };
-    vi.mocked(load).mockResolvedValue(mockStore);
+    vi.mocked(load).mockResolvedValue(
+      mockStore as unknown as Awaited<ReturnType<typeof load>>,
+    );
     vi.mocked(getSecureToken).mockResolvedValue(null);
   });
 
