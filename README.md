@@ -35,13 +35,19 @@ If you want to build the app from source:
 
 If you are developing on Linux (especially Arch Linux), you can drastically speed up Tauri's Rust compilation times by using **mold** (a highly parallel modern linker) and **sccache** (a compilation cache).
 
-The project is already pre-configured (`src-tauri/.cargo/config.toml`) to use them automatically if they are installed on your system!
-
 1. Install the tools:
    ```bash
    sudo pacman -S mold sccache
    ```
-2. The first time you run `pnpm tauri dev` after installing, it will build the initial cache. All subsequent builds will be incredibly fast.
+2. Configure your global Cargo config to use them by adding this to `~/.cargo/config.toml`:
+   ```toml
+   [build]
+   rustc-wrapper = "sccache"
+
+   [target.x86_64-unknown-linux-gnu]
+   rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+   ```
+3. The first time you run `pnpm tauri dev` after installing, it will build the initial cache. All subsequent builds will be incredibly fast.
 
 ## Documentation
 
