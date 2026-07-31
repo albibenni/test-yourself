@@ -15,6 +15,8 @@ vi.mock("@tauri-apps/plugin-store", () => ({
   load: vi.fn(),
 }));
 
+import type { AccentColor, TextColor, ThemeType } from "../types";
+
 vi.mock("../utils/secureStore", () => ({
   getSecureToken: vi.fn(),
   setSecureToken: vi.fn(),
@@ -62,12 +64,9 @@ describe("SettingsView", () => {
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
-    // biome-ignore lint/suspicious/noExplicitAny: mock type
-    theme: "system" as any,
-    // biome-ignore lint/suspicious/noExplicitAny: mock type
-    accent: "blue" as any,
-    // biome-ignore lint/suspicious/noExplicitAny: mock type
-    textColor: "slate" as any,
+    theme: "system" as ThemeType,
+    accent: "blue" as AccentColor,
+    textColor: "slate" as TextColor,
     onThemeChange: vi.fn(),
     onAccentChange: vi.fn(),
     onTextColorChange: vi.fn(),
