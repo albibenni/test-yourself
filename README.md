@@ -31,6 +31,18 @@ If you want to build the app from source:
 2. Run the development server: `pnpm tauri dev`
 3. Build for production: `pnpm tauri build`
 
+### Speeding Up Rust Compilation (Linux)
+
+If you are developing on Linux (especially Arch Linux), you can drastically speed up Tauri's Rust compilation times by using **mold** (a highly parallel modern linker) and **sccache** (a compilation cache).
+
+The project is already pre-configured (`src-tauri/.cargo/config.toml`) to use them automatically if they are installed on your system!
+
+1. Install the tools:
+   ```bash
+   sudo pacman -S mold sccache
+   ```
+2. The first time you run `pnpm tauri dev` after installing, it will build the initial cache. All subsequent builds will be incredibly fast.
+
 ## Documentation
 
 For full details on how to use the app, available keyboard shortcuts, and configuring integrations, please see our [Usage Guide](docs/USAGE.md).

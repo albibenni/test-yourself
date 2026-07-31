@@ -66,8 +66,13 @@ describe("SettingsView", () => {
     onTextColorChange: vi.fn(),
   };
 
-  it("renders tabs and switches between them", () => {
+  it("renders tabs and switches between them", async () => {
     render(<SettingsView {...defaultProps} />);
+
+    // Wait for initial load to avoid act warnings
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
 
     // Default tab is Appearance
     expect(
@@ -90,8 +95,13 @@ describe("SettingsView", () => {
     expect(screen.getByText("App Version")).toBeInTheDocument();
   });
 
-  it("calls onChange handlers when using segmented controls", () => {
+  it("calls onChange handlers when using segmented controls", async () => {
     render(<SettingsView {...defaultProps} />);
+
+    // Wait for initial load to avoid act warnings
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
 
     // In Appearance tab, click Light theme
     fireEvent.click(screen.getByRole("button", { name: "Light" }));
