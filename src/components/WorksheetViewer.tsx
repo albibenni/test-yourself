@@ -306,11 +306,6 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
       <div className="questions-container">
         {questions.map((q, qIndex) => {
           const isQuestionChecked = checkedQuestions[qIndex];
-          const allFilled =
-            q.blankIndices.length > 0 &&
-            q.blankIndices.every(
-              (idx) => (userAnswers[idx] || "").trim().length > 0,
-            );
 
           return (
             <div
@@ -336,7 +331,6 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
                         fontSize: "0.85rem",
                       }}
                       onClick={() => handleCheckQuestion(qIndex)}
-                      disabled={!allFilled}
                     >
                       Check
                     </button>
@@ -354,7 +348,6 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
                         fontSize: "0.85rem",
                       }}
                       onClick={() => handleCheckQuestion(qIndex)}
-                      disabled={!allFilled}
                     >
                       Check
                     </button>
