@@ -2,6 +2,58 @@ import React, { useMemo, useState } from "react";
 import type { Worksheet } from "../types";
 import "./WorksheetViewer.css";
 
+const normalizeAnswer = (ans: string | undefined) => {
+  if (!ans) return "";
+  return ans
+    .toLowerCase()
+    .replace(/[.,!?;:'"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const getLevenshteinDistance = (a: string, b: string): number => {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1),
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+};
+
+const checkAnswer = (
+  userAns: string | undefined,
+  correctAnsContent: string,
+) => {
+  if (!userAns) return false;
+  const normalizedUser = normalizeAnswer(userAns);
+  if (!normalizedUser) return false;
+
+  const options = correctAnsContent.split("|").map(normalizeAnswer);
+
+  return options.some((opt) => {
+    if (opt === normalizedUser) return true;
+    if (opt.length > 3) {
+      const distance = getLevenshteinDistance(normalizedUser, opt);
+      if (distance <= 1) return true;
+    }
+    return false;
+  });
+};
+
 interface WorksheetViewerProps {
   worksheet: Worksheet;
 }
@@ -177,7 +229,7 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
   const calculateScore = () => {
     let correct = 0;
     correctAnswers.forEach((ans, idx) => {
-      if (userAnswers[idx]?.toLowerCase().trim() === ans.toLowerCase()) {
+      if (checkAnswer(userAnswers[idx], ans)) {
         correct++;
       }
     });
@@ -222,8 +274,7 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
         );
       } else if (part.type === "blank" && part.index !== undefined) {
         const isCorrect = isQuestionChecked
-          ? userAnswers[part.index]?.toLowerCase().trim() ===
-            part.content.toLowerCase()
+          ? checkAnswer(userAnswers[part.index], part.content)
           : null;
 
         return (
