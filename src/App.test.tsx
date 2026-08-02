@@ -332,4 +332,58 @@ describe("App Component", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("preserves quiz state when settings are opened and closed", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    // Select the quiz
+    fireEvent.click(screen.getByText("React Basics"));
+
+    await waitFor(() => {
+      expect(screen.getByText("1. What is React?")).toBeInTheDocument();
+    });
+
+    // Answer correctly (Question 1)
+    const btnA = screen.getByText("A library").closest("button")!;
+    fireEvent.click(btnA);
+
+    // Verify it was answered
+    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(btnA).toBeDisabled();
+
+    // Open settings
+    const settingsBtn = screen.getByRole("button", { name: "Settings" });
+    fireEvent.click(settingsBtn);
+
+    // Verify Settings is opened by looking for Settings title
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Settings" }),
+      ).toBeInTheDocument();
+    });
+
+    // Check if the question is visually hidden but still in DOM
+    const questionEl = screen.getByText("1. What is React?");
+    expect(questionEl).toBeInTheDocument();
+
+    // Close settings
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
+
+    // Verify Settings is closed
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Settings" }),
+      ).not.toBeInTheDocument();
+    });
+
+    // Verify the state is preserved (still says Correct and disabled)
+    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    const btnAAfter = screen.getByText("A library").closest("button")!;
+    expect(btnAAfter).toBeDisabled();
+  });
 });
