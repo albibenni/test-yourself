@@ -85,7 +85,7 @@ function App() {
           "@tauri-apps/plugin-deep-link"
         );
 
-        const handleUrls = (urls: string[] | null) => {
+        const handleUrls = async (urls: string[] | null) => {
           if (!urls) return;
           for (const url of urls) {
             try {
@@ -97,6 +97,16 @@ function App() {
                 const quizPath = u.searchParams.get("quiz");
                 if (quizPath) {
                   setPendingQuizLink(quizPath);
+                  try {
+                    const { getCurrentWindow } = await import(
+                      "@tauri-apps/api/window"
+                    );
+                    const appWindow = getCurrentWindow();
+                    await appWindow.unminimize();
+                    await appWindow.setFocus();
+                  } catch (err) {
+                    console.warn("Failed to focus window:", err);
+                  }
                 }
               }
             } catch (e) {
@@ -136,13 +146,23 @@ function App() {
 
     // Also listen to single-instance argv forwards
     let unlistenEvent: (() => void) | undefined;
-    listen<string>("deep-link-received", (event) => {
+    listen<string>("deep-link-received", async (event) => {
       try {
         const u = new URL(event.payload);
         if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
           const quizPath = u.searchParams.get("quiz");
           if (quizPath) {
             setPendingQuizLink(quizPath);
+            try {
+              const { getCurrentWindow } = await import(
+                "@tauri-apps/api/window"
+              );
+              const appWindow = getCurrentWindow();
+              await appWindow.unminimize();
+              await appWindow.setFocus();
+            } catch (err) {
+              console.warn("Failed to focus window:", err);
+            }
           }
         }
       } catch (e) {
