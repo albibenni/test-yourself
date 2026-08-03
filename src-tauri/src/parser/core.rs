@@ -88,7 +88,13 @@ pub fn parse_inline_options(raw_text: &str) -> (String, Vec<QuizOption>) {
 
 pub fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
     if let Some(caps) = RE_QUESTION.captures(trimmed) {
-        let raw_text = caps[2].to_string();
+        let q_id = caps
+            .get(1)
+            .or_else(|| caps.get(2))
+            .unwrap()
+            .as_str()
+            .to_string();
+        let raw_text = caps[3].to_string();
 
         let raw_lower = raw_text.to_lowercase();
         let solution_keywords = [
@@ -104,7 +110,6 @@ pub fn process_question_line(trimmed: &str, quiz: &mut Quiz) {
             .any(|&kw| raw_lower.starts_with(kw));
 
         if !is_actually_solution {
-            let q_id = caps[1].to_string();
             let (text, options) = parse_inline_options(&raw_text);
 
             let new_q = QuizQuestion {
@@ -149,6 +154,7 @@ pub fn process_solution_line(
 
     if let Some(caps) = RE_CORRECT_ANSWER.captures(trimmed) {
         let correct_letter_val = caps[1].to_string();
+        let remaining_text = caps.get(2).map_or("", |m| m.as_str().trim());
         if let Some(ref q_id) = current_solution_id {
             if let Some(q) = quiz
                 .questions
@@ -157,6 +163,14 @@ pub fn process_solution_line(
                 .find(|q| q.id == *q_id && !q.options.is_empty())
             {
                 q.correct_answer = Some(correct_letter_val);
+                if !remaining_text.is_empty() {
+                    if let Some(ref mut expl) = q.explanation {
+                        expl.push_str("\n\n");
+                        expl.push_str(remaining_text);
+                    } else {
+                        q.explanation = Some(remaining_text.to_string());
+                    }
+                }
             }
         }
         return;
@@ -218,9 +232,14 @@ pub fn process_solution_line(
     }
 
     if let Some(caps) = RE_QUESTION.captures(trimmed) {
-        let q_id_val = caps[1].to_string();
+        let q_id_val = caps
+            .get(1)
+            .or_else(|| caps.get(2))
+            .unwrap()
+            .as_str()
+            .to_string();
         *current_solution_id = Some(q_id_val.clone());
-        let new_text = caps[2].trim().to_string();
+        let new_text = caps[3].trim().to_string();
 
         if !new_text.is_empty() {
             if let Some(q) = quiz
