@@ -63,18 +63,20 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            use tauri::Manager;
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_focus();
-            }
-            for arg in argv {
-                if arg.starts_with("test-yourself://") {
-                    use tauri::Emitter;
-                    let _ = app.emit("deep-link-received", arg);
+        builder = builder
+            .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_focus();
                 }
-            }
-        }));
+                for arg in argv {
+                    if arg.starts_with("test-yourself://") {
+                        use tauri::Emitter;
+                        let _ = app.emit("deep-link-received", arg);
+                    }
+                }
+            }))
+            .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
     builder
@@ -91,7 +93,6 @@ pub fn run() {
         })
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_stronghold::Builder::new(|password| {
@@ -142,7 +143,7 @@ fn is_arch_linux() -> bool {
 }
 
 #[tauri::command]
-fn custom_linux_relaunch(app: tauri::AppHandle) -> bool {
+fn custom_linux_relaunch(_app: tauri::AppHandle) -> bool {
     #[cfg(target_os = "linux")]
     {
         if let Ok(exe) = std::env::current_exe() {
@@ -155,6 +156,6 @@ fn custom_linux_relaunch(app: tauri::AppHandle) -> bool {
     }
     #[cfg(not(target_os = "linux"))]
     {
-        return false;
+        false
     }
 }

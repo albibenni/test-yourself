@@ -1,6 +1,9 @@
 src-tauri/target/
+src-tauri/gen/apple/Pods/
+src-tauri/gen/apple/DerivedData/
 node_modules/
 .git/
 dist/
 coverage/
 .husky/
+

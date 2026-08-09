@@ -1,4 +1,4 @@
-.PHONY: install dev build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
+.PHONY: install dev dev-ios dev-ios-open sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
 
 # Install dependencies
 install:
@@ -8,6 +8,22 @@ install:
 # Run the Tauri Desktop App in development mode
 dev:
 	pnpm tauri dev
+
+# Run the Tauri App in the iOS Simulator (e.g. make dev-ios or make dev-ios DEVICE="iPhone 17 Pro")
+dev-ios:
+	pnpm tauri ios dev "$${DEVICE:-iPhone 17}"
+
+# Run the Tauri App and open the Xcode project
+dev-ios-open:
+	pnpm tauri ios dev --open "$${DEVICE:-iPhone 17}"
+
+# Open the iOS Simulator app on macOS
+sim-ios:
+	open -a Simulator
+
+# Open the iOS Xcode project in Xcode
+open-ios:
+	open src-tauri/gen/apple/test-yourself.xcodeproj
 
 # Build the Tauri Desktop App for production (creates the .app)
 build:
