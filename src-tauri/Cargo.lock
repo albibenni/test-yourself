@@ -4994,7 +4994,7 @@ dependencies = [
 
 [[package]]
 name = "test-yourself"
-version = "2.4.3"
+version = "3.0.0"
 dependencies = [
  "pulldown-cmark",
  "regex",

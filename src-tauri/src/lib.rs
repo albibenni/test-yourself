@@ -249,7 +249,7 @@ fn is_arch_linux() -> bool {
 }
 
 #[tauri::command]
-fn custom_linux_relaunch(_app: tauri::AppHandle) -> bool {
+fn custom_linux_relaunch(app: tauri::AppHandle) -> bool {
     #[cfg(target_os = "linux")]
     {
         if let Ok(exe) = std::env::current_exe() {
@@ -262,6 +262,7 @@ fn custom_linux_relaunch(_app: tauri::AppHandle) -> bool {
     }
     #[cfg(not(target_os = "linux"))]
     {
+        let _ = app;
         false
     }
 }
