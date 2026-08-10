@@ -404,14 +404,13 @@ function App() {
               <div className="quiz-viewer">
                 <div className="quiz-header">
                   <div className="header-title-row">
-                    <h1>{selectedQuizMeta.title}</h1>
-                    <div
-                      style={{
-                        marginLeft: "auto",
-                        display: "flex",
-                        gap: "0.5rem",
-                      }}
-                    >
+                    <h1>
+                      {selectedQuizMeta.title.includes("_") &&
+                      !selectedQuizMeta.title.includes(" ")
+                        ? selectedQuizMeta.title.replace(/_/g, " ")
+                        : selectedQuizMeta.title}
+                    </h1>
+                    <div className="quiz-header-actions">
                       <button
                         className="button-secondary"
                         onClick={() => setResetKey((k) => k + 1)}
@@ -474,51 +473,40 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <p>
-                    Topic:{" "}
-                    <a
-                      href="#"
-                      aria-label={`Open topic ${selectedQuizMeta.topic || DEFAULT_TOPIC}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const platform = osType();
-                        if (platform === "windows") {
-                          void openUrl(
-                            `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path.replace(/\\/g, "/"))}`,
-                          );
-                        } else {
-                          void openUrl(
-                            `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`,
-                          );
-                        }
-                      }}
-                      style={{
-                        color: "inherit",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {selectedQuizMeta.topic || DEFAULT_TOPIC}
-                    </a>
-                    <span
-                      style={{
-                        margin: "0 0.5rem",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      •
-                    </span>
-                    <span
-                      style={{
-                        color: "var(--text-secondary)",
-                        fontSize: "0.9rem",
-                      }}
-                    >
+                  <div className="quiz-meta-info">
+                    <p className="quiz-topic-line">
+                      Topic:{" "}
+                      <a
+                        href="#"
+                        aria-label={`Open topic ${selectedQuizMeta.topic || DEFAULT_TOPIC}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const platform = osType();
+                          if (platform === "windows") {
+                            void openUrl(
+                              `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path.replace(/\\/g, "/"))}`,
+                            );
+                          } else {
+                            void openUrl(
+                              `obsidian://open?path=${encodeURIComponent(selectedQuizMeta.path)}`,
+                            );
+                          }
+                        }}
+                        style={{
+                          color: "inherit",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {selectedQuizMeta.topic || DEFAULT_TOPIC}
+                      </a>
+                    </p>
+                    <p className="quiz-progress-line">
                       {selectedQuizMeta.is_worksheet
                         ? "Worksheet"
                         : `${answeredCount} of ${totalQuestions} answered`}
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
 
                 {loadingActiveQuiz ? (
