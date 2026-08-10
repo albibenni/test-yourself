@@ -431,7 +431,7 @@ body {
     height: 38px;
     min-height: 38px;
     padding-top: 0;
-    padding-left: 84px; /* Clear Mac traffic lights + extra breathing room */
+    padding-left: 70px; /* Aligned right next to Mac traffic lights */
   }
 }
 
@@ -679,6 +679,12 @@ body {
   padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   margin: 0;
   box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .sidebar-header {
+    display: none !important;
+  }
 }
 
 .sidebar h2 {

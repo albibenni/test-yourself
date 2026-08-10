@@ -15,7 +15,8 @@
         "title": "Test Yourself",
         "width": 800,
         "height": 600,
-        "titleBarStyle": "Visible"
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {
