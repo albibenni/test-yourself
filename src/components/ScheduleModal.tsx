@@ -281,8 +281,12 @@ export function ScheduleModal({
         onSuccess?.(dueDateString);
       }
       onClose();
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn(err);
+      const msg =
+        err instanceof Error ? err.message : "Failed to schedule task.";
+      setError(msg);
+      onCheckResult?.(msg);
     } finally {
       setIsScheduling(false);
     }

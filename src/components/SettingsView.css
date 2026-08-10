@@ -23,9 +23,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
+  max-width: none;
 }
 
 .settings-title-group {
@@ -55,10 +54,9 @@
 .settings-layout {
   display: flex;
   flex-direction: column;
-  max-width: 1000px;
-  margin: 0 auto;
   width: 100%;
-  padding: 1rem 1.5rem 3rem 1.5rem;
+  max-width: none;
+  padding: 1.5rem 2rem 3rem 2rem;
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -66,55 +64,24 @@
 /* Dual View Layouts */
 .settings-desktop-view {
   display: flex;
+  flex: 1;
+  width: 100%;
+  gap: 2.5rem;
+}
+
+.settings-nav {
+  width: 260px;
+  min-width: 260px;
+  padding: 0;
+  display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.settings-desktop-nav {
-  display: flex;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 0.75rem;
-  width: 100%;
-  overflow-x: auto;
-}
-
-.settings-desktop-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.625rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.settings-desktop-tab:hover {
-  background: color-mix(in srgb, var(--text-primary) 5%, var(--bg-surface));
-  color: var(--text-primary);
-  border-color: color-mix(in srgb, var(--accent-color) 30%, transparent);
-}
-
-.settings-desktop-tab.active {
-  background: var(--bg-surface);
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.settings-desktop-tab.active .settings-nav-icon {
-  color: var(--accent-color);
-}
-
-.settings-desktop-content {
-  width: 100%;
+.settings-content-area {
+  flex: 1;
+  max-width: 900px;
 }
 
 .settings-mobile-view {

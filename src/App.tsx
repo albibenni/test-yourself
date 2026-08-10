@@ -677,9 +677,10 @@ function App() {
           <ScheduleModal
             isOpen={isScheduleOpen}
             onClose={() => setIsScheduleOpen(false)}
-            quizTitle={selectedQuizMeta?.title || ""}
-            quizPath={selectedQuizMeta?.path || ""}
-            topic={selectedQuizMeta?.topic || DEFAULT_TOPIC}
+            quiz={selectedQuizMeta}
+            onSuccess={(dateText) =>
+              showToast(`Task scheduled for ${dateText}!`)
+            }
             onCheckResult={(msg) => showToast(msg)}
           />
         </Suspense>

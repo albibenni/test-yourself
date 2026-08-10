@@ -762,25 +762,28 @@ export function SettingsView({
 
       <div className="settings-layout">
         {!isMobile ? (
-          /* Desktop View: Tabbed Navigation Header + Unified Content Panel */
+          /* Desktop View: Original v2.4.3 2-Column Sidebar Layout */
           <div className="settings-desktop-view">
-            <div className="settings-desktop-nav">
+            <div className="settings-nav">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
-                  className={`settings-desktop-tab ${
+                  className={`settings-nav-item ${
                     (activeTab || "general") === tab.id ? "active" : ""
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
                   <div className="settings-nav-icon">{tab.icon}</div>
-                  <span>{tab.label}</span>
+                  <div className="settings-nav-text">
+                    <div className="settings-nav-label">{tab.label}</div>
+                    <div className="settings-nav-subtitle">{tab.subtitle}</div>
+                  </div>
                 </button>
               ))}
             </div>
 
-            <div className="settings-desktop-content">
+            <div className="settings-content-area">
               {renderTabContent(activeTab || "general")}
             </div>
           </div>
