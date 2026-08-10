@@ -1,6 +1,6 @@
 # Test Yourself
 
-A fast, desktop-based quiz application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" allows you to point to a local folder of Markdown-based quizzes and worksheets to test your knowledge, review topics, and schedule follow-ups.
+A local-first quiz application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" lets you point to a local folder of Markdown-based quizzes and worksheets to test your knowledge, review topics, and schedule follow-ups. Desktop is the supported release target; iOS development support is in progress—see [Mobile compatibility](#mobile-compatibility).
 
 ## Key Features
 
@@ -28,8 +28,36 @@ Learn more about the app and other projects at **[albertobenatti.dev](https://al
 If you want to build the app from source:
 
 1. Install dependencies: `pnpm install`
-2. Run the development server: `pnpm tauri dev`
+2. Run the desktop app: `make dev`
 3. Build for production: `pnpm tauri build`
+
+### Concurrent desktop and iOS development
+
+`make dev` starts the desktop app on port **1422**. `make dev-ios` keeps the normal Tauri/Vite development URL on port **1420**. The separate ports allow the desktop app and an iOS Simulator session to run at the same time.
+
+Useful mobile commands:
+
+```bash
+make dev-ios                 # default Simulator device
+make dev-ios DEVICE="iPhone 17 Pro"
+make dev-ios-open            # also open the Xcode project
+```
+
+### Secure Todoist token storage
+
+On supported desktop platforms, the Todoist token is stored only in the operating system credential store: macOS Keychain, Windows Credential Manager, or the Linux Secret Service. Clearing the token removes that credential; the app does not fall back to plaintext browser or plugin storage.
+
+The Rust credential test uses an in-memory keyring mock. It initializes the platform library before installing that mock, so the test does not read, change, or prompt for access to your real credential.
+
+### Mobile compatibility
+
+The project has a generated iOS target and a responsive settings layout, and desktop-only updater/single-instance behavior is excluded from mobile builds. It is not yet a fully supported mobile release:
+
+- iOS/Android sandboxing prevents the current arbitrary-folder Markdown workflow from working reliably without an import flow or persistent document-access implementation.
+- The desktop keyring backend intentionally does not support iOS or Android. Todoist token storage needs a mobile credential-store implementation before Todoist scheduling can work there.
+- Touch/safe-area behavior and App Store packaging still need device-level verification.
+
+See [the iOS migration plan](future_plan/ios_migration_plan.md) for the remaining work.
 
 ### Speeding Up Rust Compilation (Linux)
 

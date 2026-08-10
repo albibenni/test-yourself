@@ -30,6 +30,8 @@ The app is highly optimized for keyboard usage to keep you in the flow:
 2. **Todoist API Token**: Enter your token. You can find this in Todoist by going to _Settings > Integrations > Developer_.
 3. **Obsidian Vault Name**: Enter the exact name of your Obsidian vault (or use the "Browse" button to select the vault directory and automatically extract the name).
 
+On desktop, the Todoist token is saved in your operating system credential store, not in the app's regular settings file or browser storage. Saving a token requires that credential store to be available; the app will show an error instead of storing it insecurely.
+
 ### Scheduling a Review
 
 Once your settings are configured, you can use the **Schedule** button inside any open quiz:
@@ -41,6 +43,10 @@ Once your settings are configured, you can use the **Schedule** button inside an
 5. Click **Add Task**.
 
 This will instantly create a task in your Todoist! The task description will automatically contain a deep link to your Obsidian vault (`obsidian://open?vault=...&file=...`), so when the task is due, clicking the link in Todoist will immediately open the exact markdown file in Obsidian for review.
+
+## Mobile status
+
+The iOS project and a compact settings layout exist, but the app is not yet a supported mobile release. Folder selection currently assumes desktop-style filesystem paths, which iOS and Android sandboxing do not provide persistently. Todoist scheduling is also unavailable on mobile until the desktop credential-store backend is replaced with a platform-native mobile implementation. Use the desktop app for the complete workflow today.
 
 ## File & Folder Structure
 

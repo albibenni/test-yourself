@@ -42,7 +42,11 @@ The application uses the API Token you provide in Settings to authenticate with 
 
 ### Security
 
-Your Todoist API token is stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux secret service). It is never transmitted anywhere other than directly to the official Todoist REST API endpoints over secure HTTPS.
+Your Todoist API token is stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux Secret Service). Clearing the token removes the credential. There is no fallback to plaintext browser storage or the Tauri store.
+
+The backend exposes only `get_secret` and `set_secret` for the fixed `todoist_token` account; it does not expose arbitrary credential-store access to the frontend. The native credential lifecycle is tested with an in-memory keyring mock, so tests do not read, update, delete, or prompt for your real Keychain credential.
+
+This implementation is currently **desktop-only**. The selected `keyring` backend deliberately rejects iOS and Android; a mobile-native credential-store implementation is required before Todoist integration is available on those platforms.
 
 ## 3. Deep Linking (Custom URL Scheme)
 
@@ -55,3 +59,5 @@ You can trigger a deep link via the browser or terminal:
 
 - The application listens for `get_initial_url` on startup, or the `deep-link-received` event if already running.
 - It will automatically navigate to the target quiz or worksheet.
+
+Desktop deep-link registration and single-instance handling are intentionally desktop-only. Mobile builds must use the platform's own universal-link/app-link configuration before equivalent flows can be supported.
