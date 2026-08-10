@@ -638,7 +638,9 @@ describe("App Component", () => {
     vi.mocked(onOpenUrl).mockImplementation(async (cb) => {
       await Promise.resolve();
       capturedCallback = cb as (urls: string[]) => void;
-      return vi.fn();
+      return () => {
+        /* intentionally empty */
+      };
     });
 
     vi.mocked(invoke).mockImplementation((cmd: string) => {

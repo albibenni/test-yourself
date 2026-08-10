@@ -165,13 +165,15 @@ function App() {
       console.log("[DeepLink] deep-link-received -> quizPath:", quizPath);
       if (quizPath) {
         setPendingQuizLink(quizPath);
-        try {
-          const { getCurrentWindow } = await import("@tauri-apps/api/window");
-          const appWindow = getCurrentWindow();
-          await appWindow.unminimize();
-          await appWindow.setFocus();
-        } catch (err) {
-          console.warn("Failed to focus window:", err);
+        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+          try {
+            const { getCurrentWindow } = await import("@tauri-apps/api/window");
+            const appWindow = getCurrentWindow();
+            await appWindow.unminimize();
+            await appWindow.setFocus();
+          } catch (err) {
+            console.warn("Failed to focus window:", err);
+          }
         }
       }
     })

@@ -204,7 +204,7 @@ export function SettingsView({
         setDefaultPriority(defPri);
         setInitialDefaultPriority(defPri);
       }
-      if (defProj !== undefined) {
+      if (defProj !== undefined && defProj !== null) {
         setDefaultProject(defProj);
         setInitialDefaultProject(defProj);
       }
@@ -654,7 +654,7 @@ export function SettingsView({
                   <label className="settings-label">Default Project</label>
                   <select
                     className="settings-input"
-                    value={defaultProject}
+                    value={defaultProject || ""}
                     onChange={(e) => setDefaultProject(e.target.value)}
                     disabled={loadingProjects}
                   >

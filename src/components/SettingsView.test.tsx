@@ -348,6 +348,9 @@ describe("SettingsView", () => {
   });
 
   it("falls back to standard store if secure store throws an error", async () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {
+      /* intentionally empty */
+    });
     vi.mocked(setSecureToken).mockRejectedValue(
       new Error("Secure store disabled"),
     );
@@ -381,6 +384,7 @@ describe("SettingsView", () => {
       expect(mockStore.save).toHaveBeenCalled();
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
+    consoleWarnSpy.mockRestore();
   });
 
   it("handles save failure gracefully and resets isSaving state", async () => {
