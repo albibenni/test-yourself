@@ -54,6 +54,13 @@ mod credential_tests {
     #[test]
     fn stores_reads_and_deletes_a_secret_with_the_mock_keyring() {
         let _guard = keyring_test_lock();
+
+        // `keyring::Entry` installs the platform store lazily on its first use.
+        // Initialize it before replacing the default store, otherwise it would
+        // overwrite this mock and make the test read the user's real Keychain.
+        keyring::Entry::store_status()
+            .as_ref()
+            .expect("the platform keyring should initialize");
         set_default_store(mock::Store::new().unwrap());
 
         assert_eq!(get_secret().unwrap(), None);
