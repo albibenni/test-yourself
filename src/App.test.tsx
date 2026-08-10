@@ -170,7 +170,9 @@ describe("App Component", () => {
       expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
-    const toggleButton = screen.getByRole("button", { name: "Toggle Sidebar" });
+    const toggleButton = screen.getAllByRole("button", {
+      name: "Toggle Sidebar",
+    })[0];
     // The aside has role="complementary" implicitly
     const sidebar = screen.getByRole("complementary");
 
@@ -251,7 +253,7 @@ describe("App Component", () => {
     });
   });
 
-  it("allows selecting a new folder from TopBar", async () => {
+  it("allows selecting a new folder from Settings", async () => {
     vi.mocked(open).mockResolvedValue("/new/mock/path");
 
     render(<App />);
@@ -260,8 +262,15 @@ describe("App Component", () => {
       expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
+    const settingsBtn = screen.getAllByRole("button", { name: "Settings" })[0];
+    fireEvent.click(settingsBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Quiz Directory")).toBeInTheDocument();
+    });
+
     const changeFolderBtn = screen.getByRole("button", {
-      name: "Change Folder",
+      name: "Browse...",
     });
     fireEvent.click(changeFolderBtn);
 
@@ -356,7 +365,7 @@ describe("App Component", () => {
     expect(btnA).toBeDisabled();
 
     // Open settings
-    const settingsBtn = screen.getByRole("button", { name: "Settings" });
+    const settingsBtn = screen.getAllByRole("button", { name: "Settings" })[0];
     fireEvent.click(settingsBtn);
 
     // Verify Settings is opened by looking for Settings title

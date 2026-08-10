@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { confirm } from "@tauri-apps/plugin-dialog";
+import { confirm, open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
@@ -9,6 +9,7 @@ import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
 import { lazy, Suspense } from "react";
+import { FolderBrowserModal } from "./components/FolderBrowserModal";
 import { QuestionCard } from "./components/QuestionCard";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
@@ -28,6 +29,7 @@ const ScheduleModal = lazy(() =>
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isFolderBrowserOpen, setIsFolderBrowserOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSettingsDirty, setIsSettingsDirty] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -71,7 +73,7 @@ function App() {
     searchQuery,
     setSearchQuery,
     basePath,
-    selectFolder,
+    updateBasePath,
     handleSync,
     groupedQuizzes,
     quizzes,
@@ -275,7 +277,6 @@ function App() {
       <TopBar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        selectFolder={() => void selectFolder()}
         onOpenSettings={() => setIsSettingsOpen(true)}
         hasUpdate={!!updateVersion}
       />
@@ -306,6 +307,7 @@ function App() {
           handleSync={() => void handleSync()}
           isSyncing={isSyncing}
           setIsSidebarOpen={setIsSidebarOpen}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         <main className="main-content">
@@ -332,6 +334,23 @@ function App() {
                 }}
                 updateAvailable={updateVersion}
                 onDirtyChange={setIsSettingsDirty}
+                basePath={basePath}
+                onSelectFolder={async () => {
+                  try {
+                    const selected = await open({
+                      directory: true,
+                      multiple: false,
+                    });
+                    if (selected && typeof selected === "string") {
+                      await updateBasePath(selected);
+                      return;
+                    }
+                  } catch {
+                    // Fallback to visual modal
+                  }
+                  setIsFolderBrowserOpen(true);
+                }}
+                onUpdateBasePath={(newPath) => void updateBasePath(newPath)}
               />
             </Suspense>
           )}
@@ -350,12 +369,36 @@ function App() {
                 <p>
                   Please select a directory containing your Markdown quizzes.
                 </p>
-                <button
-                  onClick={() => void selectFolder()}
-                  className="primary-btn"
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.75rem",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                    marginTop: "1rem",
+                  }}
                 >
-                  Choose Folder
-                </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const selected = await open({
+                          directory: true,
+                          multiple: false,
+                        });
+                        if (selected && typeof selected === "string") {
+                          await updateBasePath(selected);
+                          return;
+                        }
+                      } catch {
+                        // Fallback to visual modal
+                      }
+                      setIsFolderBrowserOpen(true);
+                    }}
+                    className="primary-btn"
+                  >
+                    Choose Folder
+                  </button>
+                </div>
               </div>
             ) : selectedQuizMeta ? (
               <div className="quiz-viewer">
@@ -646,14 +689,23 @@ function App() {
           <ScheduleModal
             isOpen={isScheduleOpen}
             onClose={() => setIsScheduleOpen(false)}
-            quiz={selectedQuizMeta}
-            onSuccess={(dateText) =>
-              showToast(`Task created successfully for ${dateText}!`)
-            }
+            quizTitle={selectedQuizMeta?.title || ""}
+            quizPath={selectedQuizMeta?.path || ""}
+            topic={selectedQuizMeta?.topic || DEFAULT_TOPIC}
             onCheckResult={(msg) => showToast(msg)}
           />
         </Suspense>
       )}
+
+      <FolderBrowserModal
+        isOpen={isFolderBrowserOpen}
+        onClose={() => setIsFolderBrowserOpen(false)}
+        onSelectFolder={(newPath) => {
+          void updateBasePath(newPath);
+          showToast("Quiz directory updated!");
+        }}
+        initialPath={basePath}
+      />
 
       {toastMessage && (
         <div role="status" aria-live="polite" className="toast-notification">

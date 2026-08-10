@@ -126,17 +126,43 @@ export function useQuizzes() {
     void loadActiveQuiz();
   }, [selectedQuizMeta]);
 
+  const updateBasePath = async (newPath: string) => {
+    setBasePath(newPath);
+    setSelectedQuizMeta(null);
+    if (storeInstance) {
+      await storeInstance.set(STORE_KEY_BASE_PATH, newPath);
+      await storeInstance.save();
+    }
+  };
+
   const selectFolder = async () => {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-    });
-    if (selected && typeof selected === "string" && selected !== basePath) {
-      setBasePath(selected);
-      setSelectedQuizMeta(null);
-      if (storeInstance) {
-        await storeInstance.set(STORE_KEY_BASE_PATH, selected);
-        await storeInstance.save();
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+      });
+      if (selected && typeof selected === "string" && selected !== basePath) {
+        await updateBasePath(selected);
+        return;
+      }
+      if (!selected) {
+        // Prompt for path on mobile / fallback
+        const manual = window.prompt(
+          "Enter quiz directory path:",
+          basePath || "",
+        );
+        if (manual && manual.trim() && manual.trim() !== basePath) {
+          await updateBasePath(manual.trim());
+        }
+      }
+    } catch (err) {
+      console.warn("Native folder picker unsupported or failed:", err);
+      const manual = window.prompt(
+        "Enter quiz directory path:",
+        basePath || "",
+      );
+      if (manual && manual.trim() && manual.trim() !== basePath) {
+        await updateBasePath(manual.trim());
       }
     }
   };
@@ -208,6 +234,7 @@ export function useQuizzes() {
     setSearchQuery,
     basePath,
     selectFolder,
+    updateBasePath,
     handleSync,
     groupedQuizzes,
   };

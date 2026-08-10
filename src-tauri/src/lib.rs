@@ -57,6 +57,95 @@ async fn get_worksheet_content(path: String, topic: String) -> Result<models::Wo
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct FolderItem {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+    pub md_count: usize,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct DirectoryListing {
+    pub current_path: String,
+    pub parent_path: Option<String>,
+    pub items: Vec<FolderItem>,
+}
+
+#[tauri::command]
+async fn browse_directory(
+    path: Option<String>,
+    app_handle: tauri::AppHandle,
+) -> Result<DirectoryListing, String> {
+    use tauri::Manager;
+    let target_path = match path {
+        Some(ref p) if !p.trim().is_empty() && p != "documents" => std::path::PathBuf::from(p),
+        _ => app_handle
+            .path()
+            .document_dir()
+            .ok()
+            .or_else(|| std::env::var("HOME").ok().map(std::path::PathBuf::from))
+            .unwrap_or_else(|| std::path::PathBuf::from("/")),
+    };
+
+    let current_path_str = target_path.to_string_lossy().to_string();
+    let parent_path_str = target_path
+        .parent()
+        .map(|p| p.to_string_lossy().to_string());
+
+    let read_dir = std::fs::read_dir(&target_path)
+        .map_err(|e| format!("Cannot access directory '{}': {}", current_path_str, e))?;
+
+    let mut items = Vec::new();
+
+    for entry in read_dir.flatten() {
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        if file_name.starts_with('.') {
+            continue;
+        }
+
+        let entry_path = entry.path();
+        let is_dir = entry_path.is_dir();
+
+        let mut md_count = 0;
+        if is_dir {
+            if let Ok(sub_read) = std::fs::read_dir(&entry_path) {
+                for sub in sub_read.flatten() {
+                    let sub_name = sub.file_name().to_string_lossy().to_string();
+                    if sub_name.ends_with(".md") && !sub_name.starts_with('.') {
+                        md_count += 1;
+                    }
+                }
+            }
+        } else if file_name.ends_with(".md") {
+            md_count = 1;
+        } else {
+            continue;
+        }
+
+        items.push(FolderItem {
+            name: file_name,
+            path: entry_path.to_string_lossy().to_string(),
+            is_dir,
+            md_count,
+        });
+    }
+
+    items.sort_by(|a, b| {
+        if a.is_dir != b.is_dir {
+            b.is_dir.cmp(&a.is_dir)
+        } else {
+            a.name.to_lowercase().cmp(&b.name.to_lowercase())
+        }
+    });
+
+    Ok(DirectoryListing {
+        current_path: current_path_str,
+        parent_path: parent_path_str,
+        items,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default().plugin(tauri_plugin_os::init());
@@ -121,7 +210,8 @@ pub fn run() {
             get_worksheet_content,
             get_initial_url,
             is_arch_linux,
-            custom_linux_relaunch
+            custom_linux_relaunch,
+            browse_directory
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

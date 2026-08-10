@@ -18,6 +18,10 @@
 	<string>2.4.3</string>
 	<key>CFBundleVersion</key>
 	<string>2.4.3</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

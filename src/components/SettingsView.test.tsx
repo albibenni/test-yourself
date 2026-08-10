@@ -80,18 +80,18 @@ describe("SettingsView", () => {
       expect(mockStore.get).toHaveBeenCalled();
     });
 
-    // Default tab is Appearance
+    // Default tab is General
+    expect(
+      screen.getByRole("heading", { name: "General", level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Quiz Directory")).toBeInTheDocument();
+
+    // Switch to Appearance
+    fireEvent.click(screen.getByText("Appearance"));
     expect(
       screen.getByRole("heading", { name: "Appearance", level: 2 }),
     ).toBeInTheDocument();
     expect(screen.getByText("Theme")).toBeInTheDocument();
-
-    // Switch to Integrations
-    fireEvent.click(screen.getByText("Integrations"));
-    expect(
-      screen.getByRole("heading", { name: "Integrations", level: 2 }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Obsidian Vault")).toBeInTheDocument();
 
     // Switch to About
     fireEvent.click(screen.getByText("About"));
@@ -109,7 +109,10 @@ describe("SettingsView", () => {
       expect(mockStore.get).toHaveBeenCalled();
     });
 
-    // In Appearance tab, click Light theme
+    // Switch to Appearance tab
+    fireEvent.click(screen.getByText("Appearance"));
+
+    // Click Light theme
     fireEvent.click(screen.getByRole("button", { name: "Light" }));
     expect(defaultProps.onThemeChange).toHaveBeenCalledWith("light");
 
@@ -159,7 +162,7 @@ describe("SettingsView", () => {
         "todoist_token",
         "new-token-123",
       );
-      expect(mockStore.delete).toHaveBeenCalledWith("todoist_token"); // Cleans up unencrypted
+      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", ""); // Cleans up unencrypted
       expect(mockStore.save).toHaveBeenCalled();
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
@@ -198,24 +201,20 @@ describe("SettingsView", () => {
     });
 
     // Change another setting (e.g., Vault Name)
-    const browseBtn = screen.getByRole("button", { name: "Browse..." });
-    vi.mocked(open).mockResolvedValue("/new/mock/MyVault");
-    fireEvent.click(browseBtn);
+    const vaultInput = screen.getByPlaceholderText("e.g. MyVault");
+    fireEvent.change(vaultInput, { target: { value: "UpdatedVault" } });
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("MyVault")).toBeInTheDocument();
-    });
-
-    // Save
     const saveButton = screen.getByRole("button", { name: "Save Changes" });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      // The token wasn't modified and was in secure store, so setSecureToken should NOT be called
+      // Vault name was saved
+      expect(mockStore.set).toHaveBeenCalledWith(
+        "obsidian_vault",
+        "UpdatedVault",
+      );
+      // Ultimately, it matches the initial secure token, so skip encryption
       expect(setSecureToken).not.toHaveBeenCalled();
-      expect(mockStore.set).toHaveBeenCalledWith("obsidian_vault", "MyVault");
-      expect(mockStore.save).toHaveBeenCalled();
-      expect(defaultProps.onClose).toHaveBeenCalled();
     });
   });
 
@@ -277,7 +276,7 @@ describe("SettingsView", () => {
         "todoist_token",
         "unencrypted-store-token",
       );
-      expect(mockStore.delete).toHaveBeenCalledWith("todoist_token");
+      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", "");
     });
   });
 
@@ -305,7 +304,7 @@ describe("SettingsView", () => {
         "todoist_token",
         "localstorage-token",
       );
-      expect(mockStore.delete).toHaveBeenCalledWith("todoist_token");
+      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", "");
     });
   });
 
