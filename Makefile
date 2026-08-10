@@ -5,9 +5,9 @@ install:
 	pnpm install
 
 
-# Run the Tauri Desktop App in development mode
+# Run the Tauri Desktop App in development mode (runs on port 1422 to allow running alongside dev-ios)
 dev:
-	pnpm tauri dev
+	PORT=1422 pnpm tauri dev --port 1422
 
 # Run the Tauri App in the iOS Simulator (e.g. make dev-ios or make dev-ios DEVICE="iPhone 17 Pro")
 dev-ios:
