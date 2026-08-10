@@ -53,7 +53,8 @@ async fn test_discovery_ignores_file_path() {
     writeln!(file, "1. Q\nA. Opt\n\nAnswers\n1. A").unwrap();
 
     // Pass a file directly instead of a directory
-    let quizzes = get_all_quizzes(file_path.to_str().unwrap()).await;
+    let file_str = file_path.to_str().expect("path should be valid UTF-8");
+    let _quizzes = get_all_quizzes(file_str).await;
 
     // get_all_quizzes checks if path exists and is a directory implicitly because WalkDir on a file
     // will yield the file itself if it's .md, but canonicalization might work. Let's see if it discovers it

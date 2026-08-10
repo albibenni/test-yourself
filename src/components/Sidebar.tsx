@@ -72,6 +72,13 @@ export function Sidebar({
     setFocusedQuizIndex(0);
   }
 
+  const handleSelectQuiz = (quizToOpen: QuizMetadata) => {
+    setSelectedQuiz(quizToOpen);
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (flatQuizzes.length === 0) return;
 
@@ -85,12 +92,12 @@ export function Sidebar({
       e.preventDefault();
       const quizToOpen = flatQuizzes[focusedQuizIndex];
       if (quizToOpen) {
-        setSelectedQuiz(quizToOpen);
-        setIsSidebarOpen(false);
+        handleSelectQuiz(quizToOpen);
       }
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: setIsSidebarOpen is a stable setState dispatch
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
@@ -105,7 +112,7 @@ export function Sidebar({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setIsSidebarOpen]);
+  }, []);
 
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>
@@ -308,14 +315,12 @@ export function Sidebar({
                     role="button"
                     tabIndex={0}
                     onClick={() => {
-                      setSelectedQuiz(quiz);
-                      setIsSidebarOpen(false);
+                      handleSelectQuiz(quiz);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setSelectedQuiz(quiz);
-                        setIsSidebarOpen(false);
+                        handleSelectQuiz(quiz);
                       }
                     }}
                   >

@@ -502,7 +502,7 @@ export function ScheduleModal({
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!loading && !error) {
+      if (!isScheduling) {
         void handleSchedule();
       }
     }
@@ -511,6 +511,28 @@ export function ScheduleModal({
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(projectSearchQuery),
   );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: stable keyboard listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      } else if (e.key === "Enter" && !e.shiftKey) {
+        const activeElem = document.activeElement;
+        const isDropdownButton =
+          activeElem?.classList.contains("project-dropdown-item") ||
+          activeElem?.classList.contains("segment-btn") ||
+          activeElem?.classList.contains("action-pill");
+        if (!isDropdownButton && !isScheduling) {
+          e.preventDefault();
+          void handleSchedule();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isOpen, isScheduling, onClose]);
 
   useEffect(() => {
     if (inputRef.current) {
