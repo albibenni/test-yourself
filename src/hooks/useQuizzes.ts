@@ -65,6 +65,7 @@ export function useQuizzes() {
 
   // Fetch quizzes whenever basePath is available
   useEffect(() => {
+    let isCurrent = true;
     async function loadQuizzes() {
       if (!basePath) {
         setLoading(false);
@@ -75,22 +76,27 @@ export function useQuizzes() {
       try {
         const rawData = await invoke(TAURI_COMMAND_GET_QUIZZES);
         const fetchedQuizzes = QuizMetadataArraySchema.parse(rawData);
-        setQuizzes(fetchedQuizzes);
+        if (isCurrent) setQuizzes(fetchedQuizzes);
       } catch (error) {
         console.warn("Failed to load quizzes:", error);
       } finally {
-        setLoading(false);
+        if (isCurrent) setLoading(false);
         console.log("basePath", basePath);
       }
     }
     void loadQuizzes();
+    return () => {
+      isCurrent = false;
+    };
   }, [basePath]);
 
   // Fetch active quiz content when selected meta changes
   useEffect(() => {
+    let isCurrent = true;
     async function loadActiveQuiz() {
       if (!selectedQuizMeta) {
         setActiveQuiz(null);
+        setActiveWorksheet(null);
         return;
       }
       setLoadingActiveQuiz(true);
@@ -101,38 +107,47 @@ export function useQuizzes() {
             topic: selectedQuizMeta.topic,
           });
           const fetchedWorksheet = WorksheetSchema.parse(rawData);
-          setActiveWorksheet(fetchedWorksheet);
-          setActiveQuiz(null);
+          if (isCurrent) {
+            setActiveWorksheet(fetchedWorksheet);
+            setActiveQuiz(null);
+          }
         } else {
           const rawData = await invoke("get_quiz_content", {
             path: selectedQuizMeta.path,
             topic: selectedQuizMeta.topic,
           });
           const fetchedQuiz = QuizSchema.parse(rawData);
-          setActiveQuiz(fetchedQuiz);
-          setActiveWorksheet(null);
+          if (isCurrent) {
+            setActiveQuiz(fetchedQuiz);
+            setActiveWorksheet(null);
+          }
         }
       } catch (error) {
         console.warn("Failed to load active content:", error);
         alert(
           `Failed to load quiz content! Your markdown file might have a syntax error.\n\nError details: ${String(error)}`,
         );
-        setActiveQuiz(null);
-        setActiveWorksheet(null);
+        if (isCurrent) {
+          setActiveQuiz(null);
+          setActiveWorksheet(null);
+        }
       } finally {
-        setLoadingActiveQuiz(false);
+        if (isCurrent) setLoadingActiveQuiz(false);
       }
     }
     void loadActiveQuiz();
+    return () => {
+      isCurrent = false;
+    };
   }, [selectedQuizMeta]);
 
   const updateBasePath = async (newPath: string) => {
-    setBasePath(newPath);
-    setSelectedQuizMeta(null);
     if (storeInstance) {
       await storeInstance.set(STORE_KEY_BASE_PATH, newPath);
       await storeInstance.save();
     }
+    setSelectedQuizMeta(null);
+    setBasePath(newPath);
   };
 
   const selectFolder = async () => {

@@ -88,15 +88,7 @@ export function ScheduleModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const [prevResetParams, setPrevResetParams] = useState({
-    isOpen: false,
-    quizPath: undefined as string | undefined,
-  });
-  if (
-    isOpen !== prevResetParams.isOpen ||
-    quiz?.path !== prevResetParams.quizPath
-  ) {
-    setPrevResetParams({ isOpen, quizPath: quiz?.path });
+  useEffect(() => {
     if (isOpen && quiz) {
       const prefix = quiz.is_worksheet ? "Review Worksheet" : "Review Quiz";
       setTaskContent(`${prefix}: ${quiz.title}`);
@@ -108,7 +100,7 @@ export function ScheduleModal({
       setShowProjectSelectDropdown(false);
       setShowInfoDropdown(false);
     }
-  }
+  }, [isOpen, quiz]);
 
   useEffect(() => {
     if (isOpen && quiz) {

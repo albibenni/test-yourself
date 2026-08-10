@@ -4,7 +4,8 @@ import { confirm, open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useQuizSession } from "./hooks/useQuizSession";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
@@ -282,43 +283,18 @@ function App() {
     showToast,
   ]);
 
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-
-  const [prevResetParams, setPrevResetParams] = useState({
-    path: selectedQuizMeta?.path,
-    key: resetKey,
-  });
-
-  const [visibleCount, setVisibleCount] = useState(10);
-
-  if (
-    selectedQuizMeta?.path !== prevResetParams.path ||
-    resetKey !== prevResetParams.key
-  ) {
-    setPrevResetParams({ path: selectedQuizMeta?.path, key: resetKey });
-    setAnswers({});
-    setVisibleCount(10);
-  }
-
-  const totalQuestions = activeQuiz?.questions.length || 0;
-  const answeredCount = Object.keys(answers).length;
-  const isAllAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
-  const correctCount =
-    activeQuiz?.questions.filter((q) => answers[q.id] === q.correct_answer)
-      .length || 0;
-
-  const observer = useRef<IntersectionObserver>(null);
-  const lastQuestionElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 10, totalQuestions));
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [totalQuestions],
+  const {
+    answers,
+    setAnswers,
+    visibleCount,
+    totalQuestions,
+    answeredCount,
+    correctCount,
+    isAllAnswered,
+    lastQuestionElementRef,
+  } = useQuizSession(
+    selectedQuizMeta ? `${selectedQuizMeta.path}:${resetKey}` : undefined,
+    activeQuiz?.questions,
   );
 
   return (

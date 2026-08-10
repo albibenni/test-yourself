@@ -54,6 +54,7 @@ describe("FolderBrowserModal Component (iOS Directory Search & Navigation)", () 
     expect(screen.getByText("Browse Folders")).toBeInTheDocument();
     expect(screen.getByText("SampleQuizzes")).toBeInTheDocument();
     expect(screen.getByText("12 quizzes")).toBeInTheDocument();
+    expect(screen.queryByText("📂 Project Workspace")).not.toBeInTheDocument();
   });
 
   it("navigates into subfolder when a folder item is clicked", async () => {
@@ -120,28 +121,6 @@ describe("FolderBrowserModal Component (iOS Directory Search & Navigation)", () 
     await waitFor(() => {
       expect(invoke).toHaveBeenCalledWith("browse_directory", {
         path: "documents",
-      });
-    });
-  });
-
-  it("navigates directly to Project Workspace shortcut", async () => {
-    render(
-      <FolderBrowserModal
-        isOpen={true}
-        onClose={vi.fn()}
-        onSelectFolder={vi.fn()}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("📂 Project Workspace")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("📂 Project Workspace"));
-
-    await waitFor(() => {
-      expect(invoke).toHaveBeenCalledWith("browse_directory", {
-        path: "/Users/benni/benni-projects/test-yourself",
       });
     });
   });

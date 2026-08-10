@@ -66,12 +66,6 @@ export function Sidebar({
       .flatMap(([, quizzes]) => quizzes);
   }, [filteredGroupedQuizzes]);
 
-  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
-  if (searchQuery !== prevSearchQuery) {
-    setPrevSearchQuery(searchQuery);
-    setFocusedQuizIndex(0);
-  }
-
   const handleSelectQuiz = (quizToOpen: QuizMetadata) => {
     setSelectedQuiz(quizToOpen);
     if (window.innerWidth <= 768) {
@@ -190,7 +184,10 @@ export function Sidebar({
             placeholder="Search..."
             aria-label="Search"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setFocusedQuizIndex(0);
+            }}
             onKeyDown={handleInputKeyDown}
           />
         </div>

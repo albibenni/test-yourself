@@ -180,20 +180,6 @@ export function FolderBrowserModal({
           >
             📱 On My iPhone (Documents)
           </button>
-          <button
-            className="button-secondary"
-            onClick={() =>
-              setCurrentPath("/Users/benni/benni-projects/test-yourself")
-            }
-            style={{
-              padding: "0.25rem 0.625rem",
-              fontSize: "0.75rem",
-              minHeight: "32px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            📂 Project Workspace
-          </button>
         </div>
 
         {/* Current Path Bar & Go Up Control */}

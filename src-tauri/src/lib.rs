@@ -19,6 +19,11 @@ fn get_initial_url(state: tauri::State<InitialUrl>) -> Option<String> {
 
 #[tauri::command]
 async fn get_quizzes(app_handle: tauri::AppHandle) -> Result<Vec<models::QuizMetadata>, String> {
+    let base_path = configured_quiz_root(&app_handle).await?;
+    Ok(parser::discovery::get_all_quizzes_metadata(&base_path).await)
+}
+
+async fn configured_quiz_root(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let store = app_handle
         .store("settings.json")
         .map_err(|e| e.to_string())?;
@@ -29,12 +34,49 @@ async fn get_quizzes(app_handle: tauri::AppHandle) -> Result<Vec<models::QuizMet
         .as_str()
         .ok_or("Invalid base path format")?
         .to_string();
-    Ok(parser::discovery::get_all_quizzes_metadata(&base_path).await)
+    Ok(base_path)
+}
+
+async fn resolve_quiz_path(
+    app_handle: &tauri::AppHandle,
+    path: &str,
+) -> Result<std::path::PathBuf, String> {
+    let root = tokio::fs::canonicalize(configured_quiz_root(app_handle).await?)
+        .await
+        .map_err(|_| "Configured quiz directory is not accessible".to_string())?;
+    let candidate = tokio::fs::canonicalize(path)
+        .await
+        .map_err(|_| "Quiz file is not accessible".to_string())?;
+
+    validate_quiz_path(root, candidate)
+}
+
+pub fn validate_quiz_path(
+    root: std::path::PathBuf,
+    candidate: std::path::PathBuf,
+) -> Result<std::path::PathBuf, String> {
+    if candidate
+        .extension()
+        .and_then(|extension| extension.to_str())
+        != Some("md")
+        || !candidate.starts_with(&root)
+    {
+        return Err(
+            "Quiz file must be a Markdown file inside the configured quiz directory".to_string(),
+        );
+    }
+
+    Ok(candidate)
 }
 
 #[tauri::command]
-async fn get_quiz_content(path: String, topic: String) -> Result<models::Quiz, String> {
-    get_quiz_content_inner(path, topic).await
+async fn get_quiz_content(
+    app_handle: tauri::AppHandle,
+    path: String,
+    topic: String,
+) -> Result<models::Quiz, String> {
+    let path = resolve_quiz_path(&app_handle, &path).await?;
+    get_quiz_content_inner(path.to_string_lossy().into_owned(), topic).await
 }
 
 pub async fn get_quiz_content_inner(path: String, topic: String) -> Result<models::Quiz, String> {
@@ -50,8 +92,12 @@ pub async fn get_quiz_content_inner(path: String, topic: String) -> Result<model
 }
 
 #[tauri::command]
-async fn get_worksheet_content(path: String, topic: String) -> Result<models::Worksheet, String> {
-    let path_buf = std::path::PathBuf::from(&path);
+async fn get_worksheet_content(
+    app_handle: tauri::AppHandle,
+    path: String,
+    topic: String,
+) -> Result<models::Worksheet, String> {
+    let path_buf = resolve_quiz_path(&app_handle, &path).await?;
     if let Some(ws) = parser::markdown::parse_worksheet_file(&path_buf, &topic).await {
         Ok(ws)
     } else {

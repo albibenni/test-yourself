@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::Write;
-use tauri_app_lib::get_quiz_content_inner;
+use tauri_app_lib::{get_quiz_content_inner, validate_quiz_path};
 use tempfile::tempdir;
 
 #[tokio::test]
@@ -64,4 +64,20 @@ async fn test_get_quiz_content_inner_binary_file() {
             path.to_str().unwrap()
         )
     );
+}
+
+#[test]
+fn validate_quiz_path_allows_markdown_inside_configured_root() {
+    let root = std::path::PathBuf::from("/quiz-root");
+    let candidate = root.join("topic/quiz.md");
+
+    assert_eq!(validate_quiz_path(root, candidate.clone()), Ok(candidate));
+}
+
+#[test]
+fn validate_quiz_path_rejects_non_markdown_or_outside_files() {
+    let root = std::path::PathBuf::from("/quiz-root");
+
+    assert!(validate_quiz_path(root.clone(), std::path::PathBuf::from("/other/quiz.md")).is_err());
+    assert!(validate_quiz_path(root.clone(), root.join("quiz.txt")).is_err());
 }
