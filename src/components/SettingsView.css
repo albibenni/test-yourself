@@ -63,6 +63,65 @@
   overflow-y: auto;
 }
 
+/* Dual View Layouts */
+.settings-desktop-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.settings-desktop-nav {
+  display: flex;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 0.75rem;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.settings-desktop-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.625rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.settings-desktop-tab:hover {
+  background: color-mix(in srgb, var(--text-primary) 5%, var(--bg-surface));
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+.settings-desktop-tab.active {
+  background: var(--bg-surface);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.settings-desktop-tab.active .settings-nav-icon {
+  color: var(--accent-color);
+}
+
+.settings-desktop-content {
+  width: 100%;
+}
+
+.settings-mobile-view {
+  display: none;
+  width: 100%;
+}
+
 .settings-accordion-list {
   display: flex;
   flex-direction: column;
@@ -285,6 +344,16 @@ select.settings-input option {
 
 /* Mobile Settings Responsive Layout */
 @media (max-width: 768px) {
+  .settings-desktop-view {
+    display: none;
+  }
+
+  .settings-mobile-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
   .settings-header-sticky {
     padding: 0.75rem 1rem;
     position: sticky;

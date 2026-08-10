@@ -35,6 +35,35 @@ Explanation: Because math.
 }
 
 #[tokio::test]
+async fn test_spiffe_spire_quiz() {
+    let md = r#"# SPIFFE-SPIRE and mTLS Quiz
+
+Reference: [[SPIFFE-SPIRE and mTLS]]
+
+1. What is the exact relationship between mTLS, SPIFFE, and SPIRE in a modern cloud-native architecture?
+   A. mTLS handles identity document design, SPIFFE executes container attestation, and SPIRE handles transport layer encryption.
+   B. SPIFFE provides cryptographic packet encryption, SPIRE manages network routing policies, and mTLS verifies user login sessions.
+   C. SPIRE defines public key standards, mTLS performs node kernel attestation, and SPIFFE manages long-lived API token storage on host disks.
+   D. mTLS creates the secure verification tunnel, SPIFFE standardizes workload identity format, and SPIRE automates dynamic attestation and credential issuance.
+
+2. How is a SPIFFE ID formatted and where is it cryptographically embedded within an X.509 SVID certificate?
+   A. Formatted as a URI scheme (`spiffe://trust-domain/workload`) and embedded inside the Subject Alternative Name (SAN) extension.
+   B. Formatted as a standard email address URI and embedded inside the Issuer Common Name attribute of the certificate signature.
+   C. Formatted as an HTTP URL endpoint and embedded inside the Serial Number extension field of the root Certificate Authority.
+   D. Formatted as a Base64 GUID identifier and embedded inside the Key Usage extension field of the private host key.
+
+## Answers
+
+1. D
+   Explanation: Mutual TLS (mTLS) handles the cryptographic transport tunnel, SPIFFE defines the URI identity schema (SPIFFE ID in X.509 SAN), and SPIRE automates workload attestation and short-lived SVID issuance.
+2. A
+   Explanation: A SPIFFE ID is formatted as a URI (`spiffe://trust-domain/workload`) and standard SPIFFE X.509 SVIDs encode this identifier inside the Subject Alternative Name (SAN) URI extension.
+"#;
+    let quiz = parse_string(md).await.unwrap();
+    assert_eq!(quiz.questions.len(), 2, "Expected 2 valid questions");
+}
+
+#[tokio::test]
 async fn test_italian_solution_format() {
     let md = "
 ### 1. Qual è uno dei presupposti fondamentali?

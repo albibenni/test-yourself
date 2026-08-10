@@ -134,30 +134,6 @@ export function Sidebar({
         <div className="top-bar-separator"></div>
         <div className="top-bar-title">{APP_TITLE}</div>
         <div style={{ flex: 1 }} />
-        <button
-          className="sync-button"
-          onClick={handleSync}
-          disabled={isSyncing}
-          title="Sync Quizzes"
-          aria-label="Sync Quizzes"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              animation: isSyncing ? "spin 1s linear infinite" : "none",
-            }}
-          >
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-3.34 3.34" />
-          </svg>
-        </button>
         {onOpenSettings && (
           <button
             className="top-bar-btn"
@@ -185,31 +161,56 @@ export function Sidebar({
           </button>
         )}
       </div>
-      <hr className="sidebar-divider" />
       <div className="search-container">
-        <svg
-          className="search-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <div className="search-input-wrapper">
+          <svg
+            className="search-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="search-input"
+            placeholder="Search..."
+            aria-label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+          />
+        </div>
+        <button
+          className="sync-button"
+          onClick={handleSync}
+          disabled={isSyncing}
+          title="Sync Quizzes"
+          aria-label="Sync Quizzes"
         >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          ref={searchInputRef}
-          type="text"
-          className="search-input"
-          placeholder="Search..."
-          aria-label="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleInputKeyDown}
-        />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              animation: isSyncing ? "spin 1s linear infinite" : "none",
+            }}
+          >
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-3.34 3.34" />
+          </svg>
+        </button>
       </div>
       <div
         style={{

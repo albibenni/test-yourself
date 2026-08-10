@@ -87,14 +87,14 @@ describe("SettingsView", () => {
     expect(screen.getByText("Quiz Directory")).toBeInTheDocument();
 
     // Switch to Appearance
-    fireEvent.click(screen.getByText("Appearance"));
+    fireEvent.click(screen.getAllByText("Appearance")[0]);
     expect(
       screen.getByRole("heading", { name: "Appearance", level: 2 }),
     ).toBeInTheDocument();
     expect(screen.getByText("Theme")).toBeInTheDocument();
 
     // Switch to About
-    fireEvent.click(screen.getByText("About"));
+    fireEvent.click(screen.getAllByText("About")[0]);
     expect(
       screen.getByRole("heading", { name: "About", level: 2 }),
     ).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe("SettingsView", () => {
     });
 
     // Switch to Appearance tab
-    fireEvent.click(screen.getByText("Appearance"));
+    fireEvent.click(screen.getAllByText("Appearance")[0]);
 
     // Click Light theme
     fireEvent.click(screen.getByRole("button", { name: "Light" }));
@@ -129,7 +129,7 @@ describe("SettingsView", () => {
     vi.mocked(getSecureToken).mockResolvedValue("secure-token-value");
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(
@@ -140,7 +140,7 @@ describe("SettingsView", () => {
 
   it("saves token via secureStore and cleans up localStorage", async () => {
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     // Wait for initial load
     await waitFor(() => {
@@ -172,7 +172,7 @@ describe("SettingsView", () => {
     vi.mocked(open).mockResolvedValue("/new/mock/MyVault");
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     // Wait for initial load
     await waitFor(() => {
@@ -192,7 +192,7 @@ describe("SettingsView", () => {
     vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(
@@ -222,7 +222,7 @@ describe("SettingsView", () => {
     vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(
@@ -260,7 +260,7 @@ describe("SettingsView", () => {
     });
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(
@@ -288,7 +288,7 @@ describe("SettingsView", () => {
     });
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(
@@ -353,7 +353,7 @@ describe("SettingsView", () => {
     );
 
     render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getByText("Integrations"));
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
 
     await waitFor(() => {
       expect(mockStore.get).toHaveBeenCalled();

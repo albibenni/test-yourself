@@ -92,6 +92,18 @@ export function SettingsView({
   onUpdateBasePath,
 }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState("general");
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const [customBasePath, setCustomBasePath] = useState(basePath || "");
   const [todoistToken, setTodoistToken] = useState("");
   const [initialTodoistToken, setInitialTodoistToken] = useState("");
@@ -403,6 +415,322 @@ export function SettingsView({
     },
   ];
 
+  const renderTabContent = (tabId: string) => {
+    switch (tabId) {
+      case "general":
+        return (
+          <div className="settings-section">
+            <h2 className="settings-section-title">General</h2>
+            <p className="settings-section-subtitle">
+              Manage your quiz directory and storage.
+            </p>
+            <SettingsCard
+              title="Quiz Directory"
+              subtitle="Folder path containing your Markdown quizzes and worksheets."
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                <div className="settings-input-group">
+                  <input
+                    type="text"
+                    className="settings-input"
+                    placeholder="e.g. /Users/username/Quizzes"
+                    value={customBasePath}
+                    onChange={(e) => setCustomBasePath(e.target.value)}
+                  />
+                  {onSelectFolder && (
+                    <button
+                      className="button-secondary"
+                      onClick={() => void onSelectFolder()}
+                    >
+                      Browse...
+                    </button>
+                  )}
+                </div>
+                {customBasePath !== (basePath || "") && (
+                  <button
+                    className="button-primary"
+                    onClick={() => {
+                      if (onUpdateBasePath && customBasePath.trim()) {
+                        onUpdateBasePath(customBasePath.trim());
+                      }
+                    }}
+                    style={{
+                      alignSelf: "flex-start",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    Set Folder Path
+                  </button>
+                )}
+              </div>
+            </SettingsCard>
+          </div>
+        );
+
+      case "appearance":
+        return (
+          <div className="settings-section">
+            <h2 className="settings-section-title">Appearance</h2>
+            <p className="settings-section-subtitle">
+              Adapt the interface to your needs on this device.
+            </p>
+            <SettingsCard
+              title="Theme"
+              subtitle="Scale the text and contrast across the interface."
+            >
+              <SegmentedControl
+                value={theme}
+                onChange={onThemeChange}
+                options={[
+                  { label: "System", value: "system" },
+                  { label: "Light", value: "light" },
+                  { label: "Dark", value: "dark" },
+                ]}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Text Tone"
+              subtitle="Choose the primary text color scheme."
+            >
+              <SegmentedControl
+                value={textColor}
+                onChange={onTextColorChange}
+                options={[
+                  { label: "Slate", value: "slate" },
+                  { label: "Zinc", value: "zinc" },
+                  { label: "Neutral", value: "neutral" },
+                  { label: "Stone", value: "stone" },
+                  { label: "Accent", value: "accent" },
+                ]}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Accent Color"
+              subtitle="Select the primary brand color for buttons and highlights."
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  flexWrap: "wrap",
+                  padding: "0.5rem 0",
+                }}
+              >
+                {[
+                  { id: "blue", color: "#3b82f6" },
+                  { id: "purple", color: "#a855f7" },
+                  { id: "green", color: "#10b981" },
+                  { id: "deep-green", color: "#047857" },
+                  { id: "rose", color: "#f43f5e" },
+                  { id: "red-brick", color: "#b91c1c" },
+                  { id: "orange", color: "#f97316" },
+                ].map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => onAccentChange(a.id as AccentColor)}
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "50%",
+                      backgroundColor: a.color,
+                      border:
+                        accent === a.id
+                          ? "3px solid var(--text-primary)"
+                          : "3px solid transparent",
+                      cursor: "pointer",
+                      outline: "none",
+                      boxShadow:
+                        accent === a.id
+                          ? "0 0 0 2px var(--bg-surface)"
+                          : "0 2px 5px rgba(0,0,0,0.1)",
+                      transition: "all 0.2s ease",
+                    }}
+                    aria-label={a.id}
+                  />
+                ))}
+              </div>
+            </SettingsCard>
+          </div>
+        );
+
+      case "todoist":
+      case "integrations":
+        return (
+          <div className="settings-section">
+            <h2 className="settings-section-title">Integrations</h2>
+            <p className="settings-section-subtitle">
+              Manage your connections to external services.
+            </p>
+            <SettingsCard
+              title="Obsidian Vault"
+              subtitle="Used to generate obsidian://open links to your quizzes."
+            >
+              <div className="settings-input-group">
+                <input
+                  type="text"
+                  className="settings-input"
+                  placeholder="e.g. MyVault"
+                  value={vaultName}
+                  onChange={(e) => setVaultName(e.target.value)}
+                />
+                <button
+                  className="button-secondary"
+                  onClick={() => void selectVaultFolder()}
+                >
+                  Browse...
+                </button>
+              </div>
+            </SettingsCard>
+
+            <SettingsCard
+              title="Todoist API Token"
+              subtitle="Find this in Todoist Settings > Integrations > Developer."
+            >
+              <input
+                type="password"
+                className="settings-input"
+                placeholder="Enter your Todoist API token"
+                value={todoistToken}
+                onChange={(e) => setTodoistToken(e.target.value)}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Todoist Defaults"
+              subtitle="Set default scheduling options for tasks."
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1.5rem",
+                }}
+              >
+                <div>
+                  <label className="settings-label">Default Date</label>
+                  <SegmentedControl
+                    value={defaultDate}
+                    onChange={setDefaultDate}
+                    options={[
+                      { label: "Today", value: "today" },
+                      { label: "Tomorrow", value: "tomorrow" },
+                      { label: "7 Days", value: "in 7 days" },
+                      { label: "30 Days", value: "in 30 days" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="settings-label">Default Priority</label>
+                  <SegmentedControl
+                    value={defaultPriority}
+                    onChange={(val) => setDefaultPriority(Number(val))}
+                    options={[
+                      {
+                        label: <span style={{ color: "#d1453b" }}>P1</span>,
+                        value: 4,
+                      },
+                      {
+                        label: <span style={{ color: "#eb8909" }}>P2</span>,
+                        value: 3,
+                      },
+                      {
+                        label: <span style={{ color: "#246fe0" }}>P3</span>,
+                        value: 2,
+                      },
+                      { label: "P4", value: 1 },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="settings-label">Default Project</label>
+                  <select
+                    className="settings-input"
+                    value={defaultProject}
+                    onChange={(e) => setDefaultProject(e.target.value)}
+                    disabled={loadingProjects}
+                  >
+                    <option value="">Inbox (Default)</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </SettingsCard>
+          </div>
+        );
+
+      case "about":
+        return (
+          <div className="settings-section">
+            <h2 className="settings-section-title">About</h2>
+            <p className="settings-section-subtitle">
+              Information and updates.
+            </p>
+            <SettingsCard
+              title="App Version"
+              subtitle={
+                isArchLinux
+                  ? "Managed by your system package manager."
+                  : updateStatus || "Check for new versions of Test Yourself."
+              }
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>
+                  v{appVersion}
+                </span>
+                {isArchLinux ? (
+                  <span
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    Run yay -S test-yourself to update
+                  </span>
+                ) : (
+                  <button
+                    className="button-primary"
+                    onClick={() => void handleCheckUpdate()}
+                    disabled={
+                      !!updateStatus &&
+                      updateStatus !== "App is up to date!" &&
+                      !updateStatus.startsWith("Update v") &&
+                      !updateStatus.startsWith("Failed")
+                    }
+                  >
+                    {updateAvailable || updateStatus.startsWith("Update v")
+                      ? "Install Update"
+                      : "Check for Updates"}
+                  </button>
+                )}
+              </div>
+            </SettingsCard>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="settings-page">
       <div className="settings-header-sticky">
@@ -433,374 +761,85 @@ export function SettingsView({
       </div>
 
       <div className="settings-layout">
-        <div className="settings-accordion-list">
-          {tabs.map((tab) => (
-            <div key={tab.id} className="settings-accordion-item">
-              <button
-                className={`settings-nav-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(activeTab === tab.id ? "" : tab.id)}
-                aria-expanded={activeTab === tab.id}
-              >
-                <div className="settings-nav-icon">{tab.icon}</div>
-                <div className="settings-nav-text">
-                  <div className="settings-nav-label">{tab.label}</div>
-                  <div className="settings-nav-subtitle">{tab.subtitle}</div>
-                </div>
-                <div className="settings-accordion-chevron">
-                  <svg
-                    style={{
-                      transform:
-                        activeTab === tab.id
-                          ? "rotate(180deg)"
-                          : "rotate(0deg)",
-                      transition: "transform 0.2s ease",
-                    }}
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </div>
-              </button>
-
-              {activeTab === tab.id && (
-                <div className="settings-accordion-content">
-                  {tab.id === "general" && (
-                    <div className="settings-section">
-                      <h2 className="settings-section-title">General</h2>
-                      <p className="settings-section-subtitle">
-                        Manage your quiz directory and storage.
-                      </p>
-                      <SettingsCard
-                        title="Quiz Directory"
-                        subtitle="Folder path containing your Markdown quizzes and worksheets."
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "0.75rem",
-                          }}
-                        >
-                          <div className="settings-input-group">
-                            <input
-                              type="text"
-                              className="settings-input"
-                              placeholder="e.g. /Users/username/Quizzes"
-                              value={customBasePath}
-                              onChange={(e) =>
-                                setCustomBasePath(e.target.value)
-                              }
-                            />
-                            {onSelectFolder && (
-                              <button
-                                className="button-secondary"
-                                onClick={() => void onSelectFolder()}
-                              >
-                                Browse...
-                              </button>
-                            )}
-                          </div>
-                          {customBasePath !== (basePath || "") && (
-                            <button
-                              className="button-primary"
-                              onClick={() => {
-                                if (onUpdateBasePath && customBasePath.trim()) {
-                                  onUpdateBasePath(customBasePath.trim());
-                                }
-                              }}
-                              style={{
-                                alignSelf: "flex-start",
-                                marginTop: "0.25rem",
-                              }}
-                            >
-                              Set Folder Path
-                            </button>
-                          )}
-                        </div>
-                      </SettingsCard>
-                    </div>
-                  )}
-
-                  {tab.id === "appearance" && (
-                    <div className="settings-section">
-                      <h2 className="settings-section-title">Appearance</h2>
-                      <p className="settings-section-subtitle">
-                        Adapt the interface to your needs on this device.
-                      </p>
-                      <SettingsCard
-                        title="Theme"
-                        subtitle="Scale the text and contrast across the interface."
-                      >
-                        <SegmentedControl
-                          value={theme}
-                          onChange={onThemeChange}
-                          options={[
-                            { label: "System", value: "system" },
-                            { label: "Light", value: "light" },
-                            { label: "Dark", value: "dark" },
-                          ]}
-                        />
-                      </SettingsCard>
-
-                      <SettingsCard
-                        title="Text Tone"
-                        subtitle="Choose the primary text color scheme."
-                      >
-                        <SegmentedControl
-                          value={textColor}
-                          onChange={onTextColorChange}
-                          options={[
-                            { label: "Slate", value: "slate" },
-                            { label: "Zinc", value: "zinc" },
-                            { label: "Neutral", value: "neutral" },
-                            { label: "Stone", value: "stone" },
-                            { label: "Accent", value: "accent" },
-                          ]}
-                        />
-                      </SettingsCard>
-
-                      <SettingsCard
-                        title="Accent Color"
-                        subtitle="Select the primary brand color for buttons and highlights."
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "1rem",
-                            flexWrap: "wrap",
-                            padding: "0.5rem 0",
-                          }}
-                        >
-                          {[
-                            { id: "blue", color: "#3b82f6" },
-                            { id: "purple", color: "#a855f7" },
-                            { id: "green", color: "#10b981" },
-                            { id: "deep-green", color: "#047857" },
-                            { id: "rose", color: "#f43f5e" },
-                            { id: "red-brick", color: "#b91c1c" },
-                            { id: "orange", color: "#f97316" },
-                          ].map((a) => (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() =>
-                                onAccentChange(a.id as AccentColor)
-                              }
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "50%",
-                                backgroundColor: a.color,
-                                border:
-                                  accent === a.id
-                                    ? "3px solid var(--text-primary)"
-                                    : "3px solid transparent",
-                                cursor: "pointer",
-                                outline: "none",
-                                boxShadow:
-                                  accent === a.id
-                                    ? "0 0 0 2px var(--bg-surface)"
-                                    : "0 2px 5px rgba(0,0,0,0.1)",
-                                transition: "all 0.2s ease",
-                              }}
-                              aria-label={a.id}
-                            />
-                          ))}
-                        </div>
-                      </SettingsCard>
-                    </div>
-                  )}
-
-                  {tab.id === "todoist" && (
-                    <div className="settings-section">
-                      <h2 className="settings-section-title">Integrations</h2>
-                      <p className="settings-section-subtitle">
-                        Manage your connections to external services.
-                      </p>
-                      <SettingsCard
-                        title="Obsidian Vault"
-                        subtitle="Used to generate obsidian://open links to your quizzes."
-                      >
-                        <div className="settings-input-group">
-                          <input
-                            type="text"
-                            className="settings-input"
-                            placeholder="e.g. MyVault"
-                            value={vaultName}
-                            onChange={(e) => setVaultName(e.target.value)}
-                          />
-                          <button
-                            className="button-secondary"
-                            onClick={() => void selectVaultFolder()}
-                          >
-                            Browse...
-                          </button>
-                        </div>
-                      </SettingsCard>
-
-                      <SettingsCard
-                        title="Todoist API Token"
-                        subtitle="Find this in Todoist Settings > Integrations > Developer."
-                      >
-                        <input
-                          type="password"
-                          className="settings-input"
-                          placeholder="Enter your Todoist API token"
-                          value={todoistToken}
-                          onChange={(e) => setTodoistToken(e.target.value)}
-                        />
-                      </SettingsCard>
-
-                      <SettingsCard
-                        title="Todoist Defaults"
-                        subtitle="Set default scheduling options for tasks."
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "1.5rem",
-                          }}
-                        >
-                          <div>
-                            <label className="settings-label">
-                              Default Date
-                            </label>
-                            <SegmentedControl
-                              value={defaultDate}
-                              onChange={setDefaultDate}
-                              options={[
-                                { label: "Today", value: "today" },
-                                { label: "Tomorrow", value: "tomorrow" },
-                                { label: "7 Days", value: "in 7 days" },
-                                { label: "30 Days", value: "in 30 days" },
-                              ]}
-                            />
-                          </div>
-                          <div>
-                            <label className="settings-label">
-                              Default Priority
-                            </label>
-                            <SegmentedControl
-                              value={defaultPriority}
-                              onChange={(val) =>
-                                setDefaultPriority(Number(val))
-                              }
-                              options={[
-                                {
-                                  label: (
-                                    <span style={{ color: "#d1453b" }}>P1</span>
-                                  ),
-                                  value: 4,
-                                },
-                                {
-                                  label: (
-                                    <span style={{ color: "#eb8909" }}>P2</span>
-                                  ),
-                                  value: 3,
-                                },
-                                {
-                                  label: (
-                                    <span style={{ color: "#246fe0" }}>P3</span>
-                                  ),
-                                  value: 2,
-                                },
-                                { label: "P4", value: 1 },
-                              ]}
-                            />
-                          </div>
-                          <div>
-                            <label className="settings-label">
-                              Default Project
-                            </label>
-                            <select
-                              className="settings-input"
-                              value={defaultProject}
-                              onChange={(e) =>
-                                setDefaultProject(e.target.value)
-                              }
-                              disabled={loadingProjects}
-                            >
-                              <option value="">Inbox (Default)</option>
-                              {projects.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </SettingsCard>
-                    </div>
-                  )}
-
-                  {tab.id === "about" && (
-                    <div className="settings-section">
-                      <h2 className="settings-section-title">About</h2>
-                      <p className="settings-section-subtitle">
-                        Information and updates.
-                      </p>
-                      <SettingsCard
-                        title="App Version"
-                        subtitle={
-                          isArchLinux
-                            ? "Managed by your system package manager."
-                            : updateStatus ||
-                              "Check for new versions of Test Yourself."
-                        }
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>
-                            v{appVersion}
-                          </span>
-                          {isArchLinux ? (
-                            <span
-                              style={{
-                                fontSize: "0.9rem",
-                                color: "var(--text-secondary)",
-                              }}
-                            >
-                              Run yay -S test-yourself to update
-                            </span>
-                          ) : (
-                            <button
-                              className="button-primary"
-                              onClick={() => void handleCheckUpdate()}
-                              disabled={
-                                !!updateStatus &&
-                                updateStatus !== "App is up to date!" &&
-                                !updateStatus.startsWith("Update v") &&
-                                !updateStatus.startsWith("Failed")
-                              }
-                            >
-                              {updateAvailable ||
-                              updateStatus.startsWith("Update v")
-                                ? "Install Update"
-                                : "Check for Updates"}
-                            </button>
-                          )}
-                        </div>
-                      </SettingsCard>
-                    </div>
-                  )}
-                </div>
-              )}
+        {!isMobile ? (
+          /* Desktop View: Tabbed Navigation Header + Unified Content Panel */
+          <div className="settings-desktop-view">
+            <div className="settings-desktop-nav">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`settings-desktop-tab ${
+                    (activeTab || "general") === tab.id ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <div className="settings-nav-icon">{tab.icon}</div>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+
+            <div className="settings-desktop-content">
+              {renderTabContent(activeTab || "general")}
+            </div>
+          </div>
+        ) : (
+          /* Mobile View: Inline Expandable Accordions */
+          <div className="settings-mobile-view">
+            <div className="settings-accordion-list">
+              {tabs.map((tab) => (
+                <div key={tab.id} className="settings-accordion-item">
+                  <button
+                    type="button"
+                    className={`settings-nav-item ${
+                      activeTab === tab.id ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      setActiveTab(activeTab === tab.id ? "" : tab.id)
+                    }
+                    aria-expanded={activeTab === tab.id}
+                  >
+                    <div className="settings-nav-icon">{tab.icon}</div>
+                    <div className="settings-nav-text">
+                      <div className="settings-nav-label">{tab.label}</div>
+                      <div className="settings-nav-subtitle">
+                        {tab.subtitle}
+                      </div>
+                    </div>
+                    <div className="settings-accordion-chevron">
+                      <svg
+                        style={{
+                          transform:
+                            activeTab === tab.id
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                  </button>
+
+                  {activeTab === tab.id && (
+                    <div className="settings-accordion-content">
+                      {renderTabContent(tab.id)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -518,6 +518,10 @@ body {
   .top-bar-title {
     margin-top: -4px;
   }
+
+  .sidebar-header {
+    display: none;
+  }
 }
 
 .app-container {
@@ -697,8 +701,15 @@ body {
 }
 
 .search-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 1.25rem 0.5rem 1.25rem;
+}
+
+.search-input-wrapper {
   position: relative;
-  margin: 1rem 1.5rem;
+  flex: 1;
 }
 
 .search-icon {
@@ -736,6 +747,27 @@ body {
 
 .search-input::placeholder {
   color: var(--text-secondary);
+}
+
+.sync-button {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sync-button:hover {
+  background: color-mix(in srgb, var(--text-primary) 15%, transparent);
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
 
 .sidebar-content {
