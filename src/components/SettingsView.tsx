@@ -178,14 +178,9 @@ export function SettingsView({
       });
       const secureToken = await getSecureToken("todoist_token");
       setIsTokenInSecureStore(!!secureToken);
-      const fallbackToken = await store.get<string>("todoist_token");
       const vault = await store.get<string>("obsidian_vault");
 
-      const loadedToken =
-        secureToken ||
-        fallbackToken ||
-        window.localStorage.getItem("todoist_token") ||
-        "";
+      const loadedToken = secureToken || "";
       setTodoistToken(loadedToken);
       setInitialTodoistToken(loadedToken);
       const loadedVault =
@@ -266,11 +261,9 @@ export function SettingsView({
             await store.set("todoist_token", "");
             setIsTokenInSecureStore(true);
           } catch (err) {
-            console.warn(
-              "Secure store failed, falling back to standard store",
-              err,
+            throw new Error(
+              `Unable to save the Todoist token to secure storage: ${String(err)}`,
             );
-            await store.set("todoist_token", todoistToken);
           }
         }
       } else {

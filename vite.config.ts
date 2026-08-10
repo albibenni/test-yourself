@@ -26,7 +26,6 @@ export default defineConfig(async () => ({
             "@tauri-apps/plugin-deep-link",
             "@tauri-apps/plugin-process",
             "@tauri-apps/plugin-opener",
-            "@tauri-apps/plugin-stronghold",
           ],
         },
       },

@@ -12,6 +12,58 @@ use tauri_plugin_store::StoreExt;
 
 struct InitialUrl(std::sync::Mutex<Option<String>>);
 
+const CREDENTIAL_SERVICE: &str = "com.test-yourself.desktop";
+const CREDENTIAL_ACCOUNT: &str = "todoist_token";
+
+fn credential_entry() -> Result<keyring::Entry, String> {
+    keyring::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn get_secret() -> Result<Option<String>, String> {
+    match credential_entry()?.get_password() {
+        Ok(secret) => Ok(Some(secret)),
+        Err(_) => Ok(None),
+    }
+}
+
+#[tauri::command]
+fn set_secret(secret: String) -> Result<(), String> {
+    let entry = credential_entry()?;
+    if secret.is_empty() {
+        let _ = entry.delete_credential();
+    } else {
+        entry
+            .set_password(&secret)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod credential_tests {
+    use super::{get_secret, set_secret};
+    use keyring_core::{mock, set_default_store};
+    use std::sync::{Mutex, OnceLock};
+
+    fn keyring_test_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    #[test]
+    fn stores_reads_and_deletes_a_secret_with_the_mock_keyring() {
+        let _guard = keyring_test_lock();
+        set_default_store(mock::Store::new().unwrap());
+
+        assert_eq!(get_secret().unwrap(), None);
+        set_secret("mock-token".to_string()).unwrap();
+        assert_eq!(get_secret().unwrap(), Some("mock-token".to_string()));
+        set_secret(String::new()).unwrap();
+        assert_eq!(get_secret().unwrap(), None);
+    }
+}
+
 #[tauri::command]
 fn get_initial_url(state: tauri::State<InitialUrl>) -> Option<String> {
     state.0.lock().unwrap().take()
@@ -213,25 +265,7 @@ pub fn run() {
                     }
                 }
             }))
-            .plugin(tauri_plugin_updater::Builder::new().build())
-            .plugin(
-                tauri_plugin_stronghold::Builder::new(|password| {
-                    use argon2::{hash_raw, Config, Variant, Version};
-                    let config = Config {
-                        lanes: 4,
-                        mem_cost: 10_000,
-                        time_cost: 10,
-                        variant: Variant::Argon2id,
-                        version: Version::Version13,
-                        ..Default::default()
-                    };
-                    let salt = b"test-yourself-secure-salt";
-                    let key = hash_raw(password.as_ref(), salt, &config)
-                        .expect("failed to hash password");
-                    key.to_vec()
-                })
-                .build(),
-            );
+            .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
     builder
@@ -267,6 +301,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             greet,
+            get_secret,
+            set_secret,
             get_quizzes,
             get_quiz_content,
             get_worksheet_content,

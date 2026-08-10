@@ -64,7 +64,7 @@ describe("useTodoist hook", () => {
     expect(TodoistProvider).toHaveBeenCalledWith("secure-token-123");
   });
 
-  it("falls back to plugin-store token if secure token is missing", async () => {
+  it("rejects legacy plugin-store and localStorage tokens", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(null);
     mockStoreGet.mockImplementation((key: string) => {
       if (key === "todoist_token") return Promise.resolve("store-token-456");
@@ -77,26 +77,11 @@ describe("useTodoist hook", () => {
     const { result } = renderHook(() => useTodoist());
 
     await act(async () => {
-      await result.current.getProjects();
+      await expect(result.current.getProjects()).rejects.toThrow(
+        "Missing API token",
+      );
     });
-
-    expect(TodoistProvider).toHaveBeenCalledWith("store-token-456");
-  });
-
-  it("falls back to window.localStorage if store token is also missing", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue(null);
-    mockStoreGet.mockResolvedValue(null);
-    vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
-      k === "todoist_token" ? "local-token-789" : null,
-    );
-
-    const { result } = renderHook(() => useTodoist());
-
-    await act(async () => {
-      await result.current.getProjects();
-    });
-
-    expect(TodoistProvider).toHaveBeenCalledWith("local-token-789");
+    expect(TodoistProvider).not.toHaveBeenCalled();
   });
 
   it("throws an error and sets error state if no token is found", async () => {

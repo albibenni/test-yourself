@@ -15,11 +15,7 @@ export function useTodoist() {
   const [error, setError] = useState("");
 
   const getProvider = useCallback(async (): Promise<TaskProvider> => {
-    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
-    const token =
-      (await getSecureToken("todoist_token")) ||
-      (await store.get<string>("todoist_token")) ||
-      window.localStorage.getItem("todoist_token");
+    const token = await getSecureToken("todoist_token");
     if (!token) {
       throw new Error("Missing API token. Please configure it in settings.");
     }

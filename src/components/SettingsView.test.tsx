@@ -251,63 +251,6 @@ describe("SettingsView", () => {
     });
   });
 
-  it("migrates token to secureStore on save if it was loaded from unencrypted store, even if unmodified", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue(null);
-    mockStore.get.mockImplementation((key: string) => {
-      if (key === "todoist_token")
-        return Promise.resolve("unencrypted-store-token");
-      return Promise.resolve(null);
-    });
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("unencrypted-store-token"),
-      ).toBeInTheDocument();
-    });
-
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(setSecureToken).toHaveBeenCalledWith(
-        "todoist_token",
-        "unencrypted-store-token",
-      );
-      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", "");
-    });
-  });
-
-  it("migrates token to secureStore on save if it was loaded from localStorage, even if unmodified", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue(null);
-    vi.mocked(window.localStorage.getItem).mockImplementation((key) => {
-      if (key === "todoist_token") return "localstorage-token";
-      return null;
-    });
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("localstorage-token"),
-      ).toBeInTheDocument();
-    });
-
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(setSecureToken).toHaveBeenCalledWith(
-        "todoist_token",
-        "localstorage-token",
-      );
-      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", "");
-    });
-  });
-
   it("prevents multiple concurrent saves while saving is in progress", async () => {
     // Make store.save take some time to simulate async delay
     let resolveSave: (value: unknown) => void;
@@ -347,7 +290,7 @@ describe("SettingsView", () => {
     });
   });
 
-  it("falls back to standard store if secure store throws an error", async () => {
+  it("does not fall back to plaintext storage if secure storage fails", async () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {
       /* intentionally empty */
     });
@@ -376,13 +319,11 @@ describe("SettingsView", () => {
         "todoist_token",
         "new-token-123",
       );
-      // Fallback: the token should be saved to the standard store
-      expect(mockStore.set).toHaveBeenCalledWith(
+      expect(mockStore.set).not.toHaveBeenCalledWith(
         "todoist_token",
         "new-token-123",
       );
-      expect(mockStore.save).toHaveBeenCalled();
-      expect(defaultProps.onClose).toHaveBeenCalled();
+      expect(defaultProps.onClose).not.toHaveBeenCalled();
     });
     consoleWarnSpy.mockRestore();
   });

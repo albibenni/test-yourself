@@ -42,7 +42,7 @@ The application uses the API Token you provide in Settings to authenticate with 
 
 ### Security
 
-Your Todoist API token is stored securely in an encrypted, local vault using the Tauri Stronghold plugin (`@tauri-apps/plugin-stronghold`). It is never transmitted anywhere other than directly to the official Todoist REST API endpoints over secure HTTPS.
+Your Todoist API token is stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux secret service). It is never transmitted anywhere other than directly to the official Todoist REST API endpoints over secure HTTPS.
 
 ## 3. Deep Linking (Custom URL Scheme)
 
