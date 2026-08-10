@@ -6,6 +6,8 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[cfg(desktop)]
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_store::StoreExt;
 
 struct InitialUrl(std::sync::Mutex<Option<String>>);
@@ -196,6 +198,20 @@ pub fn run() {
             }
             use tauri::Manager;
             app.manage(InitialUrl(std::sync::Mutex::new(found_url)));
+
+            // Register Rust-side URL handler so macOS open-url events reach the frontend
+            #[cfg(desktop)]
+            {
+                let handle = app.handle().clone();
+                app.deep_link().on_open_url(move |event| {
+                    use tauri::Emitter;
+                    for url in event.urls() {
+                        eprintln!("[DeepLink Rust] on_open_url: {}", url);
+                        let _ = handle.emit("deep-link-received", url.to_string());
+                    }
+                });
+            }
+
             Ok(())
         })
         .plugin(tauri_plugin_deep_link::init())

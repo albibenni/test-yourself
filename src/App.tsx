@@ -81,94 +81,98 @@ function App() {
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
-    async function setupDeepLink() {
-      try {
-        const { onOpenUrl, getCurrent } = await import(
-          "@tauri-apps/plugin-deep-link"
-        );
-
-        const handleUrls = async (urls: string[] | null) => {
-          if (!urls) return;
-          for (const url of urls) {
-            try {
-              const u = new URL(url);
-              if (
-                u.protocol === "test-yourself:" &&
-                u.searchParams.has("quiz")
-              ) {
-                const quizPath = u.searchParams.get("quiz");
-                if (quizPath) {
-                  setPendingQuizLink(quizPath);
-                  try {
-                    const { getCurrentWindow } = await import(
-                      "@tauri-apps/api/window"
-                    );
-                    const appWindow = getCurrentWindow();
-                    await appWindow.unminimize();
-                    await appWindow.setFocus();
-                  } catch (err) {
-                    console.warn("Failed to focus window:", err);
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn("Failed to parse deep link:", e);
-            }
-          }
-        };
-
-        const currentUrls = await getCurrent();
-        handleUrls(currentUrls);
-
-        unlisten = await onOpenUrl(handleUrls);
-      } catch (e) {
-        console.warn("Deep link plugin not found or failed", e);
+    const parseDeepLinkUrl = (rawPayload: unknown): string | null => {
+      console.log(
+        "[DeepLink] parseDeepLinkUrl called with:",
+        JSON.stringify(rawPayload),
+      );
+      let urlStr = "";
+      if (Array.isArray(rawPayload) && rawPayload.length > 0) {
+        urlStr = String(rawPayload[0]);
+      } else if (typeof rawPayload === "string") {
+        urlStr = rawPayload;
+      } else {
+        urlStr = String(rawPayload || "");
       }
 
+      urlStr = urlStr
+        .trim()
+        .replace(/^\[|\]$/g, "")
+        .replace(/^"|"$/g, "");
+      console.log("[DeepLink] cleaned urlStr:", urlStr);
       try {
+        const u = new URL(urlStr);
+        if (u.searchParams.has("quiz")) {
+          const q = u.searchParams.get("quiz");
+          const decoded = q ? decodeURIComponent(q) : null;
+          console.log("[DeepLink] parsed via URL API, quiz:", decoded);
+          return decoded;
+        }
+      } catch (e) {
+        console.log("[DeepLink] URL parse failed:", e, "- trying regex");
+      }
+
+      const match = urlStr.match(/quiz=([^&]+)/);
+      if (match && match[1]) {
+        try {
+          const decoded = decodeURIComponent(match[1]);
+          console.log("[DeepLink] parsed via regex, quiz:", decoded);
+          return decoded;
+        } catch {
+          return match[1];
+        }
+      }
+      console.log("[DeepLink] no quiz param found in URL");
+      return null;
+    };
+
+    async function setupDeepLink() {
+      try {
+        const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+        console.log("[DeepLink] registering onOpenUrl listener");
+        unlisten = await onOpenUrl((urls) => {
+          console.log("[DeepLink] onOpenUrl fired:", JSON.stringify(urls));
+          const quizPath = parseDeepLinkUrl(urls);
+          console.log("[DeepLink] onOpenUrl -> quizPath:", quizPath);
+          if (quizPath) {
+            setPendingQuizLink(quizPath);
+          }
+        });
+        console.log("[DeepLink] onOpenUrl listener registered");
+
         const initialUrl = await invoke<string | null>("get_initial_url");
+        console.log("[DeepLink] get_initial_url returned:", initialUrl);
         if (initialUrl) {
-          try {
-            const u = new URL(initialUrl);
-            if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
-              const quizPath = u.searchParams.get("quiz");
-              if (quizPath) {
-                setPendingQuizLink(quizPath);
-              }
-            }
-          } catch (e) {
-            console.warn("Failed to parse custom deep link:", e);
+          const quizPath = parseDeepLinkUrl(initialUrl);
+          if (quizPath) {
+            setPendingQuizLink(quizPath);
           }
         }
       } catch (e) {
-        console.warn("Failed to get initial url:", e);
+        console.warn("[DeepLink] Failed to setup deep link:", e);
       }
     }
     void setupDeepLink();
 
     // Also listen to single-instance argv forwards
     let unlistenEvent: (() => void) | undefined;
-    listen<string>("deep-link-received", async (event) => {
-      try {
-        const u = new URL(event.payload);
-        if (u.protocol === "test-yourself:" && u.searchParams.has("quiz")) {
-          const quizPath = u.searchParams.get("quiz");
-          if (quizPath) {
-            setPendingQuizLink(quizPath);
-            try {
-              const { getCurrentWindow } = await import(
-                "@tauri-apps/api/window"
-              );
-              const appWindow = getCurrentWindow();
-              await appWindow.unminimize();
-              await appWindow.setFocus();
-            } catch (err) {
-              console.warn("Failed to focus window:", err);
-            }
-          }
+    listen<unknown>("deep-link-received", async (event) => {
+      console.log(
+        "[DeepLink] deep-link-received event:",
+        JSON.stringify(event.payload),
+      );
+      const quizPath = parseDeepLinkUrl(event.payload);
+      console.log("[DeepLink] deep-link-received -> quizPath:", quizPath);
+      if (quizPath) {
+        setPendingQuizLink(quizPath);
+        try {
+          const { getCurrentWindow } = await import("@tauri-apps/api/window");
+          const appWindow = getCurrentWindow();
+          await appWindow.unminimize();
+          await appWindow.setFocus();
+        } catch (err) {
+          console.warn("Failed to focus window:", err);
         }
-      } catch (e) {
-        console.warn("Failed to parse custom deep link:", e);
       }
     })
       .then((unlistenFn) => {
@@ -184,13 +188,56 @@ function App() {
 
   useEffect(() => {
     if (pendingQuizLink && quizzes && quizzes.length > 0) {
-      const normalizedPending = pendingQuizLink.replace(/\\/g, "/");
+      let decodedPending = pendingQuizLink;
+      try {
+        decodedPending = decodeURIComponent(pendingQuizLink);
+      } catch {
+        // use raw
+      }
+      const normalizedPending = decodedPending
+        .replace(/\\/g, "/")
+        .toLowerCase();
+      const pendingFilename = normalizedPending.split("/").pop() || "";
+      const pendingStem = pendingFilename.replace(/(\.worksheet)?\.md$/i, "");
+      console.log("[DeepLink] resolving:", normalizedPending);
+      console.log("[DeepLink] quizzes count:", quizzes.length);
+      console.log(
+        "[DeepLink] sample paths:",
+        quizzes.slice(0, 3).map((q) => q.path),
+      );
+
       let targetQuiz = quizzes.find((q) => {
-        const normalizedPath = q.path.replace(/\\/g, "/");
-        return (
-          normalizedPath.endsWith(normalizedPending) ||
-          normalizedPath === normalizedPending
-        );
+        const normalizedPath = q.path.replace(/\\/g, "/").toLowerCase();
+        const quizFilename = normalizedPath.split("/").pop() || "";
+        const quizStem = quizFilename.replace(/(\.worksheet)?\.md$/i, "");
+
+        // 1. Full or suffix path match
+        if (
+          normalizedPath === normalizedPending ||
+          normalizedPath.endsWith(normalizedPending)
+        ) {
+          return true;
+        }
+        // 2. Exact filename match (e.g. spiffe_spire_and_mtls_quiz.md)
+        if (quizFilename && quizFilename === pendingFilename) {
+          return true;
+        }
+        // 3. File stem match (e.g. spiffe_spire_and_mtls)
+        if (quizStem && quizStem === pendingStem) {
+          return true;
+        }
+        // 4. H1 Title match (e.g. "SPIFFE-SPIRE and mTLS")
+        const titleLower = q.title.toLowerCase();
+        if (titleLower === normalizedPending || titleLower === pendingStem) {
+          return true;
+        }
+        if (
+          titleLower.replace(/_/g, " ").replace(/-/g, " ") ===
+          pendingStem.replace(/_/g, " ").replace(/-/g, " ")
+        ) {
+          return true;
+        }
+        return false;
       });
 
       if (
@@ -203,7 +250,7 @@ function App() {
           ".worksheet.md",
         );
         targetQuiz = quizzes.find((q) => {
-          const normalizedPath = q.path.replace(/\\/g, "/");
+          const normalizedPath = q.path.replace(/\\/g, "/").toLowerCase();
           return (
             normalizedPath.endsWith(fallbackPending) ||
             normalizedPath === fallbackPending

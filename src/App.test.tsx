@@ -395,4 +395,273 @@ describe("App Component", () => {
     const btnAAfter = screen.getByText("A library").closest("button")!;
     expect(btnAAfter).toBeDisabled();
   });
+
+  // ─── Deep link: parseDeepLinkUrl & path-matching ────────────────────────────
+
+  it("opens quiz via deep link with %2F-encoded path (Todoist-style URL)", async () => {
+    // Todoist encodes slashes as %2F in query params
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
+      if (cmd === "get_initial_url")
+        return Promise.resolve(
+          "test-yourself://open?quiz=Frontend%2FReact%20Basics.md",
+        );
+      return Promise.resolve(null);
+    });
+
+    // React quiz path matches 'Frontend/React Basics.md' via endsWith
+    const todoistQuizzes = [
+      {
+        ...mockQuizzes[0],
+        path: "/Users/benni/SecondBrain/Frontend/React Basics.md",
+        topic: "Frontend",
+        title: "React Basics",
+      },
+      mockQuizzes[1],
+    ];
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(todoistQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(todoistQuizzes[0]);
+      if (cmd === "get_initial_url")
+        return Promise.resolve(
+          "test-yourself://open?quiz=Frontend%2FReact%20Basics.md",
+        );
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("opens quiz via deep-link-received with %2F-encoded path", async () => {
+    // Simulate the Rust single-instance plugin forwarding a Todoist-style URL
+    const nestedQuizzes = [
+      {
+        ...mockQuizzes[0],
+        path: "/Users/benni/SecondBrain/Computer Science/Web/React Basics.md",
+        topic: "Computer Science/Web",
+        title: "React Basics",
+      },
+      mockQuizzes[1],
+    ];
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(nestedQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(nestedQuizzes[0]);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    act(() => {
+      mockListenCallback({
+        payload:
+          "test-yourself://open?quiz=Computer%20Science%2FWeb%2FReact%20Basics.md",
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("opens quiz by filename stem match (no extension in link)", async () => {
+    // Deep link uses just the stem: react_basics (no .md)
+    // This tests Tier-3 stem matching
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    act(() => {
+      // Stem of /path/react.md is 'react'
+      mockListenCallback({
+        payload: "test-yourself://open?quiz=react.md",
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("opens quiz case-insensitively via deep link", async () => {
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    act(() => {
+      // REACT.MD (uppercase) should match /path/react.md via case-insensitive endsWith
+      mockListenCallback({
+        payload: "test-yourself://open?quiz=REACT.MD",
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows not-found toast when deep link quiz does not exist in library", async () => {
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {
+      /* intentionally empty */
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    act(() => {
+      mockListenCallback({
+        payload: "test-yourself://open?quiz=nonexistent_quiz.md",
+      });
+    });
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining("nonexistent_quiz.md"),
+      );
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  it("handles deep link with deeply-nested %2F path from ScheduleModal format", async () => {
+    // Exactly replicates what ScheduleModal builds:
+    // topic/title.md → encoded as topic%2Ftitle.md
+    const deepPath =
+      "/Users/benni/SecondBrain/Computer Science/Security/Authentication/Exercises and Quiz/spiffe_quiz.md";
+    const deepTopic =
+      "Computer Science/Security/Authentication/Exercises and Quiz";
+    const deepTitle = "spiffe_quiz";
+
+    // QuizMetadata shape (returned by get_quizzes)
+    const deepMeta = {
+      title: deepTitle,
+      path: deepPath,
+      topic: deepTopic,
+      last_modified: 1234567890,
+      is_worksheet: false,
+    };
+    // Quiz shape (returned by get_quiz_content — must match QuizSchema exactly)
+    const deepQuizContent = {
+      title: deepTitle,
+      path: deepPath,
+      topic: deepTopic,
+      last_modified: 1234567890,
+      questions: [
+        {
+          id: "1",
+          text: "What is SPIFFE?",
+          options: [
+            { letter: "A", text: "A standard" },
+            { letter: "B", text: "A library" },
+          ],
+          correct_answer: "A",
+          explanation: "SPIFFE is an identity standard.",
+        },
+      ],
+    };
+
+    const alertCalls: string[] = [];
+    const alertSpy = vi
+      .spyOn(window, "alert")
+      .mockImplementation((msg) => alertCalls.push(String(msg)));
+
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve([deepMeta]);
+      if (cmd === "get_quiz_content") return Promise.resolve(deepQuizContent);
+      if (cmd === "get_initial_url")
+        return Promise.resolve(
+          "test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FExercises%20and%20Quiz%2Fspiffe_quiz.md",
+        );
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", {
+          name: deepTitle.replace(/_/g, " "),
+          level: 1,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    // No alert should fire (no parse errors)
+    expect(alertCalls).toEqual([]);
+    alertSpy.mockRestore();
+  });
+
+  it("onOpenUrl callback opens the correct quiz", async () => {
+    const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+    let capturedCallback: ((urls: string[]) => void) | null = null;
+
+    vi.mocked(onOpenUrl).mockImplementation(async (cb) => {
+      await Promise.resolve();
+      capturedCallback = cb as (urls: string[]) => void;
+      return vi.fn();
+    });
+
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") return Promise.resolve(mockQuizzes[0]);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    // Simulate macOS delivering the URL via the deep-link plugin
+    act(() => {
+      capturedCallback?.(["test-yourself://open?quiz=%2Fpath%2Freact.md"]);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
 });
