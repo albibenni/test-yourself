@@ -32,7 +32,6 @@ tauri-plugin-process = "2"
 tauri-plugin-stronghold = "2.3.1"
 rust-argon2 = "3.0.0"
 tauri-plugin-deep-link = "2.4.9"
-tauri-plugin-single-instance = { version = "2.4.3", features = ["deep-link"] }
 tauri-plugin-os = "2"
 
 [dev-dependencies]
@@ -41,3 +40,5 @@ tokio = { version = "1.52.3", features = ["rt", "macros"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
+tauri-plugin-single-instance = { version = "2.4.3", features = ["deep-link"] }
+tauri-plugin-stronghold = "2.3.1"
