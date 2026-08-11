@@ -1,20 +1,12 @@
 
+set -eu
 
-echo "Running formatting and linting for the entire app..."
+echo "Running pre-commit checks..."
 
-# Format and lint frontend
-npx @biomejs/biome check --write .
+# Type-check the frontend without emitting build files.
+pnpm exec tsc --noEmit
 
-# Format and lint backend
-cd src-tauri
-cargo fmt
-cargo clippy --fix --allow-dirty --allow-no-vcs
-cd ..
-
-# Re-stage any files that were already staged in case the formatters modified them
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-if [ -n "$STAGED_FILES" ]; then
-  echo "$STAGED_FILES" | xargs -I {} git add "{}"
-fi
+# Biome checks both lint rules and formatting without changing or re-staging files.
+pnpm biome check .
 
 echo "Pre-commit checks passed!"
