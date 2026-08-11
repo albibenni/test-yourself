@@ -82,4 +82,51 @@ describe("WorksheetViewer", () => {
     expect((newInputs[0] as HTMLInputElement).value).toBe("");
     expect(screen.queryByText("Score: 1 / 2")).not.toBeInTheDocument();
   });
+
+  it("moves focus to the next unanswered question after Enter checks one", () => {
+    render(
+      <WorksheetViewer
+        worksheet={{
+          ...mockWorksheet,
+          content: "1. First: {{first}}\n\n2. Second: {{second}}",
+        }}
+      />,
+    );
+
+    const [firstInput, secondInput] = screen.getAllByRole("textbox");
+    fireEvent.change(firstInput, { target: { value: "first" } });
+    firstInput.focus();
+    fireEvent.keyDown(firstInput, { key: "Enter" });
+
+    expect(firstInput).toBeDisabled();
+    expect(secondInput).toHaveFocus();
+  });
+
+  it("cycles Tab and Shift+Tab between unanswered blanks instead of buttons", () => {
+    render(<WorksheetViewer worksheet={mockWorksheet} />);
+
+    const [firstInput, secondInput] = screen.getAllByRole("textbox");
+    firstInput.focus();
+    fireEvent.keyDown(firstInput, { key: "Tab" });
+    expect(secondInput).toHaveFocus();
+
+    fireEvent.keyDown(secondInput, { key: "Tab", shiftKey: true });
+    expect(firstInput).toHaveFocus();
+  });
+
+  it("lets keyboard users leave answer navigation with Escape", () => {
+    render(<WorksheetViewer worksheet={mockWorksheet} />);
+
+    const [firstInput] = screen.getAllByRole("textbox");
+    firstInput.focus();
+    fireEvent.keyDown(firstInput, { key: "Escape" });
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+    firstInput.dispatchEvent(tabEvent);
+
+    expect(tabEvent.defaultPrevented).toBe(false);
+  });
 });

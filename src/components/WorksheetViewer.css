@@ -12,6 +12,12 @@
   white-space: pre-wrap;
 }
 
+.worksheet-keyboard-help {
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
 .worksheet-phrase {
   white-space: pre-wrap;
   font-size: 1.05rem;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Worksheet } from "../types";
 import "./WorksheetViewer.css";
 
@@ -60,6 +60,7 @@ interface WorksheetViewerProps {
 
 export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   // Parse the content and split by numbered questions
   const { questions, correctAnswers } = useMemo(() => {
@@ -186,6 +187,15 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
   const [checkedQuestions, setCheckedQuestions] = useState<
     Record<number, boolean>
   >({});
+  const [focusTargetIndex, setFocusTargetIndex] = useState<number | null>(null);
+  const [isAnswerNavigationLocked, setIsAnswerNavigationLocked] =
+    useState(true);
+
+  useEffect(() => {
+    if (focusTargetIndex === null) return;
+    inputRefs.current[focusTargetIndex]?.focus();
+    setFocusTargetIndex(null);
+  }, [focusTargetIndex]);
 
   const handleInputChange = (index: number, value: string) => {
     setUserAnswers((prev) => ({
@@ -194,8 +204,40 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
     }));
   };
 
-  const handleCheckQuestion = (qIndex: number) => {
+  const handleCheckQuestion = (qIndex: number, moveFocus = false) => {
     setCheckedQuestions((prev) => ({ ...prev, [qIndex]: true }));
+
+    if (moveFocus) {
+      const nextUnansweredQuestion = questions.find(
+        (question, index) =>
+          index > qIndex &&
+          question.blankIndices.length > 0 &&
+          !checkedQuestions[index],
+      );
+      setFocusTargetIndex(nextUnansweredQuestion?.blankIndices[0] ?? null);
+    }
+  };
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setIsAnswerNavigationLocked(false);
+      return;
+    }
+
+    if (!isAnswerNavigationLocked) return;
+    if (e.key !== "Tab") return;
+
+    const enabledInputs = inputRefs.current.filter(
+      (input): input is HTMLInputElement => input !== null && !input.disabled,
+    );
+    const currentIndex = enabledInputs.indexOf(e.currentTarget);
+    if (currentIndex === -1) return;
+
+    e.preventDefault();
+    const direction = e.shiftKey ? -1 : 1;
+    const nextIndex =
+      (currentIndex + direction + enabledInputs.length) % enabledInputs.length;
+    enabledInputs[nextIndex]?.focus();
   };
 
   const handleKeyDown = (
@@ -208,7 +250,8 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
         (idx) => (userAnswers[idx] || "").trim().length > 0,
       );
       if (allFilled) {
-        handleCheckQuestion(qIndex);
+        e.preventDefault();
+        handleCheckQuestion(qIndex, true);
       }
     }
   };
@@ -224,6 +267,7 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
   const reset = () => {
     setUserAnswers({});
     setCheckedQuestions({});
+    setIsAnswerNavigationLocked(true);
   };
 
   const calculateScore = () => {
@@ -287,8 +331,16 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
               className={`worksheet-input ${isQuestionChecked ? (isCorrect ? "correct" : "incorrect") : ""}`}
               value={userAnswers[part.index] || ""}
               onChange={(e) => handleInputChange(part.index!, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, qIndex)}
+              onKeyDown={(e) => {
+                handleKeyDown(e, qIndex);
+                handleTabKeyDown(e);
+              }}
               disabled={isQuestionChecked}
+              ref={(input) => {
+                inputRefs.current[part.index!] = input;
+              }}
+              aria-label={`Answer ${part.index + 1} of ${correctAnswers.length}`}
+              aria-describedby="worksheet-keyboard-help"
               style={{ width: `${Math.max(part.content.length * 10, 60)}px` }}
             />
             {isQuestionChecked && !isCorrect && (
@@ -303,6 +355,10 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
 
   return (
     <div className="worksheet-viewer">
+      <p id="worksheet-keyboard-help" className="worksheet-keyboard-help">
+        Tab and Shift+Tab move between unanswered blanks. Press Escape, then
+        Tab, to leave answer navigation.
+      </p>
       <div className="questions-container">
         {questions.map((q, qIndex) => {
           const isQuestionChecked = checkedQuestions[qIndex];
