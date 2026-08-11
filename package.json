@@ -39,7 +39,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
-    "typescript": "~5.8.3",
+    "typescript": "~7.0.2",
     "vite": "^7.0.4",
     "vite-plugin-css-injected-by-js": "^5.0.2",
     "vitest": "^4.1.10"
