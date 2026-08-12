@@ -33,6 +33,7 @@ export function FolderBrowserModal({
   const [listing, setListing] = useState<DirectoryListing | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -75,6 +76,7 @@ export function FolderBrowserModal({
     if (!isOpen) return;
 
     let isMounted = true;
+    const requestId = ++requestIdRef.current;
     const fetchDirectory = async () => {
       setLoading(true);
       setError(null);
@@ -82,16 +84,16 @@ export function FolderBrowserModal({
         const result = await invoke<DirectoryListing>("browse_directory", {
           path: currentPath,
         });
-        if (isMounted) {
+        if (isMounted && requestId === requestIdRef.current) {
           setListing(result);
           setCurrentPath(result.current_path);
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && requestId === requestIdRef.current) {
           setError(typeof err === "string" ? err : "Failed to load directory");
         }
       } finally {
-        if (isMounted) {
+        if (isMounted && requestId === requestIdRef.current) {
           setLoading(false);
         }
       }
@@ -133,7 +135,8 @@ export function FolderBrowserModal({
         style={{
           width: "100%",
           maxWidth: "540px",
-          maxHeight: "85vh",
+          height: "min(85dvh, 720px)",
+          maxHeight: "calc(100dvh - 2rem)",
           display: "flex",
           flexDirection: "column",
           backgroundColor: "var(--bg-surface)",
@@ -141,6 +144,7 @@ export function FolderBrowserModal({
           borderRadius: "0.875rem",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
           overflow: "hidden",
+          minHeight: 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -152,6 +156,7 @@ export function FolderBrowserModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexShrink: 0,
           }}
         >
           <div>
@@ -210,6 +215,7 @@ export function FolderBrowserModal({
             display: "flex",
             gap: "0.5rem",
             overflowX: "auto",
+            flexShrink: 0,
           }}
         >
           <button
@@ -236,6 +242,7 @@ export function FolderBrowserModal({
             display: "flex",
             alignItems: "center",
             gap: "0.75rem",
+            flexShrink: 0,
           }}
         >
           <button
@@ -295,7 +302,7 @@ export function FolderBrowserModal({
             flex: 1,
             overflowY: "auto",
             padding: "0.5rem",
-            minHeight: "220px",
+            minHeight: 0,
           }}
         >
           {loading ? (
@@ -434,6 +441,8 @@ export function FolderBrowserModal({
             justifyContent: "space-between",
             gap: "0.75rem",
             backgroundColor: "var(--bg-surface)",
+            flexShrink: 0,
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
           }}
         >
           <button

@@ -15,8 +15,28 @@ struct InitialUrl(std::sync::Mutex<Option<String>>);
 const CREDENTIAL_SERVICE: &str = "com.test-yourself.desktop";
 const CREDENTIAL_ACCOUNT: &str = "todoist_token";
 
+#[cfg(not(target_os = "ios"))]
 fn credential_entry() -> Result<keyring::Entry, String> {
     keyring::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT).map_err(|error| error.to_string())
+}
+
+#[cfg(target_os = "ios")]
+fn credential_entry() -> Result<keyring_core::Entry, String> {
+    use apple_native_keyring_store::protected::Store;
+    use std::sync::OnceLock;
+
+    static STORE_RESULT: OnceLock<Result<(), String>> = OnceLock::new();
+    STORE_RESULT
+        .get_or_init(|| {
+            let store = Store::new().map_err(|error| error.to_string())?;
+            keyring_core::set_default_store(store);
+            Ok(())
+        })
+        .as_ref()
+        .map_err(Clone::clone)?;
+
+    keyring_core::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT)
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
