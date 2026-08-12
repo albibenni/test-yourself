@@ -143,4 +143,15 @@ release:
 	git tag v$$new_version; \
 	git push origin main; \
 	git push origin v$$new_version; \
-	echo "\n🎉 Successfully released v$$new_version! GitHub Actions is now building the installers."
+	echo "\n🎉 Successfully released v$$new_version! GitHub Actions is now building the installers."; \
+	echo ""; \
+	echo "App Store Connect steps after CI finishes:"; \
+	echo "1. Open App Store Connect → My Apps → Test Yourself."; \
+	echo "2. Wait for the uploaded build to finish processing."; \
+	echo "3. Create or open the new iOS version."; \
+	echo "4. Complete the required metadata, screenshots, age rating, and privacy details."; \
+	echo "5. Select the uploaded build under Build."; \
+	echo "6. Complete the export-compliance questions."; \
+	echo "7. Click Add for Review, resolve warnings, and click Submit for Review."; \
+	echo "8. Choose manual release or automatic release after approval."; \
+	echo "Apple review is required before the update becomes public."
