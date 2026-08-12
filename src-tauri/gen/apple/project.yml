@@ -40,6 +40,7 @@ targets:
       path: test-yourself_iOS/Info.plist
       properties:
         LSRequiresIPhoneOS: true
+        NSLocalNetworkUsageDescription: Test Yourself uses your local network to connect to the development server during testing.
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:
