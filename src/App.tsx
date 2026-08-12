@@ -31,6 +31,12 @@ const ScheduleModal = lazy(() =>
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFolderBrowserOpen, setIsFolderBrowserOpen] = useState(false);
+  const [folderBrowserPurpose, setFolderBrowserPurpose] = useState<
+    "quiz" | "vault"
+  >("quiz");
+  const [selectedVaultFolder, setSelectedVaultFolder] = useState<string | null>(
+    null,
+  );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSettingsDirty, setIsSettingsDirty] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -348,6 +354,7 @@ function App() {
                 accent={accent}
                 textColor={textColor}
                 onSaveSuccess={() => showToast("Settings saved!")}
+                onSaveError={(message) => showToast(message)}
                 onThemeChange={(val) => {
                   void saveTheme(val);
                 }}
@@ -361,6 +368,7 @@ function App() {
                 onDirtyChange={setIsSettingsDirty}
                 basePath={basePath}
                 onSelectFolder={async () => {
+                  setFolderBrowserPurpose("quiz");
                   try {
                     const selected = await open({
                       directory: true,
@@ -375,6 +383,11 @@ function App() {
                   }
                   setIsFolderBrowserOpen(true);
                 }}
+                onSelectVaultFolder={() => {
+                  setFolderBrowserPurpose("vault");
+                  setIsFolderBrowserOpen(true);
+                }}
+                selectedVaultFolder={selectedVaultFolder}
                 onUpdateBasePath={(newPath) => void updateBasePath(newPath)}
               />
             </Suspense>
@@ -715,8 +728,13 @@ function App() {
         isOpen={isFolderBrowserOpen}
         onClose={() => setIsFolderBrowserOpen(false)}
         onSelectFolder={(newPath) => {
-          void updateBasePath(newPath);
-          showToast("Quiz directory updated!");
+          if (folderBrowserPurpose === "vault") {
+            setSelectedVaultFolder(newPath);
+            showToast("Obsidian vault folder selected.");
+          } else {
+            void updateBasePath(newPath);
+            showToast("Quiz directory updated!");
+          }
         }}
         initialPath={basePath}
       />

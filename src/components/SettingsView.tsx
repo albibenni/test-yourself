@@ -26,9 +26,12 @@ interface SettingsViewProps {
   onTextColorChange: (textColor: TextColor) => void;
   updateAvailable?: string | null;
   onSaveSuccess?: () => void;
+  onSaveError?: (message: string) => void;
   onDirtyChange?: (isDirty: boolean) => void;
   basePath?: string | null;
   onSelectFolder?: () => void;
+  onSelectVaultFolder?: () => void;
+  selectedVaultFolder?: string | null;
   onUpdateBasePath?: (newPath: string) => void;
 }
 
@@ -88,9 +91,12 @@ export function SettingsView({
   onTextColorChange,
   updateAvailable,
   onSaveSuccess,
+  onSaveError,
   onDirtyChange,
   basePath,
   onSelectFolder,
+  onSelectVaultFolder,
+  selectedVaultFolder,
   onUpdateBasePath,
 }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState("general");
@@ -105,6 +111,13 @@ export function SettingsView({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!selectedVaultFolder) return;
+    const normalizedPath = selectedVaultFolder.replace(/\\/g, "/");
+    const folderName = normalizedPath.split("/").filter(Boolean).pop();
+    if (folderName) setVaultName(folderName);
+  }, [selectedVaultFolder]);
 
   const [customBasePath, setCustomBasePath] = useState(basePath || "");
   const [todoistToken, setTodoistToken] = useState("");
@@ -122,6 +135,7 @@ export function SettingsView({
   const [initialDefaultProject, setInitialDefaultProject] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [isDefaultProjectOpen, setIsDefaultProjectOpen] = useState(false);
 
   const [updateStatus, setUpdateStatus] = useState(
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
@@ -291,6 +305,9 @@ export function SettingsView({
       onClose();
     } catch (error) {
       console.error("Failed to save settings", error);
+      onSaveError?.(
+        `Could not save settings: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       setIsSaving(false);
     }
@@ -309,9 +326,12 @@ export function SettingsView({
         if (folderName) {
           setVaultName(folderName);
         }
+        return;
       }
+      onSelectVaultFolder?.();
     } catch (err) {
       console.warn("Failed to select vault directory", err);
+      onSelectVaultFolder?.();
     }
   };
 
@@ -650,19 +670,56 @@ export function SettingsView({
                 </div>
                 <div>
                   <label className="settings-label">Default Project</label>
-                  <select
-                    className="settings-input"
-                    value={defaultProject || ""}
-                    onChange={(e) => setDefaultProject(e.target.value)}
-                    disabled={loadingProjects}
-                  >
-                    <option value="">Inbox (Default)</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="settings-select-wrapper">
+                    <button
+                      type="button"
+                      className="settings-input settings-select-button"
+                      aria-haspopup="listbox"
+                      aria-expanded={isDefaultProjectOpen}
+                      aria-label="Default project"
+                      disabled={loadingProjects}
+                      onClick={() => setIsDefaultProjectOpen((open) => !open)}
+                    >
+                      {projects.find((p) => p.id === defaultProject)?.name ||
+                        "Inbox (Default)"}
+                      <span aria-hidden="true">⌄</span>
+                    </button>
+                    {isDefaultProjectOpen && (
+                      <div
+                        className="settings-select-menu"
+                        role="listbox"
+                        aria-label="Default project options"
+                      >
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={!defaultProject}
+                          className="settings-select-option"
+                          onClick={() => {
+                            setDefaultProject("");
+                            setIsDefaultProjectOpen(false);
+                          }}
+                        >
+                          Inbox (Default)
+                        </button>
+                        {projects.map((p) => (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={defaultProject === p.id}
+                            className="settings-select-option"
+                            key={p.id}
+                            onClick={() => {
+                              setDefaultProject(p.id);
+                              setIsDefaultProjectOpen(false);
+                            }}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </SettingsCard>
