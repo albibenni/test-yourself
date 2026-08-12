@@ -1259,13 +1259,30 @@ body {
   font-size: 16px;
   font-weight: 400;
   outline: none;
-  padding: 4px 0;
+  padding: 3px 6px;
   line-height: 1.5;
+}
+
+.quick-add-input:focus-visible {
+  outline: 1px solid var(--accent-soft);
+  outline-offset: 0;
+  border-radius: 2px;
 }
 
 .quick-add-input::placeholder {
   color: var(--text-muted);
   font-weight: 400;
+}
+
+@media (min-width: 769px) {
+  .quick-add-input {
+    padding: 8px 10px;
+  }
+
+  .quick-add-input:not(.quick-add-desc) {
+    padding: 4px 10px;
+    line-height: 1.5;
+  }
 }
 
 .quick-add-actions {
