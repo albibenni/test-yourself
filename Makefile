@@ -1,4 +1,4 @@
-.PHONY: install dev dev-ios dev-ios-open sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
+.PHONY: install dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
 
 # Install dependencies
 install:
@@ -16,6 +16,15 @@ dev-ios:
 # Run the Tauri App and open the Xcode project
 dev-ios-open:
 	pnpm tauri ios dev --open "$${DEVICE:-iPhone 17}"
+
+# Run the Tauri app in Xcode on a physical iPhone.
+# Usage: make dev-ios-device DEVICE="My iPhone" [HOST="192.168.1.42"]
+dev-ios-device:
+	@test -n "$${DEVICE}" || (echo 'Set DEVICE, e.g. make dev-ios-device DEVICE="Benni’s iPhone"'; exit 1)
+	@HOST="$${HOST:-$$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)}"; \
+	test -n "$$HOST" || (echo 'Could not detect your Mac IP; pass HOST=192.168.x.x'; exit 1); \
+	echo "Using Mac host $$HOST"; \
+	pnpm tauri ios dev --open --host "$$HOST" "$${DEVICE}"
 
 # Open the iOS Simulator app on macOS
 sim-ios:
