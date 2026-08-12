@@ -30,7 +30,6 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
-      - path: Externals
       - path: test-yourself_iOS
       - path: assets
         buildPhase: resources
