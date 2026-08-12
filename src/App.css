@@ -1317,6 +1317,13 @@ body {
   background-color: var(--bg-secondary);
 }
 
+@media (max-width: 768px) {
+  .action-pill svg {
+    display: block;
+    flex: 0 0 auto;
+  }
+}
+
 .date-pill {
   color: var(--date-accent);
   border-color: rgba(5, 133, 39, 0.3);
