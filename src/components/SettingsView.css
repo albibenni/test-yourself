@@ -260,7 +260,6 @@ select.settings-input option {
 }
 
 .settings-input:focus {
-  outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
 }

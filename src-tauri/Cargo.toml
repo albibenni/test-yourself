@@ -41,3 +41,9 @@ tokio = { version = "1.52.3", features = ["rt", "macros"] }
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
 tauri-plugin-single-instance = { version = "2.4.3", features = ["deep-link"] }
+
+# iOS requires the protected Keychain entitlement in apple-native-keyring-store.
+# This target dependency enables the feature on the transitive keyring backend
+# without pulling the CLI-only backends into desktop builds.
+[target.'cfg(target_os = "ios")'.dependencies]
+apple-native-keyring-store = { version = "1.0.2", features = ["protected"] }

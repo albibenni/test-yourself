@@ -4310,6 +4310,7 @@ dependencies = [
 name = "test-yourself"
 version = "3.1.1"
 dependencies = [
+ "apple-native-keyring-store",
  "keyring",
  "keyring-core",
  "pulldown-cmark",

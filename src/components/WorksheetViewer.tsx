@@ -341,7 +341,10 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
               }}
               aria-label={`Answer ${part.index + 1} of ${correctAnswers.length}`}
               aria-describedby="worksheet-keyboard-help"
-              style={{ width: `${Math.max(part.content.length * 10, 60)}px` }}
+              style={{
+                width: `${Math.min(Math.max(part.content.length * 10, 60), 240)}px`,
+                maxWidth: "min(240px, 70vw)",
+              }}
             />
             {isQuestionChecked && !isCorrect && (
               <span className="worksheet-correction">{part.content}</span>

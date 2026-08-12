@@ -46,8 +46,10 @@ function SegmentedControl<T extends string | number>({
       {options.map((opt) => (
         <button
           key={String(opt.value)}
+          type="button"
           className={`segment-btn ${value === opt.value ? "active" : ""}`}
           onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
         >
           {opt.label}
         </button>
@@ -432,6 +434,7 @@ export function SettingsView({
                   <input
                     type="text"
                     className="settings-input"
+                    aria-label="Quiz directory path"
                     placeholder="e.g. /Users/username/Quizzes"
                     value={customBasePath}
                     onChange={(e) => setCustomBasePath(e.target.value)}
@@ -540,7 +543,6 @@ export function SettingsView({
                           ? "3px solid var(--text-primary)"
                           : "3px solid transparent",
                       cursor: "pointer",
-                      outline: "none",
                       boxShadow:
                         accent === a.id
                           ? "0 0 0 2px var(--bg-surface)"
@@ -548,6 +550,7 @@ export function SettingsView({
                       transition: "all 0.2s ease",
                     }}
                     aria-label={a.id}
+                    aria-pressed={accent === a.id}
                   />
                 ))}
               </div>
@@ -571,6 +574,7 @@ export function SettingsView({
                 <input
                   type="text"
                   className="settings-input"
+                  aria-label="Obsidian vault name"
                   placeholder="e.g. MyVault"
                   value={vaultName}
                   onChange={(e) => setVaultName(e.target.value)}
@@ -591,6 +595,7 @@ export function SettingsView({
               <input
                 type="password"
                 className="settings-input"
+                aria-label="Todoist API token"
                 placeholder="Enter your Todoist API token"
                 value={todoistToken}
                 onChange={(e) => setTodoistToken(e.target.value)}

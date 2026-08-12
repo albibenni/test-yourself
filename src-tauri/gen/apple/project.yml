@@ -2,7 +2,7 @@ name: test-yourself
 options:
   bundleIdPrefix: com.test-yourself.desktop
   deploymentTarget:
-    iOS: 14.0
+    iOS: 18.0
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -51,8 +51,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 2.4.3
-        CFBundleVersion: "2.4.3"
+        CFBundleShortVersionString: 3.1.1
+        CFBundleVersion: "3.1.1"
     entitlements:
       path: test-yourself_iOS/test-yourself_iOS.entitlements
     scheme:

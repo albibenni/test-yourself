@@ -62,6 +62,36 @@ export function ScheduleModal({
   const hashProjRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    inputRef.current?.focus();
+    const handleTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleTab);
+    return () => {
+      document.removeEventListener("keydown", handleTab);
+      previousFocus?.focus();
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -345,6 +375,8 @@ export function ScheduleModal({
       days.push(
         <button
           key={day}
+          type="button"
+          aria-label={`${currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })} ${day}${count > 0 ? `, ${count} scheduled task${count === 1 ? "" : "s"}` : ""}`}
           className={`cal-day ${isSelected ? "selected" : ""} ${isToday && !isSelected ? "is-today" : ""}`}
           onClick={() => handleDateSelect(year, month, day)}
         >
@@ -357,7 +389,11 @@ export function ScheduleModal({
     return (
       <div className="calendar-popover">
         <div className="cal-header">
-          <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
+          >
             &lt;
           </button>
           <span>
@@ -366,7 +402,11 @@ export function ScheduleModal({
               year: "numeric",
             })}
           </span>
-          <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
+          >
             &gt;
           </button>
         </div>
@@ -539,6 +579,7 @@ export function ScheduleModal({
     <div className="modal-overlay">
       <div
         className="modal-content quick-add-modal"
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Schedule Task"
@@ -573,7 +614,11 @@ export function ScheduleModal({
             placeholder="Description"
             aria-label="Task description"
             rows={1}
-            style={{ fontSize: "13px", color: "#ccc", resize: "none" }}
+            style={{
+              fontSize: "13px",
+              color: "var(--text-secondary)",
+              resize: "none",
+            }}
           />
           {showProjectDropdown && filteredProjects.length > 0 && (
             <div className="project-dropdown">
@@ -583,7 +628,12 @@ export function ScheduleModal({
                   className="project-dropdown-item"
                   onClick={() => handleProjectSelect(p)}
                 >
-                  <span style={{ color: "#8f8f8f", marginRight: "8px" }}>
+                  <span
+                    style={{
+                      color: "var(--text-secondary)",
+                      marginRight: "8px",
+                    }}
+                  >
                     #
                   </span>
                   {p.name}
@@ -726,7 +776,12 @@ export function ScheduleModal({
                         setShowProjectSelectDropdown(false);
                       }}
                     >
-                      <span style={{ color: "#8f8f8f", marginRight: "8px" }}>
+                      <span
+                        style={{
+                          color: "var(--text-secondary)",
+                          marginRight: "8px",
+                        }}
+                      >
                         #
                       </span>
                       {p.name}
@@ -766,7 +821,7 @@ export function ScheduleModal({
                     minWidth: "220px",
                     padding: "12px",
                     fontSize: "13px",
-                    color: "#ccc",
+                    color: "var(--text-secondary)",
                     whiteSpace: "normal",
                     lineHeight: "1.5",
                     left: "0",
@@ -777,7 +832,7 @@ export function ScheduleModal({
                     style={{
                       marginBottom: "10px",
                       fontWeight: "bold",
-                      color: "#fff",
+                      color: "var(--text-primary)",
                     }}
                   >
                     Typing Shortcuts

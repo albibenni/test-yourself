@@ -26,9 +26,7 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "test-yourself"
-        ]
+        "schemes": ["test-yourself"]
       }
     },
     "updater": {

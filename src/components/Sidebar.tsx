@@ -301,7 +301,7 @@ export function Sidebar({
               <div key={topic} className="topic-group">
                 <div className="topic-title">{topic || DEFAULT_TOPIC}</div>
                 {topicQuizzes.map((quiz) => (
-                  <div
+                  <button
                     key={quiz.path}
                     className={clsx(
                       "quiz-item",
@@ -309,20 +309,17 @@ export function Sidebar({
                       flatQuizzes[focusedQuizIndex]?.path === quiz.path &&
                         "focused",
                     )}
-                    role="button"
-                    tabIndex={0}
+                    type="button"
+                    aria-current={
+                      selectedQuiz?.path === quiz.path ? "page" : undefined
+                    }
+                    style={{ fontFamily: "inherit", textAlign: "left" }}
                     onClick={() => {
                       handleSelectQuiz(quiz);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleSelectQuiz(quiz);
-                      }
-                    }}
                   >
                     {quiz.title}
-                  </div>
+                  </button>
                 ))}
               </div>
             ))
