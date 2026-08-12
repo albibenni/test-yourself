@@ -314,10 +314,16 @@ export function SettingsView({
   };
 
   const selectVaultFolder = async () => {
+    if (onSelectVaultFolder) {
+      await onSelectVaultFolder();
+      return;
+    }
     try {
       const selected = await open({
         directory: true,
         multiple: false,
+        recursive: true,
+        fileAccessMode: "scoped",
       });
       if (selected && typeof selected === "string") {
         const isWindows = selected.includes("\\");
@@ -328,10 +334,8 @@ export function SettingsView({
         }
         return;
       }
-      onSelectVaultFolder?.();
     } catch (err) {
       console.warn("Failed to select vault directory", err);
-      onSelectVaultFolder?.();
     }
   };
 

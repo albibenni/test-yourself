@@ -2595,6 +2595,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "obsidian-folder-picker"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4313,6 +4322,7 @@ dependencies = [
  "apple-native-keyring-store",
  "keyring",
  "keyring-core",
+ "obsidian-folder-picker",
  "pulldown-cmark",
  "regex",
  "serde",

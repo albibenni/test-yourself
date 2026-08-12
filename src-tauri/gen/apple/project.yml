@@ -41,6 +41,11 @@ targets:
       properties:
         LSRequiresIPhoneOS: true
         NSLocalNetworkUsageDescription: Test Yourself uses your local network to connect to the development server during testing.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.test-yourself.desktop
+            CFBundleURLSchemes: [test-yourself]
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:

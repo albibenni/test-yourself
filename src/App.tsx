@@ -37,6 +37,7 @@ function App() {
   const [selectedVaultFolder, setSelectedVaultFolder] = useState<string | null>(
     null,
   );
+  const isIOS = osType() === "ios";
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSettingsDirty, setIsSettingsDirty] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -85,6 +86,27 @@ function App() {
     groupedQuizzes,
     quizzes,
   } = useQuizzes();
+
+  const selectIosFolder = useCallback(
+    async (purpose: "quiz" | "vault") => {
+      try {
+        const selected = await invoke<string | null>("pick_ios_folder");
+        if (!selected) return;
+
+        await updateBasePath(selected);
+        if (purpose === "vault") {
+          const folderName = selected.split("/").filter(Boolean).pop();
+          setSelectedVaultFolder(folderName ?? "Obsidian");
+        }
+        showToast("Obsidian folder selected.");
+      } catch (error) {
+        showToast(
+          `Unable to open the iOS folder picker: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    },
+    [showToast, updateBasePath],
+  );
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -368,24 +390,55 @@ function App() {
                 onDirtyChange={setIsSettingsDirty}
                 basePath={basePath}
                 onSelectFolder={async () => {
+                  if (isIOS) {
+                    await selectIosFolder("quiz");
+                    return;
+                  }
                   setFolderBrowserPurpose("quiz");
                   try {
                     const selected = await open({
                       directory: true,
                       multiple: false,
+                      recursive: true,
+                      fileAccessMode: "scoped",
                     });
                     if (selected && typeof selected === "string") {
                       await updateBasePath(selected);
                       return;
                     }
                   } catch {
-                    // Fallback to visual modal
+                    if (isIOS) {
+                      showToast(
+                        "Unable to open the iOS Files picker. Please try again.",
+                      );
+                      return;
+                    }
+                    // Desktop fallback
                   }
                   setIsFolderBrowserOpen(true);
                 }}
-                onSelectVaultFolder={() => {
-                  setFolderBrowserPurpose("vault");
-                  setIsFolderBrowserOpen(true);
+                onSelectVaultFolder={async () => {
+                  if (isIOS) {
+                    await selectIosFolder("vault");
+                    return;
+                  }
+                  try {
+                    const selected = await open({
+                      directory: true,
+                      multiple: false,
+                      recursive: true,
+                      fileAccessMode: "scoped",
+                    });
+                    if (selected && typeof selected === "string") {
+                      setSelectedVaultFolder(selected);
+                      showToast("Obsidian vault folder selected.");
+                      return;
+                    }
+                  } catch {
+                    showToast(
+                      "Unable to open the iOS Files picker. Please try again.",
+                    );
+                  }
                 }}
                 selectedVaultFolder={selectedVaultFolder}
                 onUpdateBasePath={(newPath) => void updateBasePath(newPath)}
@@ -418,17 +471,29 @@ function App() {
                 >
                   <button
                     onClick={async () => {
+                      if (isIOS) {
+                        await selectIosFolder("quiz");
+                        return;
+                      }
                       try {
                         const selected = await open({
                           directory: true,
                           multiple: false,
+                          recursive: true,
+                          fileAccessMode: "scoped",
                         });
                         if (selected && typeof selected === "string") {
                           await updateBasePath(selected);
                           return;
                         }
                       } catch {
-                        // Fallback to visual modal
+                        if (isIOS) {
+                          showToast(
+                            "Unable to open the iOS Files picker. Please try again.",
+                          );
+                          return;
+                        }
+                        // Desktop fallback
                       }
                       setIsFolderBrowserOpen(true);
                     }}
@@ -725,7 +790,7 @@ function App() {
       )}
 
       <FolderBrowserModal
-        isOpen={isFolderBrowserOpen}
+        isOpen={isFolderBrowserOpen && !isIOS}
         onClose={() => setIsFolderBrowserOpen(false)}
         onSelectFolder={(newPath) => {
           if (folderBrowserPurpose === "vault") {

@@ -155,6 +155,8 @@ export function useQuizzes() {
       const selected = await open({
         directory: true,
         multiple: false,
+        recursive: true,
+        fileAccessMode: "scoped",
       });
       if (selected && typeof selected === "string" && selected !== basePath) {
         await updateBasePath(selected);

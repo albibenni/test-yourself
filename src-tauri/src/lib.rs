@@ -15,6 +15,20 @@ struct InitialUrl(std::sync::Mutex<Option<String>>);
 const CREDENTIAL_SERVICE: &str = "com.test-yourself.desktop";
 const CREDENTIAL_ACCOUNT: &str = "todoist_token";
 
+#[cfg(target_os = "ios")]
+#[tauri::command]
+async fn pick_ios_folder(
+    picker: tauri::State<'_, obsidian_folder_picker::ObsidianFolderPicker<tauri::Wry>>,
+) -> Result<Option<String>, String> {
+    picker.pick().await
+}
+
+#[cfg(not(target_os = "ios"))]
+#[tauri::command]
+fn pick_ios_folder() -> Result<Option<String>, String> {
+    Err("The iOS folder picker is only available on iOS".to_string())
+}
+
 #[cfg(not(target_os = "ios"))]
 fn credential_entry() -> Result<keyring::Entry, String> {
     keyring::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT).map_err(|error| error.to_string())
@@ -273,10 +287,49 @@ async fn browse_directory(
     })
 }
 
+#[tauri::command]
+async fn import_quiz_files(
+    app_handle: tauri::AppHandle,
+    paths: Vec<String>,
+) -> Result<String, String> {
+    use tauri::Manager;
+
+    let document_dir = app_handle
+        .path()
+        .document_dir()
+        .map_err(|error| format!("Cannot locate the app Documents directory: {error}"))?;
+    tokio::fs::create_dir_all(&document_dir)
+        .await
+        .map_err(|error| format!("Cannot create the app Documents directory: {error}"))?;
+
+    let mut imported = 0usize;
+    for source in paths {
+        let source_path = std::path::PathBuf::from(&source);
+        if source_path.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let file_name = source_path
+            .file_name()
+            .ok_or_else(|| format!("Invalid quiz file path: {source}"))?;
+        let destination = document_dir.join(file_name);
+        tokio::fs::copy(&source_path, &destination)
+            .await
+            .map_err(|error| format!("Cannot import {source}: {error}"))?;
+        imported += 1;
+    }
+
+    if imported == 0 {
+        return Err("No Markdown quiz files were selected".to_string());
+    }
+
+    Ok(document_dir.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default().plugin(tauri_plugin_os::init());
+    builder = builder.plugin(obsidian_folder_picker::init());
 
     #[cfg(desktop)]
     {
@@ -337,7 +390,9 @@ pub fn run() {
             get_initial_url,
             is_arch_linux,
             custom_linux_relaunch,
-            browse_directory
+            browse_directory,
+            import_quiz_files,
+            pick_ios_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -275,7 +275,12 @@ describe("App Component", () => {
     fireEvent.click(changeFolderBtn);
 
     await waitFor(() => {
-      expect(open).toHaveBeenCalledWith({ directory: true, multiple: false });
+      expect(open).toHaveBeenCalledWith({
+        directory: true,
+        multiple: false,
+        recursive: true,
+        fileAccessMode: "scoped",
+      });
     });
   });
 
