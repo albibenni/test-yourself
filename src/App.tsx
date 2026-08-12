@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { confirm, open } from "@tauri-apps/plugin-dialog";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
 import { useCallback, useEffect, useState } from "react";
@@ -11,11 +10,9 @@ import { useTheme } from "./hooks/useTheme";
 import "./App.css";
 import { lazy, Suspense } from "react";
 import { FolderBrowserModal } from "./components/FolderBrowserModal";
-import { QuestionCard } from "./components/QuestionCard";
+import { QuizViewer } from "./components/QuizViewer";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
-import { WorksheetViewer } from "./components/WorksheetViewer";
-import { DEFAULT_TOPIC } from "./constants";
 
 const SettingsView = lazy(() =>
   import("./components/SettingsView").then((m) => ({
@@ -508,6 +505,25 @@ function App() {
                 </div>
               </div>
             ) : selectedQuizMeta ? (
+              <>
+                <QuizViewer
+                  selectedQuiz={selectedQuizMeta}
+                  activeQuiz={activeQuiz}
+                  activeWorksheet={activeWorksheet}
+                  loadingActiveQuiz={loadingActiveQuiz}
+                  resetKey={resetKey}
+                  onReset={() => setResetKey((key) => key + 1)}
+                  onSchedule={() => setIsScheduleOpen(true)}
+                  answers={answers}
+                  setAnswers={setAnswers}
+                  visibleCount={visibleCount}
+                  totalQuestions={totalQuestions}
+                  answeredCount={answeredCount}
+                  correctCount={correctCount}
+                  isAllAnswered={isAllAnswered}
+                  lastQuestionElementRef={lastQuestionElementRef}
+                />
+                {/*
               <div className="quiz-viewer">
                 <div className="quiz-header">
                   <div className="header-title-row">
@@ -762,8 +778,10 @@ function App() {
                   >
                     Failed to load quiz content.
                   </div>
-                )}
               </div>
+                )}
+                */}
+              </>
             ) : (
               <div className="empty-state">
                 <div className="header-title-row empty-state-header">
