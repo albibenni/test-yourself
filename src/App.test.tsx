@@ -284,6 +284,26 @@ describe("App Component", () => {
     });
   });
 
+  it("does not open the fallback folder browser when the native picker is canceled", async () => {
+    vi.mocked(open).mockResolvedValue(null);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Settings" })[0]);
+
+    const changeFolderBtn = await screen.findByRole("button", {
+      name: "Browse...",
+    });
+    fireEvent.click(changeFolderBtn);
+
+    await waitFor(() => expect(open).toHaveBeenCalled());
+    expect(screen.queryByText("Browse Folders")).not.toBeInTheDocument();
+  });
+
   it("opens Obsidian with absolute path when clicking the Topic link", async () => {
     const { openUrl } = await import("@tauri-apps/plugin-opener");
 

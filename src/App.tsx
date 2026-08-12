@@ -406,6 +406,8 @@ function App() {
                       await updateBasePath(selected);
                       return;
                     }
+                    // Canceling the native desktop picker is a no-op.
+                    if (!isIOS) return;
                   } catch {
                     if (isIOS) {
                       showToast(
@@ -486,6 +488,8 @@ function App() {
                           await updateBasePath(selected);
                           return;
                         }
+                        // Canceling the native desktop picker is a no-op.
+                        if (!isIOS) return;
                       } catch {
                         if (isIOS) {
                           showToast(
