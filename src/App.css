@@ -1264,7 +1264,7 @@ body {
 }
 
 .quick-add-input:focus-visible {
-  outline: 1px solid var(--accent-soft);
+  outline: 1px solid color-mix(in srgb, var(--accent-soft) 55%, transparent);
   outline-offset: 0;
   border-radius: 2px;
 }
