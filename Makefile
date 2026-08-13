@@ -1,7 +1,7 @@
-.PHONY: install dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app
+.PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app uninstall-app remove-aur build-aur install-aur
 
 # Install dependencies
-install:
+i:
 	pnpm install
 
 
@@ -44,7 +44,13 @@ install-app:
 	pnpm tauri build --no-bundle
 	@echo "Installing to ~/apps/test-yourself..."
 	@mkdir -p ~/apps
-	cp src-tauri/target/release/tauri-app ~/apps/test-yourself
+	@if [ -f src-tauri/target/release/test-yourself ]; then \
+		cp src-tauri/target/release/test-yourself ~/apps/test-yourself; \
+	elif [ -f src-tauri/target/release/tauri-app ]; then \
+		cp src-tauri/target/release/tauri-app ~/apps/test-yourself; \
+	else \
+		echo "Error: Binary not found in src-tauri/target/release/"; exit 1; \
+	fi
 	@echo "Updating desktop file to point to ~/apps/test-yourself..."
 	@mkdir -p ~/.local/share/applications
 	@echo "[Desktop Entry]" > ~/.local/share/applications/testyourself.desktop
@@ -58,6 +64,30 @@ install-app:
 	@update-desktop-database ~/.local/share/applications || true
 	@xdg-mime default testyourself.desktop x-scheme-handler/test-yourself || true
 	@echo "🎉 Successfully installed! You can now run the app from ~/apps/test-yourself"
+
+# Uninstall the app installed via make install-app
+uninstall-app:
+	@echo "Removing ~/apps/test-yourself binary..."
+	@rm -f ~/apps/test-yourself
+	@echo "Removing desktop entry..."
+	@rm -f ~/.local/share/applications/testyourself.desktop
+	@update-desktop-database ~/.local/share/applications || true
+	@echo "Successfully uninstalled local app!"
+
+# Uninstall package previously installed via yay / AUR / pacman
+remove-aur:
+	@echo "Removing test-yourself installed via yay/pacman..."
+	yay -R test-yourself || sudo pacman -R test-yourself
+
+# Build Arch Linux package locally via makepkg in aur directory
+build-aur:
+	@echo "Building Arch Linux package locally..."
+	cd aur && makepkg -s
+
+# Build and install Arch Linux package locally via makepkg in aur directory
+install-aur:
+	@echo "Building and installing Arch Linux package locally..."
+	cd aur && makepkg -si
 
 # Run all tests (Frontend and Backend)
 test: test-ui test-rust
@@ -81,7 +111,7 @@ format:
 
 # Clean all generated files, caches, and node_modules
 clean:
-	rm -rf node_modules dist dist-ssr src-tauri/target
+	rm -rf node_modules dist dist-ssr src-tauri/target aur/src aur/pkg aur/*.tar.gz aur/*.pkg.tar.zst
 
 # Run code coverage for Rust backend
 coverage-rust:
@@ -138,7 +168,8 @@ release:
 	new_version=$$(node -p "require('./package.json').version"); \
 	node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const conf = JSON.parse(fs.readFileSync(file)); conf.version = '$$new_version'; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');"; \
 	node -e "const fs = require('fs'); const file = 'src-tauri/Cargo.toml'; let toml = fs.readFileSync(file, 'utf8'); toml = toml.replace(/^version = \".*\"$$/m, 'version = \"$$new_version\"'); fs.writeFileSync(file, toml);"; \
-	git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml; \
+	node -e "const fs = require('fs'); const file = 'aur/PKGBUILD'; let pkg = fs.readFileSync(file, 'utf8'); pkg = pkg.replace(/^pkgver=.*$$/m, 'pkgver=' + '$$new_version'); fs.writeFileSync(file, pkg);"; \
+	git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml aur/PKGBUILD; \
 	git commit -m "chore: release v$$new_version"; \
 	git tag v$$new_version; \
 	git push origin main; \

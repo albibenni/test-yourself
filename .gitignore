@@ -29,3 +29,5 @@ coverage
 *.AppImage
 *.tar.gz
 *.zip
+aur/*
+!aur/PKGBUILD
