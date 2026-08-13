@@ -142,6 +142,38 @@ describe("SettingsView", () => {
     });
   });
 
+  it("preserves an OAuth session when saving other settings", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(
+      JSON.stringify({
+        access_token: "oauth-access-token",
+        refresh_token: "oauth-refresh-token",
+        expires_in: 3600,
+        expires_at: Date.now() + 3600_000,
+        token_type: "Bearer",
+      }),
+    );
+
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Connected securely with Todoist."),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. MyVault"), {
+      target: { value: "UpdatedVault" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => {
+      expect(mockStore.save).toHaveBeenCalled();
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+    expect(setSecureToken).not.toHaveBeenCalled();
+  });
+
   it("saves token via secureStore and cleans up localStorage", async () => {
     render(<SettingsView {...defaultProps} />);
     fireEvent.click(screen.getAllByText("Integrations")[0]);

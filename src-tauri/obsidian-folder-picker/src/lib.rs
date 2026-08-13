@@ -1,4 +1,4 @@
-use tauri::{plugin::PluginHandle, Runtime};
+use tauri::{plugin::PluginHandle, Manager, Runtime};
 
 #[cfg(target_os = "ios")]
 use serde::Deserialize;

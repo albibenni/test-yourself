@@ -339,8 +339,14 @@ export function SettingsView({
             );
           }
         }
-      } else {
+      } else if (todoistAuthStatus !== "connected") {
         await setSecureToken("todoist_token", "");
+        await store.set("todoist_token", "");
+        window.localStorage.removeItem("todoist_token");
+      } else {
+        // OAuth credentials are stored as a JSON secret, while the legacy
+        // input intentionally stays empty. Saving other settings must not
+        // interpret that empty input as a request to disconnect.
         await store.set("todoist_token", "");
         window.localStorage.removeItem("todoist_token");
       }
