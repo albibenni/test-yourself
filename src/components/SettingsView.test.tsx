@@ -204,6 +204,24 @@ describe("SettingsView", () => {
     });
   });
 
+  it("keeps the default-project options open inside the scrollable settings content", async () => {
+    render(<SettingsView {...defaultProps} />);
+    fireEvent.click(screen.getAllByText("Integrations")[0]);
+
+    await waitFor(() => {
+      expect(mockStore.get).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Default project" }));
+
+    expect(
+      screen.getByRole("listbox", { name: "Default project options" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Inbox (Default)" }),
+    ).toBeInTheDocument();
+  });
+
   it("selects vault folder via dialog", async () => {
     vi.mocked(open).mockResolvedValue("/new/mock/MyVault");
 
