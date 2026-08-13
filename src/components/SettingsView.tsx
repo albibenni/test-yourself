@@ -1,5 +1,6 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
@@ -7,6 +8,12 @@ import { check } from "@tauri-apps/plugin-updater";
 import React, { useEffect, useState } from "react";
 import { STORE_FILENAME } from "../constants";
 import { TodoistProvider } from "../providers/TodoistProvider";
+import {
+  beginTodoistAuthorization,
+  completeTodoistAuthorization,
+  getAuthorizedTodoistToken,
+  isTodoistOAuthSecret,
+} from "../todoistOAuth";
 import type { AccentColor, TextColor, ThemeType } from "../types";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import "./SettingsView.css";
@@ -136,6 +143,9 @@ export function SettingsView({
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [isDefaultProjectOpen, setIsDefaultProjectOpen] = useState(false);
+  const [todoistAuthStatus, setTodoistAuthStatus] = useState<
+    "disconnected" | "connected" | "connecting"
+  >("disconnected");
 
   const [updateStatus, setUpdateStatus] = useState(
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
@@ -197,8 +207,10 @@ export function SettingsView({
       const vault = await store.get<string>("obsidian_vault");
 
       const loadedToken = secureToken || "";
-      setTodoistToken(loadedToken);
-      setInitialTodoistToken(loadedToken);
+      const isOAuth = isTodoistOAuthSecret(secureToken);
+      setTodoistAuthStatus(isOAuth ? "connected" : "disconnected");
+      setTodoistToken(isOAuth ? "" : loadedToken);
+      setInitialTodoistToken(isOAuth ? "" : loadedToken);
       const loadedVault =
         vault || window.localStorage.getItem("obsidian_vault") || "";
       setVaultName(loadedVault);
@@ -224,6 +236,27 @@ export function SettingsView({
   }, []);
 
   useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    void listen<string>("deep-link-received", async (event) => {
+      try {
+        if (!(await completeTodoistAuthorization(event.payload))) return;
+        setTodoistAuthStatus("connected");
+        setTodoistToken("");
+      } catch (error) {
+        setTodoistAuthStatus("disconnected");
+        onSaveError?.(
+          error instanceof Error
+            ? error.message
+            : "Todoist authorization failed.",
+        );
+      }
+    }).then((remove) => {
+      unlisten = remove;
+    });
+    return () => unlisten?.();
+  }, [onSaveError]);
+
+  useEffect(() => {
     const isDirty =
       todoistToken !== initialTodoistToken ||
       vaultName !== initialVaultName ||
@@ -247,10 +280,12 @@ export function SettingsView({
 
   useEffect(() => {
     async function fetchProjects() {
-      if (!todoistToken) return;
+      if (!todoistToken && todoistAuthStatus !== "connected") return;
+      const token = await getAuthorizedTodoistToken();
+      if (!token) return;
       setLoadingProjects(true);
       try {
-        const api = new TodoistProvider(todoistToken);
+        const api = new TodoistProvider(token);
         const projs = await api.getProjects();
         setProjects(projs);
       } catch (err) {
@@ -260,7 +295,29 @@ export function SettingsView({
       }
     }
     void fetchProjects();
-  }, [todoistToken]);
+  }, [todoistToken, todoistAuthStatus]);
+
+  const connectTodoist = async () => {
+    try {
+      setTodoistAuthStatus("connecting");
+      await beginTodoistAuthorization();
+    } catch (error) {
+      setTodoistAuthStatus("disconnected");
+      onSaveError?.(
+        error instanceof Error
+          ? error.message
+          : "Could not start Todoist authorization.",
+      );
+    }
+  };
+
+  const disconnectTodoist = async () => {
+    await setSecureToken("todoist_token", "");
+    setTodoistToken("");
+    setInitialTodoistToken("");
+    setTodoistAuthStatus("disconnected");
+    setProjects([]);
+  };
 
   const handleSave = async () => {
     try {
@@ -613,10 +670,39 @@ export function SettingsView({
             </SettingsCard>
 
             <SettingsCard
-              title="Todoist API Token"
-              subtitle="Find this in Todoist Settings > Integrations > Developer."
+              title="Todoist"
+              subtitle={
+                todoistAuthStatus === "connected"
+                  ? "Connected securely with Todoist."
+                  : "Connect your Todoist account securely."
+              }
             >
+              <div className="settings-row">
+                <button
+                  className="button-secondary"
+                  disabled={todoistAuthStatus === "connecting"}
+                  onClick={() => void connectTodoist()}
+                >
+                  {todoistAuthStatus === "connecting"
+                    ? "Opening Todoist…"
+                    : todoistAuthStatus === "connected"
+                      ? "Reconnect Todoist"
+                      : "Connect Todoist"}
+                </button>
+                {todoistAuthStatus === "connected" && (
+                  <button
+                    className="button-secondary"
+                    onClick={() => void disconnectTodoist()}
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+              <label className="settings-label" htmlFor="todoist-token">
+                Personal API token (legacy)
+              </label>
               <input
+                id="todoist-token"
                 type="password"
                 className="settings-input"
                 aria-label="Todoist API token"

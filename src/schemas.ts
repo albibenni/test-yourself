@@ -1,4 +1,3 @@
-import type { GetTasksArgs } from "@doist/todoist-sdk";
 import { z } from "zod";
 
 // Quiz and Worksheet Schemas
@@ -86,4 +85,4 @@ export const GetTasksArgsSchema = z
     label: z.string().optional(),
     lang: z.string().optional(),
   })
-  .optional() as z.ZodType<GetTasksArgs | undefined>;
+  .optional();

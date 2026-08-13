@@ -8,14 +8,14 @@ import type {
   TaskProvider,
 } from "../providers/TaskProvider";
 import { TodoistProvider } from "../providers/TodoistProvider";
-import { getSecureToken } from "../utils/secureStore";
+import { getAuthorizedTodoistToken } from "../todoistOAuth";
 
 export function useTodoist() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const getProvider = useCallback(async (): Promise<TaskProvider> => {
-    const token = await getSecureToken("todoist_token");
+    const token = await getAuthorizedTodoistToken();
     if (!token) {
       throw new Error("Missing API token. Please configure it in settings.");
     }

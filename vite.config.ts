@@ -17,7 +17,6 @@ export default defineConfig(async () => ({
       output: {
         manualChunks: {
           vendor: ["react", "react-dom", "zod", "clsx"],
-          todoist: ["@doist/todoist-sdk"],
           tauri: [
             "@tauri-apps/api",
             "@tauri-apps/plugin-dialog",

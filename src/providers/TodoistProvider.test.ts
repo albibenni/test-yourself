@@ -1,17 +1,5 @@
-import { TodoistApi } from "@doist/todoist-sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TodoistProvider } from "./TodoistProvider";
-
-// Mock TodoistApi since it's used internally
-vi.mock("@doist/todoist-sdk", () => {
-  return {
-    TodoistApi: vi.fn().mockImplementation(function () {
-      return {
-        getTasks: vi.fn(),
-      };
-    }),
-  };
-});
 
 describe("TodoistProvider", () => {
   let provider: TodoistProvider;
@@ -34,7 +22,10 @@ describe("TodoistProvider", () => {
     it("should sanitize the query and hit the v1 filter API", async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: async () => [{ id: "1", content: "Test Task" }],
+        json: async () => ({
+          results: [{ id: "1", content: "Test Task" }],
+          next_cursor: null,
+        }),
       });
 
       const tasks = await provider.searchTasks(
@@ -44,7 +35,7 @@ describe("TodoistProvider", () => {
       expect(tasks).toHaveLength(1);
       expect(tasks[0].content).toBe("Test Task");
 
-      // Verify the URL and search query
+      // Verify the URL, search query, and v1 pagination request.
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const calledUrl = mockFetch.mock.calls[0][0] as string;
       const calledOpts = mockFetch.mock.calls[0][1] as RequestInit;
@@ -57,8 +48,11 @@ describe("TodoistProvider", () => {
       // slice 0 to 3: Review, Quiz, Model
       const expectedSearchParam = "Review Quiz Model";
       expect(calledUrl).toContain(
-        encodeURIComponent(`search: ${expectedSearchParam}`),
+        new URLSearchParams({
+          query: `search: ${expectedSearchParam}`,
+        }).toString(),
       );
+      expect(calledUrl).toContain("limit=200");
 
       const headers = calledOpts.headers as Record<string, string>;
       expect(headers.Authorization).toBe("Bearer fake_token");
@@ -67,13 +61,15 @@ describe("TodoistProvider", () => {
     it("should use a default 'Review Quiz' query if sanitization leaves it empty", async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: async () => [],
+        json: async () => ({ results: [], next_cursor: null }),
       });
 
       await provider.searchTasks(":) () __ !@# a b");
 
       const calledUrl = mockFetch.mock.calls[0][0] as string;
-      expect(calledUrl).toContain(encodeURIComponent("search: Review Quiz"));
+      expect(calledUrl).toContain(
+        new URLSearchParams({ query: "search: Review Quiz" }).toString(),
+      );
     });
 
     it("should throw an error if the fetch response is not ok", async () => {
@@ -84,22 +80,35 @@ describe("TodoistProvider", () => {
       });
 
       await expect(provider.searchTasks("Normal Query")).rejects.toThrow(
-        "Failed to search tasks: 400 Bad Request",
+        "Todoist API error: 400 Bad Request",
       );
     });
 
-    it("should parse wrapped result objects correctly", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          results: [
-            { id: "123", content: "Wrapped task", due: { date: "2026-08-25" } },
-          ],
-        }),
-      });
+    it("should collect paginated result objects correctly", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            results: [
+              {
+                id: "123",
+                content: "Wrapped task",
+                due: { date: "2026-08-25" },
+              },
+            ],
+            next_cursor: "second-page",
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            results: [{ id: "456", content: "Second page" }],
+            next_cursor: null,
+          }),
+        });
 
       const tasks = await provider.searchTasks("test");
-      expect(tasks).toHaveLength(1);
+      expect(tasks).toHaveLength(2);
       expect(tasks[0].id).toBe("123");
       expect(tasks[0].content).toBe("Wrapped task");
       expect(tasks[0].due?.date).toBe("2026-08-25");
@@ -107,19 +116,16 @@ describe("TodoistProvider", () => {
   });
 
   describe("getTasks", () => {
-    it("should pass the filter argument to the API client when provided", async () => {
-      const mockGetTasks = vi.fn().mockResolvedValue([]);
-      vi.mocked(TodoistApi).mockImplementation(function () {
-        return {
-          getTasks: mockGetTasks,
-        } as unknown as TodoistApi;
+    it("uses the dedicated v1 filter endpoint", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ results: [], next_cursor: null }),
       });
 
-      // Remount provider to get the updated mock
-      provider = new TodoistProvider("fake_token");
-
       await provider.getTasks({ filter: "search: test" });
-      expect(mockGetTasks).toHaveBeenCalledWith({ filter: "search: test" });
+      expect(mockFetch.mock.calls[0][0]).toContain(
+        "/api/v1/tasks/filter?query=search%3A+test",
+      );
     });
   });
 });

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Return to Test Yourself</title></head>
+  <body>
+    <p>Returning to Test Yourself…</p>
+    <script>
+      const callback = new URL("test-yourself://todoist-auth");
+      callback.search = window.location.search;
+      window.location.replace(callback);
+    </script>
+  </body>
+</html>
