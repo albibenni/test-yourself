@@ -111,7 +111,7 @@ format:
 
 # Clean all generated files, caches, and node_modules
 clean:
-	rm -rf node_modules dist dist-ssr src-tauri/target aur/src aur/pkg aur/*.tar.gz aur/*.pkg.tar.zst
+	rm -rf node_modules dist dist-ssr src-tauri/target src-tauri/obsidian-folder-picker/target src-tauri/obsidian-folder-picker/Cargo.lock aur/src aur/pkg aur/*.tar.gz aur/*.pkg.tar.zst
 
 # Run code coverage for Rust backend
 coverage-rust:
