@@ -43,9 +43,9 @@ make dev-ios DEVICE="iPhone 17 Pro"
 make dev-ios-open            # also open the Xcode project
 ```
 
-### Secure Todoist token storage
+### Secure Todoist OAuth storage
 
-On supported desktop platforms, the Todoist token is stored only in the operating system credential store: macOS Keychain, Windows Credential Manager, or the Linux Secret Service. Clearing the token removes that credential; the app does not fall back to plaintext browser or plugin storage.
+Todoist is connected exclusively through OAuth 2.0 with PKCE. On supported desktop platforms, the OAuth credentials are stored only in the operating system credential store: macOS Keychain, Windows Credential Manager, or the Linux Secret Service. Disconnecting removes that credential; the app does not fall back to plaintext browser or plugin storage.
 
 The Rust credential test uses an in-memory keyring mock. It initializes the platform library before installing that mock, so the test does not read, change, or prompt for access to your real credential.
 
@@ -54,7 +54,7 @@ The Rust credential test uses an in-memory keyring mock. It initializes the plat
 The project has a generated iOS target and a responsive settings layout, and desktop-only updater/single-instance behavior is excluded from mobile builds. It is not yet a fully supported mobile release:
 
 - iOS/Android sandboxing prevents the current arbitrary-folder Markdown workflow from working reliably without an import flow or persistent document-access implementation.
-- The desktop keyring backend intentionally does not support iOS or Android. Todoist token storage needs a mobile credential-store implementation before Todoist scheduling can work there.
+- The desktop keyring backend intentionally does not support iOS or Android. Todoist OAuth credential storage needs a mobile credential-store implementation before Todoist scheduling can work there.
 - Touch/safe-area behavior and App Store packaging still need device-level verification.
 
 See [the iOS migration plan](future_plan/ios_migration_plan.md) for the remaining work.

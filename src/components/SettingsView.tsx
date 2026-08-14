@@ -127,9 +127,6 @@ export function SettingsView({
   }, [selectedVaultFolder]);
 
   const [customBasePath, setCustomBasePath] = useState(basePath || "");
-  const [todoistToken, setTodoistToken] = useState("");
-  const [initialTodoistToken, setInitialTodoistToken] = useState("");
-  const [_isTokenInSecureStore, setIsTokenInSecureStore] = useState(false);
   const [vaultName, setVaultName] = useState("");
   const [initialVaultName, setInitialVaultName] = useState("");
 
@@ -203,14 +200,10 @@ export function SettingsView({
         defaults: {},
       });
       const secureToken = await getSecureToken("todoist_token");
-      setIsTokenInSecureStore(!!secureToken);
       const vault = await store.get<string>("obsidian_vault");
 
-      const loadedToken = secureToken || "";
       const isOAuth = isTodoistOAuthSecret(secureToken);
       setTodoistAuthStatus(isOAuth ? "connected" : "disconnected");
-      setTodoistToken(isOAuth ? "" : loadedToken);
-      setInitialTodoistToken(isOAuth ? "" : loadedToken);
       const loadedVault =
         vault || window.localStorage.getItem("obsidian_vault") || "";
       setVaultName(loadedVault);
@@ -241,7 +234,6 @@ export function SettingsView({
       try {
         if (!(await completeTodoistAuthorization(event.payload))) return;
         setTodoistAuthStatus("connected");
-        setTodoistToken("");
       } catch (error) {
         setTodoistAuthStatus("disconnected");
         onSaveError?.(
@@ -258,15 +250,12 @@ export function SettingsView({
 
   useEffect(() => {
     const isDirty =
-      todoistToken !== initialTodoistToken ||
       vaultName !== initialVaultName ||
       defaultDate !== initialDefaultDate ||
       defaultPriority !== initialDefaultPriority ||
       defaultProject !== initialDefaultProject;
     onDirtyChange?.(isDirty);
   }, [
-    todoistToken,
-    initialTodoistToken,
     vaultName,
     initialVaultName,
     defaultDate,
@@ -280,7 +269,7 @@ export function SettingsView({
 
   useEffect(() => {
     async function fetchProjects() {
-      if (!todoistToken && todoistAuthStatus !== "connected") return;
+      if (todoistAuthStatus !== "connected") return;
       const token = await getAuthorizedTodoistToken();
       if (!token) return;
       setLoadingProjects(true);
@@ -295,7 +284,7 @@ export function SettingsView({
       }
     }
     void fetchProjects();
-  }, [todoistToken, todoistAuthStatus]);
+  }, [todoistAuthStatus]);
 
   const connectTodoist = async () => {
     try {
@@ -313,8 +302,6 @@ export function SettingsView({
 
   const disconnectTodoist = async () => {
     await setSecureToken("todoist_token", "");
-    setTodoistToken("");
-    setInitialTodoistToken("");
     setTodoistAuthStatus("disconnected");
     setProjects([]);
   };
@@ -327,30 +314,6 @@ export function SettingsView({
         defaults: {},
       });
 
-      if (todoistToken) {
-        if (todoistToken !== initialTodoistToken || !_isTokenInSecureStore) {
-          try {
-            await setSecureToken("todoist_token", todoistToken);
-            await store.set("todoist_token", "");
-            setIsTokenInSecureStore(true);
-          } catch (err) {
-            throw new Error(
-              `Unable to save the Todoist token to secure storage: ${String(err)}`,
-            );
-          }
-        }
-      } else if (todoistAuthStatus !== "connected") {
-        await setSecureToken("todoist_token", "");
-        await store.set("todoist_token", "");
-        window.localStorage.removeItem("todoist_token");
-      } else {
-        // OAuth credentials are stored as a JSON secret, while the legacy
-        // input intentionally stays empty. Saving other settings must not
-        // interpret that empty input as a request to disconnect.
-        await store.set("todoist_token", "");
-        window.localStorage.removeItem("todoist_token");
-      }
-
       await store.set("obsidian_vault", vaultName);
       await store.set("default_todoist_date", defaultDate);
       await store.set("default_todoist_priority", defaultPriority);
@@ -358,7 +321,6 @@ export function SettingsView({
 
       await store.save();
 
-      setInitialTodoistToken(todoistToken);
       setInitialVaultName(vaultName);
       setInitialDefaultDate(defaultDate);
       setInitialDefaultPriority(defaultPriority);
@@ -704,18 +666,6 @@ export function SettingsView({
                   </button>
                 )}
               </div>
-              <label className="settings-label" htmlFor="todoist-token">
-                Personal API token (legacy)
-              </label>
-              <input
-                id="todoist-token"
-                type="password"
-                className="settings-input"
-                aria-label="Todoist API token"
-                placeholder="Enter your Todoist API token"
-                value={todoistToken}
-                onChange={(e) => setTodoistToken(e.target.value)}
-              />
             </SettingsCard>
 
             <SettingsCard

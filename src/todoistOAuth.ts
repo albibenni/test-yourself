@@ -131,7 +131,7 @@ export async function getAuthorizedTodoistToken() {
       }
     })(),
   );
-  if (!parsed.success) return secret; // Existing personal tokens remain supported.
+  if (!parsed.success) return null;
   if (parsed.data.expires_at - REFRESH_SKEW_MS > Date.now()) {
     return parsed.data.access_token;
   }

@@ -32,6 +32,14 @@ vi.mock("../providers/TodoistProvider", () => {
 
 describe("useTodoist hook", () => {
   let mockStoreGet: import("vitest").Mock;
+  const oauthSession = () =>
+    JSON.stringify({
+      access_token: "oauth-access-token",
+      refresh_token: "oauth-refresh-token",
+      expires_in: 3600,
+      expires_at: Date.now() + 3600_000,
+      token_type: "Bearer",
+    });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,15 +51,8 @@ describe("useTodoist hook", () => {
     vi.mocked(window.localStorage.getItem).mockReturnValue(null);
   });
 
-  it("prioritizes secureStore token over fallback store or localStorage", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
-    mockStoreGet.mockImplementation((key: string) => {
-      if (key === "todoist_token") return Promise.resolve("store-token-456");
-      return Promise.resolve(null);
-    });
-    vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
-      k === "todoist_token" ? "local-token-789" : null,
-    );
+  it("uses the access token from a valid OAuth session", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
 
     const { result } = renderHook(() => useTodoist());
 
@@ -61,24 +62,17 @@ describe("useTodoist hook", () => {
     });
 
     expect(getSecureToken).toHaveBeenCalledWith("todoist_token");
-    expect(TodoistProvider).toHaveBeenCalledWith("secure-token-123");
+    expect(TodoistProvider).toHaveBeenCalledWith("oauth-access-token");
   });
 
-  it("rejects legacy plugin-store and localStorage tokens", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue(null);
-    mockStoreGet.mockImplementation((key: string) => {
-      if (key === "todoist_token") return Promise.resolve("store-token-456");
-      return Promise.resolve(null);
-    });
-    vi.mocked(window.localStorage.getItem).mockImplementation((k) =>
-      k === "todoist_token" ? "local-token-789" : null,
-    );
+  it("rejects non-OAuth credentials", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue("legacy-personal-token");
 
     const { result } = renderHook(() => useTodoist());
 
     await act(async () => {
       await expect(result.current.getProjects()).rejects.toThrow(
-        "Missing API token",
+        "Todoist is not connected",
       );
     });
     expect(TodoistProvider).not.toHaveBeenCalled();
@@ -92,18 +86,18 @@ describe("useTodoist hook", () => {
 
     await act(async () => {
       await expect(result.current.getProjects()).rejects.toThrow(
-        "Missing API token",
+        "Todoist is not connected",
       );
     });
 
     expect(result.current.error).toBe(
-      "Failed to fetch projects. Check your token.",
+      "Failed to fetch projects. Check your Todoist connection.",
     );
     expect(result.current.loading).toBe(false);
   });
 
   it("fetches tasks successfully using the provider", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
 
     const { result } = renderHook(() => useTodoist());
 
@@ -118,7 +112,7 @@ describe("useTodoist hook", () => {
   });
 
   it("searches tasks successfully using the provider", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
 
     const { result } = renderHook(() => useTodoist());
 
@@ -133,7 +127,7 @@ describe("useTodoist hook", () => {
   });
 
   it("sets error when searchTasks fails", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
 
     // Force searchTasks to throw
     vi.mocked(TodoistProvider).mockImplementationOnce(function () {
@@ -157,7 +151,7 @@ describe("useTodoist hook", () => {
   });
 
   it("adds a task successfully using the provider", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-123");
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
 
     const { result } = renderHook(() => useTodoist());
 

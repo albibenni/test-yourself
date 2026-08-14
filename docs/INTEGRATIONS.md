@@ -30,7 +30,7 @@ Todoist is a task manager that provides a REST API. We use the `@doist/todoist-s
 
 ### How it works
 
-The application uses the API Token you provide in Settings to authenticate with Todoist. When you open the **Schedule Modal**, the app performs the following actions:
+The application connects to Todoist exclusively through OAuth 2.0 with PKCE. When you select **Connect Todoist**, the app creates a state value and PKCE verifier/challenge, opens Todoist authorization in the browser, validates the callback state, and securely stores the returned OAuth credentials. When you open the **Schedule Modal**, the app performs the following actions:
 
 1. **Fetch Projects**: Calls `api.getProjects()` to populate your project selection dropdown.
 2. **Fetch Tasks**: Calls `api.getTasks()` to aggregate tasks by their due dates. This populates the task counts (the green dots) on the interactive calendar, helping you balance your workload.
@@ -42,7 +42,7 @@ The application uses the API Token you provide in Settings to authenticate with 
 
 ### Security
 
-Your Todoist API token is stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux Secret Service). Clearing the token removes the credential. There is no fallback to plaintext browser storage or the Tauri store.
+Todoist OAuth credentials are stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux Secret Service). Disconnecting removes the credential. There is no fallback to plaintext browser storage or the Tauri store.
 
 The backend exposes only `get_secret` and `set_secret` for the fixed `todoist_token` account; it does not expose arbitrary credential-store access to the frontend. The native credential lifecycle is tested with an in-memory keyring mock, so tests do not read, update, delete, or prompt for your real Keychain credential.
 

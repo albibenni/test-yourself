@@ -27,10 +27,10 @@ The app is highly optimized for keyboard usage to keep you in the flow:
 ### Setup
 
 1. Open the **Settings** modal (click the gear icon in the top right).
-2. **Todoist API Token**: Enter your token. You can find this in Todoist by going to _Settings > Integrations > Developer_.
+2. **Todoist**: Select **Connect Todoist** and complete the Todoist OAuth 2.0 authorization in your browser. The connection uses PKCE.
 3. **Obsidian Vault Name**: Enter the exact name of your Obsidian vault (or use the "Browse" button to select the vault directory and automatically extract the name).
 
-On desktop, the Todoist token is saved in your operating system credential store, not in the app's regular settings file or browser storage. Saving a token requires that credential store to be available; the app will show an error instead of storing it insecurely.
+On desktop, Todoist OAuth credentials are saved in your operating system credential store, not in the app's regular settings file or browser storage. Connecting requires that credential store to be available; the app will show an error instead of storing credentials insecurely.
 
 ### Scheduling a Review
 

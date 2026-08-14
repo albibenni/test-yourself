@@ -17,7 +17,7 @@ export function useTodoist() {
   const getProvider = useCallback(async (): Promise<TaskProvider> => {
     const token = await getAuthorizedTodoistToken();
     if (!token) {
-      throw new Error("Missing API token. Please configure it in settings.");
+      throw new Error("Todoist is not connected. Connect it in settings.");
     }
     return new TodoistProvider(token);
   }, []);
@@ -29,7 +29,7 @@ export function useTodoist() {
       const provider = await getProvider();
       return await provider.getProjects();
     } catch (err: unknown) {
-      setError("Failed to fetch projects. Check your token.");
+      setError("Failed to fetch projects. Check your Todoist connection.");
       throw err;
     } finally {
       setLoading(false);

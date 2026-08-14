@@ -129,19 +129,6 @@ describe("SettingsView", () => {
     expect(defaultProps.onAccentChange).toHaveBeenCalledWith("purple");
   });
 
-  it("loads secure token if available", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("secure-token-value");
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("secure-token-value"),
-      ).toBeInTheDocument();
-    });
-  });
-
   it("preserves an OAuth session when saving other settings", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(
       JSON.stringify({
@@ -172,36 +159,6 @@ describe("SettingsView", () => {
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
     expect(setSecureToken).not.toHaveBeenCalled();
-  });
-
-  it("saves token via secureStore and cleans up localStorage", async () => {
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    // Wait for initial load
-    await waitFor(() => {
-      expect(mockStore.get).toHaveBeenCalled();
-    });
-
-    // Enter a token
-    const tokenInput = screen.getByPlaceholderText(
-      "Enter your Todoist API token",
-    );
-    fireEvent.change(tokenInput, { target: { value: "new-token-123" } });
-
-    // Save
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(setSecureToken).toHaveBeenCalledWith(
-        "todoist_token",
-        "new-token-123",
-      );
-      expect(mockStore.set).toHaveBeenCalledWith("todoist_token", ""); // Cleans up unencrypted
-      expect(mockStore.save).toHaveBeenCalled();
-      expect(defaultProps.onClose).toHaveBeenCalled();
-    });
   });
 
   it("keeps the default-project options open inside the scrollable settings content", async () => {
@@ -247,69 +204,6 @@ describe("SettingsView", () => {
     });
   });
 
-  it("does not call setSecureToken if the token was already in secure store and hasn't changed", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("existing-secure-token"),
-      ).toBeInTheDocument();
-    });
-
-    // Change another setting (e.g., Vault Name)
-    const vaultInput = screen.getByPlaceholderText("e.g. MyVault");
-    fireEvent.change(vaultInput, { target: { value: "UpdatedVault" } });
-
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      // Vault name was saved
-      expect(mockStore.set).toHaveBeenCalledWith(
-        "obsidian_vault",
-        "UpdatedVault",
-      );
-      // Ultimately, it matches the initial secure token, so skip encryption
-      expect(setSecureToken).not.toHaveBeenCalled();
-    });
-  });
-
-  it("does not call setSecureToken if the token is changed and then changed back to the original secureToken", async () => {
-    vi.mocked(getSecureToken).mockResolvedValue("existing-secure-token");
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("existing-secure-token"),
-      ).toBeInTheDocument();
-    });
-
-    // Change token to something else
-    const tokenInput = screen.getByPlaceholderText(
-      "Enter your Todoist API token",
-    );
-    fireEvent.change(tokenInput, { target: { value: "different-token" } });
-
-    // Change token back to original
-    fireEvent.change(tokenInput, {
-      target: { value: "existing-secure-token" },
-    });
-
-    // Save
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      // Ultimately, it matches the initial secure token, so skip encryption
-      expect(setSecureToken).not.toHaveBeenCalled();
-    });
-  });
-
   it("prevents multiple concurrent saves while saving is in progress", async () => {
     // Make store.save take some time to simulate async delay
     let resolveSave: (value: unknown) => void;
@@ -347,44 +241,6 @@ describe("SettingsView", () => {
     await waitFor(() => {
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
-  });
-
-  it("does not fall back to plaintext storage if secure storage fails", async () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {
-      /* intentionally empty */
-    });
-    vi.mocked(setSecureToken).mockRejectedValue(
-      new Error("Secure store disabled"),
-    );
-
-    render(<SettingsView {...defaultProps} />);
-    fireEvent.click(screen.getAllByText("Integrations")[0]);
-
-    await waitFor(() => {
-      expect(mockStore.get).toHaveBeenCalled();
-    });
-
-    const tokenInput = screen.getByPlaceholderText(
-      "Enter your Todoist API token",
-    );
-    fireEvent.change(tokenInput, { target: { value: "new-token-123" } });
-
-    const saveButton = screen.getByRole("button", { name: "Save Changes" });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      // Secure store was called but failed
-      expect(setSecureToken).toHaveBeenCalledWith(
-        "todoist_token",
-        "new-token-123",
-      );
-      expect(mockStore.set).not.toHaveBeenCalledWith(
-        "todoist_token",
-        "new-token-123",
-      );
-      expect(defaultProps.onClose).not.toHaveBeenCalled();
-    });
-    consoleWarnSpy.mockRestore();
   });
 
   it("handles save failure gracefully and resets isSaving state", async () => {
