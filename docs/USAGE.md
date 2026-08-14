@@ -64,6 +64,10 @@ Standard quizzes test your knowledge using multiple-choice questions (A, B, C, D
 - **Answers**: The correct answer must be provided. It can be inline immediately after the options (e.g., `Correct answer: A` or `Answer: A`) or grouped at the end of the file under a **Solutions** heading (e.g., `1 - A`).
 - **Explanations** (Optional): Add explanations using `Explanation:` or `Spiegazione:`.
 
+#### Answer order
+
+When you open a quiz, and whenever you use **Reset**, the app independently shuffles the options for every question and reassigns their displayed letters. The correct answer is remapped for that session, so marking, the score, and the review remain accurate. The shuffled order stays fixed while you answer the quiz; the original Markdown file and its answer key are never changed. Explanations remain attached to their original question.
+
 Example:
 ```markdown
 1. What does HTML stand for?

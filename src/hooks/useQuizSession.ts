@@ -1,13 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { QuizQuestion } from "../types";
+import { shuffleQuizQuestions } from "../utils/quizShuffle";
 
 export function useQuizSession(
   sessionKey: string | undefined,
   questions: QuizQuestion[] | undefined,
 ) {
+  const shuffledQuestions = useMemo(
+    () => (sessionKey && questions ? shuffleQuizQuestions(questions) : []),
+    [sessionKey, questions],
+  );
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [visibleCount, setVisibleCount] = useState(10);
-  const totalQuestions = questions?.length ?? 0;
+  const totalQuestions = shuffledQuestions.length;
 
   useEffect(() => {
     setAnswers({});
@@ -31,14 +36,14 @@ export function useQuizSession(
   );
 
   const answeredCount = Object.keys(answers).length;
-  const correctCount =
-    questions?.filter(
-      (question) => answers[question.id] === question.correct_answer,
-    ).length ?? 0;
+  const correctCount = shuffledQuestions.filter(
+    (question) => answers[question.id] === question.correct_answer,
+  ).length;
 
   return {
     answers,
     setAnswers,
+    questions: shuffledQuestions,
     visibleCount,
     totalQuestions,
     answeredCount,

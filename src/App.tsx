@@ -108,7 +108,7 @@ function App() {
     }
   }, [pendingLink, quizzes.quizzes, quizzes.setSelectedQuizMeta, showToast]);
 
-  const session = useQuizSession(
+  const { questions: shuffledQuestions, ...session } = useQuizSession(
     quizzes.selectedQuizMeta
       ? `${quizzes.selectedQuizMeta.path}:${resetKey}`
       : undefined,
@@ -170,7 +170,11 @@ function App() {
       setSelectedQuiz={quizzes.setSelectedQuizMeta}
       handleSync={() => void quizzes.handleSync()}
       isSyncing={quizzes.isSyncing}
-      activeQuiz={quizzes.activeQuiz}
+      activeQuiz={
+        quizzes.activeQuiz
+          ? { ...quizzes.activeQuiz, questions: shuffledQuestions }
+          : null
+      }
       activeWorksheet={quizzes.activeWorksheet}
       loadingActiveQuiz={quizzes.loadingActiveQuiz}
       resetKey={resetKey}

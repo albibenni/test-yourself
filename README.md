@@ -6,6 +6,7 @@ A local-first quiz application built with **Tauri**, **React**, and **TypeScript
 
 - **Local-First**: Works directly with your local directory of markdown quizzes and worksheets.
 - **Interactive Quizzes & Worksheets**: Parses standard markdown into an interactive Q&A format, and `.worksheet.md` into fill-in-the-blank exercises.
+- **Per-Session Answer Shuffling**: Shuffles every question's options when a quiz opens or resets, while keeping scoring and explanations correct.
 - **Dark & Glassmorphic UI**: Beautiful, eye-friendly design.
 - **Keyboard Navigation**: Optimized for keyboard-heavy workflows.
 - **Powerful Integrations**: Built-in support for Todoist, Obsidian, and custom deep links.
