@@ -63,6 +63,25 @@ export function QuizViewer({
               ? selectedQuiz.title.replace(/_/g, " ")
               : selectedQuiz.title}
           </h1>
+        </div>
+        <div className="quiz-meta-row">
+          <div className="quiz-meta-info">
+            <p className="quiz-topic-line">
+              Topic:{" "}
+              <a
+                href="#"
+                aria-label={`Open topic ${topic}`}
+                onClick={openTopic}
+              >
+                {topic}
+              </a>
+            </p>
+            <p className="quiz-progress-line">
+              {selectedQuiz.is_worksheet
+                ? "Worksheet"
+                : `${answeredCount} of ${totalQuestions} answered`}
+            </p>
+          </div>
           <div className="quiz-header-actions">
             <button
               className="button-secondary"
@@ -81,28 +100,31 @@ export function QuizViewer({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
                 <path d="M3 4v5h5" />
               </svg>
               Reset
             </button>
             <button className="button-primary" onClick={onSchedule}>
-              ▣ Schedule
+              <svg
+                className="quiz-action-icon"
+                aria-hidden="true"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M8 2v4M16 2v4M3 10h18" />
+                <path d="M12 14v4M10 16h4" />
+              </svg>
+              Schedule
             </button>
           </div>
-        </div>
-        <div className="quiz-meta-info">
-          <p className="quiz-topic-line">
-            Topic:{" "}
-            <a href="#" aria-label={`Open topic ${topic}`} onClick={openTopic}>
-              {topic}
-            </a>
-          </p>
-          <p className="quiz-progress-line">
-            {selectedQuiz.is_worksheet
-              ? "Worksheet"
-              : `${answeredCount} of ${totalQuestions} answered`}
-          </p>
         </div>
       </div>
 
