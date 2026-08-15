@@ -14,8 +14,15 @@ export function TopBar({
   onOpenSettings,
   hasUpdate,
 }: TopBarProps) {
+  const isMacOS =
+    navigator.platform === "MacIntel" ||
+    /Macintosh|Mac OS X/.test(navigator.userAgent);
+
   return (
-    <div className="top-bar" data-tauri-drag-region>
+    <div
+      className={`top-bar${isMacOS ? " top-bar--macos" : ""}`}
+      data-tauri-drag-region
+    >
       <div className="top-bar-left">
         <button
           className="top-bar-btn"

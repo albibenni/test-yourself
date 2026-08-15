@@ -492,6 +492,17 @@ body {
   z-index: 2;
 }
 
+/*
+ * The macOS overlay title bar renders its traffic lights over the page.
+ * Leave room for them before placing the sidebar toggle. Other desktop
+ * platforms keep the normal title-bar padding.
+ */
+@media (min-width: 769px) {
+  .top-bar--macos .top-bar-left {
+    padding-left: 112px;
+  }
+}
+
 .top-bar-center {
   position: absolute;
   left: 50%;
