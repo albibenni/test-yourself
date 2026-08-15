@@ -25,6 +25,10 @@ const StoredOAuthTokensSchema = OAuthTokensSchema.extend({
 
 export type StoredOAuthTokens = z.infer<typeof StoredOAuthTokensSchema>;
 
+// Todoist refresh-token rotation means concurrent refreshes using the same
+// token are not safe. Keep one shared refresh in flight for all callers.
+let refreshInFlight: Promise<StoredOAuthTokens> | null = null;
+
 const toBase64Url = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -80,6 +84,38 @@ const storeTokens = async (tokens: z.infer<typeof OAuthTokensSchema>) => {
   return stored;
 };
 
+const refreshTokens = (refreshToken: string) => {
+  if (!refreshInFlight) {
+    refreshInFlight = requestTokens(
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: TODOIST_OAUTH_CLIENT_ID,
+        refresh_token: refreshToken,
+      }),
+    )
+      .then(storeTokens)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+};
+
+const readStoredTokens = async () => {
+  const secret = await getSecureToken("todoist_token");
+  if (!secret) return null;
+  const parsed = StoredOAuthTokensSchema.safeParse(
+    (() => {
+      try {
+        return JSON.parse(secret);
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  return parsed.success ? parsed.data : null;
+};
+
 export async function beginTodoistAuthorization() {
   const request = await createTodoistAuthorizationUrl();
   window.sessionStorage.setItem("todoist_oauth_state", request.state);
@@ -120,29 +156,19 @@ export async function completeTodoistAuthorization(url: string) {
 }
 
 export async function getAuthorizedTodoistToken() {
-  const secret = await getSecureToken("todoist_token");
-  if (!secret) return null;
-  const parsed = StoredOAuthTokensSchema.safeParse(
-    (() => {
-      try {
-        return JSON.parse(secret);
-      } catch {
-        return null;
-      }
-    })(),
-  );
-  if (!parsed.success) return null;
-  if (parsed.data.expires_at - REFRESH_SKEW_MS > Date.now()) {
-    return parsed.data.access_token;
+  const stored = await readStoredTokens();
+  if (!stored) return null;
+  if (stored.expires_at - REFRESH_SKEW_MS > Date.now()) {
+    return stored.access_token;
   }
-  const refreshed = await requestTokens(
-    new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: TODOIST_OAUTH_CLIENT_ID,
-      refresh_token: parsed.data.refresh_token,
-    }),
-  );
-  return (await storeTokens(refreshed)).access_token;
+  return (await refreshTokens(stored.refresh_token)).access_token;
+}
+
+/** Refreshes an existing Todoist connection on demand from Settings. */
+export async function refreshTodoistAccessToken() {
+  const stored = await readStoredTokens();
+  if (!stored) return null;
+  return (await refreshTokens(stored.refresh_token)).access_token;
 }
 
 export function isTodoistOAuthSecret(secret: string | null) {

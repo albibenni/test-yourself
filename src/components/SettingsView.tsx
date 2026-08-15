@@ -13,6 +13,7 @@ import {
   completeTodoistAuthorization,
   getAuthorizedTodoistToken,
   isTodoistOAuthSecret,
+  refreshTodoistAccessToken,
 } from "../todoistOAuth";
 import type { AccentColor, TextColor, ThemeType } from "../types";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
@@ -143,6 +144,10 @@ export function SettingsView({
   const [todoistAuthStatus, setTodoistAuthStatus] = useState<
     "disconnected" | "connected" | "connecting"
   >("disconnected");
+  const [isRefreshingTodoistToken, setIsRefreshingTodoistToken] =
+    useState(false);
+  const [todoistTokenRefreshStatus, setTodoistTokenRefreshStatus] =
+    useState("");
 
   const [updateStatus, setUpdateStatus] = useState(
     updateAvailable ? `Update v${updateAvailable} is available!` : "",
@@ -304,6 +309,23 @@ export function SettingsView({
     await setSecureToken("todoist_token", "");
     setTodoistAuthStatus("disconnected");
     setProjects([]);
+  };
+
+  const refreshTodoistToken = async () => {
+    setIsRefreshingTodoistToken(true);
+    setTodoistTokenRefreshStatus("Refreshing token…");
+    try {
+      const token = await refreshTodoistAccessToken();
+      setTodoistTokenRefreshStatus(
+        token ? "Todoist token refreshed." : "Todoist is not connected.",
+      );
+    } catch (error) {
+      setTodoistTokenRefreshStatus(
+        `Could not refresh token: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setIsRefreshingTodoistToken(false);
+    }
   };
 
   const handleSave = async () => {
@@ -658,14 +680,28 @@ export function SettingsView({
                       : "Connect Todoist"}
                 </button>
                 {todoistAuthStatus === "connected" && (
-                  <button
-                    className="button-secondary"
-                    onClick={() => void disconnectTodoist()}
-                  >
-                    Disconnect
-                  </button>
+                  <>
+                    <button
+                      className="button-secondary"
+                      disabled={isRefreshingTodoistToken}
+                      onClick={() => void refreshTodoistToken()}
+                    >
+                      {isRefreshingTodoistToken
+                        ? "Refreshing token…"
+                        : "Refresh token"}
+                    </button>
+                    <button
+                      className="button-secondary"
+                      onClick={() => void disconnectTodoist()}
+                    >
+                      Disconnect
+                    </button>
+                  </>
                 )}
               </div>
+              {todoistTokenRefreshStatus && (
+                <p role="status">{todoistTokenRefreshStatus}</p>
+              )}
             </SettingsCard>
 
             <SettingsCard
