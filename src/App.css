@@ -1326,9 +1326,9 @@ body {
 }
 
 .quick-add-input:focus-visible {
-  outline: 1px solid color-mix(in srgb, var(--accent-soft) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
   outline-offset: 0;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .quick-add-input::placeholder {
