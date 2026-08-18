@@ -108,7 +108,7 @@ describe("useMiddleClickScroll", () => {
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
   });
 
-  it("uses a larger scroll distance for discrete wheel ticks", () => {
+  it("uses a larger scroll distance for line-mode wheel ticks", () => {
     const { getByTestId } = render(<ScrollArea />);
     const area = getByTestId("scroll-area");
     const scrollBy = vi.fn();
@@ -116,10 +116,24 @@ describe("useMiddleClickScroll", () => {
 
     fireEvent.wheel(area, { deltaMode: WheelEvent.DOM_DELTA_LINE, deltaY: 1 });
 
-    expect(scrollBy).toHaveBeenCalledWith({ top: 96, behavior: "auto" });
+    expect(scrollBy).toHaveBeenCalledWith({ top: 160, behavior: "auto" });
   });
 
-  it("preserves pixel-mode scrolling for touchpads", () => {
+  it("recognizes large pixel-mode deltas as mouse-wheel ticks", () => {
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.wheel(area, {
+      deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+      deltaY: 120,
+    });
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: 160, behavior: "auto" });
+  });
+
+  it("preserves small pixel-mode scrolling for touchpads", () => {
     const { getByTestId } = render(<ScrollArea />);
     const area = getByTestId("scroll-area");
     const scrollBy = vi.fn();

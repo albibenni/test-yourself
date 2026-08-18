@@ -11,7 +11,8 @@ import {
 const DEAD_ZONE_PX = 10;
 const MAX_SCROLL_PER_FRAME = 36;
 const SCROLL_SPEED_MULTIPLIER = 0.15;
-const WHEEL_TICK_SCROLL_PX = 96;
+const WHEEL_TICK_SCROLL_PX = 160;
+const MIN_DISCRETE_PIXEL_DELTA = 40;
 
 interface ScrollState {
   active: boolean;
@@ -125,17 +126,22 @@ export function useMiddleClickScroll(
 
   const onWheel = useCallback(
     (event: WheelEvent<HTMLElement>) => {
-      // Line-mode events represent discrete mouse-wheel ticks. Pixel-mode
-      // events are left to the webview so touchpad scrolling remains natural.
-      if (
-        event.deltaMode !== globalThis.WheelEvent.DOM_DELTA_LINE ||
-        event.deltaY === 0
-      )
-        return;
+      const isLineMode =
+        event.deltaMode === globalThis.WheelEvent.DOM_DELTA_LINE;
+      // Some webviews report physical mouse-wheel ticks as large pixel deltas.
+      // Smaller pixel deltas are kept native for trackpads.
+      const isDiscretePixelMode =
+        event.deltaMode === globalThis.WheelEvent.DOM_DELTA_PIXEL &&
+        event.deltaX === 0 &&
+        Number.isInteger(event.deltaY) &&
+        Math.abs(event.deltaY) >= MIN_DISCRETE_PIXEL_DELTA;
+      if ((!isLineMode && !isDiscretePixelMode) || event.deltaY === 0) return;
 
       event.preventDefault();
       scrollContainerRef.current?.scrollBy({
-        top: event.deltaY * WHEEL_TICK_SCROLL_PX,
+        // A wheel event represents a single physical tick, regardless of the
+        // browser's line/pixel unit or OS line-height preference.
+        top: Math.sign(event.deltaY) * WHEEL_TICK_SCROLL_PX,
         behavior: "auto",
       });
     },
