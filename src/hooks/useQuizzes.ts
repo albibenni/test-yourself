@@ -14,6 +14,8 @@ import {
   type QuizMetadata,
   QuizMetadataArraySchema,
   QuizSchema,
+  type Scenario,
+  ScenarioSchema,
   type Worksheet,
   WorksheetSchema,
 } from "../schemas";
@@ -29,6 +31,7 @@ export function useQuizzes() {
   const [activeWorksheet, setActiveWorksheet] = useState<Worksheet | null>(
     null,
   );
+  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
   const [loadingActiveQuiz, setLoadingActiveQuiz] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,11 +100,23 @@ export function useQuizzes() {
       if (!selectedQuizMeta) {
         setActiveQuiz(null);
         setActiveWorksheet(null);
+        setActiveScenario(null);
         return;
       }
       setLoadingActiveQuiz(true);
       try {
-        if (selectedQuizMeta.is_worksheet) {
+        if (selectedQuizMeta.is_scenario) {
+          const rawData = await invoke("get_scenario_content", {
+            path: selectedQuizMeta.path,
+            topic: selectedQuizMeta.topic,
+          });
+          const fetchedScenario = ScenarioSchema.parse(rawData);
+          if (isCurrent) {
+            setActiveScenario(fetchedScenario);
+            setActiveWorksheet(null);
+            setActiveQuiz(null);
+          }
+        } else if (selectedQuizMeta.is_worksheet) {
           const rawData = await invoke("get_worksheet_content", {
             path: selectedQuizMeta.path,
             topic: selectedQuizMeta.topic,
@@ -110,6 +125,7 @@ export function useQuizzes() {
           if (isCurrent) {
             setActiveWorksheet(fetchedWorksheet);
             setActiveQuiz(null);
+            setActiveScenario(null);
           }
         } else {
           const rawData = await invoke("get_quiz_content", {
@@ -120,6 +136,7 @@ export function useQuizzes() {
           if (isCurrent) {
             setActiveQuiz(fetchedQuiz);
             setActiveWorksheet(null);
+            setActiveScenario(null);
           }
         }
       } catch (error) {
@@ -130,6 +147,7 @@ export function useQuizzes() {
         if (isCurrent) {
           setActiveQuiz(null);
           setActiveWorksheet(null);
+          setActiveScenario(null);
         }
       } finally {
         if (isCurrent) setLoadingActiveQuiz(false);
@@ -246,6 +264,7 @@ export function useQuizzes() {
     setSelectedQuizMeta,
     activeQuiz,
     activeWorksheet,
+    activeScenario,
     loadingActiveQuiz,
     searchQuery,
     setSearchQuery,

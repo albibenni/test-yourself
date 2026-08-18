@@ -36,7 +36,8 @@ pub async fn parse_quizzes(md_files: Vec<(PathBuf, String)>) -> Vec<Quiz> {
     let mut quizzes = Vec::new();
 
     for (path, topic) in md_files {
-        if !path.to_string_lossy().ends_with(".worksheet.md") {
+        if !path.to_string_lossy().ends_with(".worksheet.md")
+            && !path.to_string_lossy().ends_with(".scenario.md") {
             if let Some(quiz) = parse_quiz_file(&path, &topic).await {
                 quizzes.push(quiz);
             }
@@ -60,6 +61,18 @@ pub async fn parse_quizzes_metadata(
                     topic: ws.topic,
                     last_modified: ws.last_modified,
                     is_worksheet: true,
+                    is_scenario: false,
+                });
+            }
+        } else if path.to_string_lossy().ends_with(".scenario.md") {
+            if let Some(scenario) = super::markdown::parse_scenario_file(&path, &topic).await {
+                metadata.push(crate::models::QuizMetadata {
+                    title: scenario.title,
+                    path: scenario.path,
+                    topic: scenario.topic,
+                    last_modified: scenario.last_modified,
+                    is_worksheet: false,
+                    is_scenario: true,
                 });
             }
         } else {
@@ -70,6 +83,7 @@ pub async fn parse_quizzes_metadata(
                     topic: quiz.topic,
                     last_modified: quiz.last_modified,
                     is_worksheet: false,
+                    is_scenario: false,
                 });
             }
         }

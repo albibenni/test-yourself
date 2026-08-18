@@ -198,6 +198,18 @@ async fn get_worksheet_content(
     }
 }
 
+#[tauri::command]
+async fn get_scenario_content(
+    app_handle: tauri::AppHandle,
+    path: String,
+    topic: String,
+) -> Result<models::Scenario, String> {
+    let path_buf = resolve_quiz_path(&app_handle, &path).await?;
+    parser::markdown::parse_scenario_file(&path_buf, &topic)
+        .await
+        .ok_or_else(|| format!("Could not parse scenario: {}", path))
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct FolderItem {
     pub name: String,
@@ -387,6 +399,7 @@ pub fn run() {
             get_quizzes,
             get_quiz_content,
             get_worksheet_content,
+            get_scenario_content,
             get_initial_url,
             is_arch_linux,
             custom_linux_relaunch,

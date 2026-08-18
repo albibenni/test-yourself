@@ -120,7 +120,11 @@ export function ScheduleModal({
 
   useEffect(() => {
     if (isOpen && quiz) {
-      const prefix = quiz.is_worksheet ? "Review Worksheet" : "Review Quiz";
+      const prefix = quiz.is_scenario
+        ? "Review Scenario"
+        : quiz.is_worksheet
+          ? "Review Worksheet"
+          : "Review Quiz";
       setTaskContent(`${prefix}: ${quiz.title}`);
       setTaskDescription("");
       setShowCalendar(false);
@@ -201,7 +205,11 @@ export function ScheduleModal({
     setIsCheckingSchedule(true);
     setError("");
     try {
-      const prefix = quiz.is_worksheet ? "Review Worksheet" : "Review Quiz";
+      const prefix = quiz.is_scenario
+        ? "Review Scenario"
+        : quiz.is_worksheet
+          ? "Review Worksheet"
+          : "Review Quiz";
       const expectedContent = `${prefix}: ${quiz.title}`;
 
       // Use the dedicated v1 filter endpoint to accurately search all tasks, avoiding pagination limits
@@ -267,7 +275,11 @@ export function ScheduleModal({
     setError("");
 
     try {
-      const extension = quiz.is_worksheet ? ".worksheet.md" : ".md";
+      const extension = quiz.is_scenario
+        ? ".scenario.md"
+        : quiz.is_worksheet
+          ? ".worksheet.md"
+          : ".md";
       const relativePath = quiz.topic
         ? `${quiz.topic}/${quiz.title}${extension}`
         : `${quiz.title}${extension}`;

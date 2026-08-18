@@ -33,14 +33,16 @@ export function Sidebar({
 }: SidebarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<"quizzes" | "worksheets">(
-    "quizzes",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "quizzes" | "worksheets" | "scenarios"
+  >("quizzes");
 
   useEffect(() => {
     if (selectedQuiz) {
       if (selectedQuiz.is_worksheet) {
         setTimeout(() => setActiveTab("worksheets"), 0);
+      } else if (selectedQuiz.is_scenario) {
+        setTimeout(() => setActiveTab("scenarios"), 0);
       } else {
         setTimeout(() => setActiveTab("quizzes"), 0);
       }
@@ -50,9 +52,11 @@ export function Sidebar({
   const filteredGroupedQuizzes = useMemo(() => {
     const filtered: Record<string, QuizMetadata[]> = {};
     for (const [topic, quizzes] of Object.entries(groupedQuizzes)) {
-      const matching = quizzes.filter((q) =>
-        activeTab === "quizzes" ? !q.is_worksheet : q.is_worksheet,
-      );
+      const matching = quizzes.filter((q) => {
+        if (activeTab === "worksheets") return q.is_worksheet;
+        if (activeTab === "scenarios") return q.is_scenario;
+        return !q.is_worksheet && !q.is_scenario;
+      });
       if (matching.length > 0) {
         filtered[topic] = matching;
       }
@@ -275,6 +279,32 @@ export function Sidebar({
         >
           Worksheets
         </button>
+        <button
+          style={{
+            flex: 1,
+            padding: "0.75rem 0.5rem",
+            background: "none",
+            border: "none",
+            borderBottom:
+              activeTab === "scenarios"
+                ? "2px solid var(--accent-color)"
+                : "2px solid transparent",
+            color:
+              activeTab === "scenarios"
+                ? "var(--text-primary)"
+                : "var(--text-secondary)",
+            fontWeight: activeTab === "scenarios" ? 600 : 400,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            fontSize: "0.9rem",
+          }}
+          onClick={() => {
+            setActiveTab("scenarios");
+            setFocusedQuizIndex(0);
+          }}
+        >
+          Scenarios
+        </button>
       </div>
       <hr className="sidebar-divider" style={{ marginTop: 0 }} />
       <div className="sidebar-content">
@@ -341,7 +371,9 @@ export function Sidebar({
         {flatQuizzes.length === 1
           ? activeTab === "quizzes"
             ? "quiz"
-            : "worksheet"
+            : activeTab === "worksheets"
+              ? "worksheet"
+              : "scenario"
           : activeTab}
       </div>
     </aside>

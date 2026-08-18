@@ -36,6 +36,7 @@ pub async fn parse_quiz_metadata(
         topic: topic.to_string(),
         last_modified,
         is_worksheet: filepath.to_string_lossy().ends_with(".worksheet.md"),
+        is_scenario: filepath.to_string_lossy().ends_with(".scenario.md"),
     })
 }
 
@@ -72,6 +73,40 @@ pub async fn parse_worksheet_file(
         content: actual_content.trim_start().to_string(),
         last_modified,
     })
+}
+
+pub async fn parse_scenario_file(
+    filepath: &Path,
+    topic: &str,
+) -> Option<crate::models::Scenario> {
+    let content = tokio::fs::read_to_string(filepath).await.ok()?;
+    let metadata = tokio::fs::metadata(filepath).await.ok()?;
+    let last_modified = metadata
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+    let file_stem = filepath.file_stem()?.to_string_lossy().to_string();
+    let title = file_stem.replace(".scenario", "");
+    let actual_content = strip_frontmatter(&content);
+
+    Some(crate::models::Scenario {
+        title,
+        path: filepath.to_path_buf(),
+        topic: topic.to_string(),
+        content: actual_content.trim_start().to_string(),
+        last_modified,
+    })
+}
+
+fn strip_frontmatter(content: &str) -> &str {
+    if content.starts_with("---") {
+        if let Some(end_idx) = content[3..].find("---") {
+            return &content[3 + end_idx + 3..];
+        }
+    }
+    content
 }
 
 async fn read_quiz_metadata(filepath: &Path, topic: &str) -> Option<(String, Quiz)> {

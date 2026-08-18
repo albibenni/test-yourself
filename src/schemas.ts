@@ -31,6 +31,7 @@ export const QuizMetadataSchema = z.object({
   topic: z.string(),
   last_modified: z.number(),
   is_worksheet: z.boolean().optional(),
+  is_scenario: z.boolean().optional(),
 });
 export type QuizMetadata = z.infer<typeof QuizMetadataSchema>;
 export const QuizMetadataArraySchema = z.array(QuizMetadataSchema);
@@ -43,6 +44,15 @@ export const WorksheetSchema = z.object({
   last_modified: z.number(),
 });
 export type Worksheet = z.infer<typeof WorksheetSchema>;
+
+export const ScenarioSchema = z.object({
+  title: z.string(),
+  path: z.string(),
+  topic: z.string(),
+  content: z.string(),
+  last_modified: z.number(),
+});
+export type Scenario = z.infer<typeof ScenarioSchema>;
 
 // Task Provider Schemas
 export const ProjectSchema = z

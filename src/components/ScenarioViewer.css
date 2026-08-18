@@ -1,0 +1,80 @@
+.scenario-viewer {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 2rem;
+}
+
+.scenario-intro {
+  color: var(--text-secondary);
+  margin-top: 0;
+}
+
+.scenario-section,
+.scenario-answer-key {
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
+
+.scenario-content {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.scenario-content p:first-child,
+.scenario-content ol:first-child {
+  margin-top: 0;
+}
+
+.scenario-code-block {
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin: 1rem 0;
+  overflow-x: auto;
+  padding: 1rem;
+  white-space: pre;
+}
+
+.scenario-code-block code,
+.scenario-content code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.scenario-content :not(pre) > code {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+
+.scenario-response {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  font: inherit;
+  margin-top: 1rem;
+  min-height: 10rem;
+  padding: 0.75rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.scenario-response:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.scenario-answer-content {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .scenario-viewer {
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+}

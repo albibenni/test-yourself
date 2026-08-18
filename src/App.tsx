@@ -194,6 +194,7 @@ function App() {
           : null
       }
       activeWorksheet={quizzes.activeWorksheet}
+      activeScenario={quizzes.activeScenario}
       loadingActiveQuiz={quizzes.loadingActiveQuiz}
       resetKey={resetKey}
       setResetKey={setResetKey}

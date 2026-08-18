@@ -15,6 +15,7 @@ import type {
   Quiz,
   QuizMetadata,
   ReducedMotionPreference,
+  Scenario,
   TextColor,
   TextScale,
   ThemeType,
@@ -78,6 +79,7 @@ interface AppLayoutProps {
   isSyncing: boolean;
   activeQuiz: Quiz | null;
   activeWorksheet: Worksheet | null;
+  activeScenario: Scenario | null;
   loadingActiveQuiz: boolean;
   resetKey: number;
   setResetKey: Dispatch<SetStateAction<number>>;
@@ -86,6 +88,7 @@ interface AppLayoutProps {
     | "selectedQuiz"
     | "activeQuiz"
     | "activeWorksheet"
+    | "activeScenario"
     | "loadingActiveQuiz"
     | "resetKey"
     | "onReset"
@@ -147,6 +150,7 @@ export function AppLayout(props: AppLayoutProps) {
     isSyncing,
     activeQuiz,
     activeWorksheet,
+    activeScenario,
     loadingActiveQuiz,
     resetKey,
     setResetKey,
@@ -371,6 +375,7 @@ export function AppLayout(props: AppLayoutProps) {
                   selectedQuiz={selectedQuiz}
                   activeQuiz={activeQuiz}
                   activeWorksheet={activeWorksheet}
+                  activeScenario={activeScenario}
                   loadingActiveQuiz={loadingActiveQuiz}
                   resetKey={resetKey}
                   onReset={() => setResetKey((k) => k + 1)}

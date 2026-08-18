@@ -32,10 +32,20 @@ pub struct QuizMetadata {
     pub topic: String,
     pub last_modified: u64,
     pub is_worksheet: bool,
+    pub is_scenario: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Worksheet {
+    pub title: String,
+    pub path: PathBuf,
+    pub topic: String,
+    pub content: String,
+    pub last_modified: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Scenario {
     pub title: String,
     pub path: PathBuf,
     pub topic: String,

@@ -1,8 +1,9 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { DEFAULT_TOPIC } from "../constants";
-import type { Quiz, QuizMetadata, Worksheet } from "../types";
+import type { Quiz, QuizMetadata, Scenario, Worksheet } from "../types";
 import { QuestionCard } from "./QuestionCard";
+import { ScenarioViewer } from "./ScenarioViewer";
 import { WorksheetViewer } from "./WorksheetViewer";
 
 interface QuizSessionState {
@@ -22,6 +23,7 @@ interface QuizViewerProps extends QuizSessionState {
   selectedQuiz: QuizMetadata;
   activeQuiz: Quiz | null;
   activeWorksheet: Worksheet | null;
+  activeScenario: Scenario | null;
   loadingActiveQuiz: boolean;
   resetKey: number;
   onReset: () => void;
@@ -32,6 +34,7 @@ export function QuizViewer({
   selectedQuiz,
   activeQuiz,
   activeWorksheet,
+  activeScenario,
   loadingActiveQuiz,
   resetKey,
   onReset,
@@ -79,7 +82,9 @@ export function QuizViewer({
             <p className="quiz-progress-line">
               {selectedQuiz.is_worksheet
                 ? "Worksheet"
-                : `${answeredCount} of ${totalQuestions} answered`}
+                : selectedQuiz.is_scenario
+                  ? "Scenario lab"
+                  : `${answeredCount} of ${totalQuestions} answered`}
             </p>
           </div>
           <div className="quiz-header-actions">
@@ -134,6 +139,11 @@ export function QuizViewer({
         <WorksheetViewer
           key={`${activeWorksheet.path}-${resetKey}`}
           worksheet={activeWorksheet}
+        />
+      ) : activeScenario ? (
+        <ScenarioViewer
+          key={`${activeScenario.path}-${resetKey}`}
+          scenario={activeScenario}
         />
       ) : activeQuiz ? (
         <QuizQuestions

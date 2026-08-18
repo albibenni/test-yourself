@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use tauri_app_lib::parser::discovery::{find_markdown_files, get_all_quizzes};
+use tauri_app_lib::parser::discovery::{
+    find_markdown_files, get_all_quizzes, get_all_quizzes_metadata,
+};
 use tempfile::tempdir;
 
 #[tokio::test]
@@ -62,6 +64,20 @@ async fn test_discovery_ignores_file_path() {
     // If it yields the file, and its extension is .md, it parses it!
     // So it might return 1! Let's check what it actually does. We can just assert that it works or is empty.
     // Actually, WalkDir on a file works. So this is not an error!
+}
+
+#[tokio::test]
+async fn test_discovery_classifies_spiffe_mtls_scenario_filename() {
+    let dir = tempdir().unwrap();
+    let scenario_path = dir.path().join("SPIFFE-SPIRE and mTLS.scenario.md");
+    File::create(&scenario_path).unwrap();
+
+    let content = get_all_quizzes_metadata(dir.path().to_str().unwrap()).await;
+
+    assert_eq!(content.len(), 1);
+    assert_eq!(content[0].title, "SPIFFE-SPIRE and mTLS");
+    assert!(content[0].is_scenario);
+    assert!(!content[0].is_worksheet);
 }
 
 #[tokio::test]
