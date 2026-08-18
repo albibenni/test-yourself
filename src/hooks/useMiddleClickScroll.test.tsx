@@ -49,7 +49,7 @@ describe("useMiddleClickScroll", () => {
     fireEvent.mouseMove(window, { clientY: 160 });
     animationFrames[0]?.(0);
 
-    expect(scrollBy).toHaveBeenCalledWith({ top: 7.5, behavior: "auto" });
+    expect(scrollBy).toHaveBeenCalledWith({ top: 25, behavior: "auto" });
     expect(getByTestId("indicator")).toHaveTextContent("down");
   });
 
@@ -64,7 +64,21 @@ describe("useMiddleClickScroll", () => {
     fireEvent.mouseMove(window, { clientY: 40 });
     animationFrames[0]?.(0);
 
-    expect(scrollBy).toHaveBeenCalledWith({ top: -7.5, behavior: "auto" });
+    expect(scrollBy).toHaveBeenCalledWith({ top: -25, behavior: "auto" });
+  });
+
+  it("caps the speed when the pointer is far from the overlay", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    fireEvent.mouseMove(window, { clientY: 1_000 });
+    animationFrames[0]?.(0);
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: 120, behavior: "auto" });
   });
 
   it("keeps scrolling after release and stops on a second middle-click", () => {

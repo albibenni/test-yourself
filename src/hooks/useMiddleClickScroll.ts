@@ -9,8 +9,8 @@ import {
 } from "react";
 
 const DEAD_ZONE_PX = 10;
-const MAX_SCROLL_PER_FRAME = 36;
-const SCROLL_SPEED_MULTIPLIER = 0.15;
+const MAX_SCROLL_PER_FRAME = 120;
+const SCROLL_SPEED_MULTIPLIER = 0.5;
 const WHEEL_TICK_SCROLL_PX = 160;
 const MIN_DISCRETE_PIXEL_DELTA = 40;
 
