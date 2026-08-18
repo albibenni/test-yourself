@@ -1,0 +1,105 @@
+import { fireEvent, render } from "@testing-library/react";
+import { useRef } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useMiddleClickScroll } from "./useMiddleClickScroll";
+
+function ScrollArea() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { indicator, onMouseDown } = useMiddleClickScroll(ref);
+  return (
+    <div data-testid="scroll-area" onMouseDown={onMouseDown} ref={ref}>
+      {indicator && (
+        <output data-testid="indicator">{indicator.direction}</output>
+      )}
+    </div>
+  );
+}
+
+describe("useMiddleClickScroll", () => {
+  let animationFrames: FrameRequestCallback[] = [];
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    animationFrames = [];
+  });
+
+  function mockAnimationFrame() {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      animationFrames.push(callback);
+      return animationFrames.length;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
+      () => undefined,
+    );
+  }
+
+  it("scrolls down when the pointer moves below the middle-click origin", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    fireEvent.mouseMove(window, { clientY: 160 });
+    animationFrames[0]?.(0);
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: 7.5, behavior: "auto" });
+    expect(getByTestId("indicator")).toHaveTextContent("down");
+  });
+
+  it("scrolls up when the pointer moves above the middle-click origin", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    fireEvent.mouseMove(window, { clientY: 40 });
+    animationFrames[0]?.(0);
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: -7.5, behavior: "auto" });
+  });
+
+  it("keeps scrolling after release and stops on a second middle-click", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.mouseDown(area, { button: 0, clientY: 100 });
+    expect(animationFrames).toHaveLength(0);
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    fireEvent.mouseMove(window, { clientY: 160 });
+    fireEvent.mouseUp(window);
+    animationFrames[0]?.(0);
+
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 160 });
+    animationFrames[1]?.(0);
+
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(2);
+    expect(() => getByTestId("indicator")).toThrow();
+  });
+
+  it("stops on a primary click", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    fireEvent.mouseMove(window, { clientY: 160 });
+    fireEvent.mouseDown(area, { button: 0, clientY: 160 });
+    animationFrames[0]?.(0);
+
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+});

@@ -943,6 +943,51 @@ body {
   min-width: 0;
 }
 
+.auto-scroll-overlay {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  width: 48px;
+  height: 72px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 75%, white);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  color: var(--text-secondary);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.auto-scroll-arrow {
+  width: 100%;
+  color: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  transition:
+    color 0.1s ease,
+    transform 0.1s ease;
+}
+
+.auto-scroll-arrow.active {
+  color: var(--accent-soft);
+  text-shadow: 0 0 10px var(--accent-color);
+  transform: scale(1.2);
+}
+
+.auto-scroll-center {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.25);
+}
+
 .toggle-sidebar-btn {
   background: transparent;
   border: none;

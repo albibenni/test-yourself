@@ -1,5 +1,12 @@
 import { confirm } from "@tauri-apps/plugin-dialog";
-import { type Dispatch, lazy, type SetStateAction, Suspense } from "react";
+import {
+  type Dispatch,
+  lazy,
+  type SetStateAction,
+  Suspense,
+  useRef,
+} from "react";
+import { useMiddleClickScroll } from "../hooks/useMiddleClickScroll";
 import type {
   AccentColor,
   Quiz,
@@ -75,6 +82,12 @@ interface AppLayoutProps {
 }
 
 export function AppLayout(props: AppLayoutProps) {
+  const mainContentRef = useRef<HTMLElement>(null);
+  const {
+    indicator: autoScrollIndicator,
+    onAuxClick: handleMainContentAuxClick,
+    onMouseDown: handleMainContentMouseDown,
+  } = useMiddleClickScroll(mainContentRef);
   const {
     sidebarOpen,
     setSidebarOpen,
@@ -156,7 +169,42 @@ export function AppLayout(props: AppLayoutProps) {
           setIsSidebarOpen={setSidebarOpen}
           onOpenSettings={() => setSettingsOpen(true)}
         />
-        <main className="main-content">
+        <main
+          className="main-content"
+          ref={mainContentRef}
+          onAuxClick={handleMainContentAuxClick}
+          onMouseDown={handleMainContentMouseDown}
+        >
+          {autoScrollIndicator && (
+            <div
+              aria-hidden="true"
+              className="auto-scroll-overlay"
+              style={{
+                left: autoScrollIndicator.x,
+                top: autoScrollIndicator.y,
+              }}
+            >
+              <span
+                className={
+                  autoScrollIndicator.direction === "up"
+                    ? "auto-scroll-arrow active"
+                    : "auto-scroll-arrow"
+                }
+              >
+                ↑
+              </span>
+              <span className="auto-scroll-center" />
+              <span
+                className={
+                  autoScrollIndicator.direction === "down"
+                    ? "auto-scroll-arrow active"
+                    : "auto-scroll-arrow"
+                }
+              >
+                ↓
+              </span>
+            </div>
+          )}
           {settingsOpen && (
             <Suspense
               fallback={
