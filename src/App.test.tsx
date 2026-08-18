@@ -222,6 +222,44 @@ describe("App Component", () => {
     expect(screen.getByText("Facebook made React.")).toBeInTheDocument();
   });
 
+  it("loads a selected scenario through the scenario command", async () => {
+    const scenario = {
+      title: "SPIFFE-SPIRE and mTLS",
+      path: "/path/SPIFFE-SPIRE and mTLS.scenario.md",
+      topic: "Security",
+      last_modified: 1234567890,
+      is_scenario: true,
+    };
+    const scenarioContent = {
+      ...scenario,
+      content:
+        "## Scenario\n\nA trusted certificate has the wrong SPIFFE ID.\n\n## Answer Key\n\nDeny it.",
+    };
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes")
+        return Promise.resolve([...mockQuizzes, scenario]);
+      if (cmd === "get_scenario_content")
+        return Promise.resolve(scenarioContent);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await screen.findByText("React Basics");
+    fireEvent.click(screen.getByRole("button", { name: "Scenarios" }));
+    fireEvent.click(screen.getByText(scenario.title));
+
+    expect(await screen.findByText("Scenario lab")).toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith("get_scenario_content", {
+      path: scenario.path,
+      topic: scenario.topic,
+    });
+    expect(invoke).not.toHaveBeenCalledWith(
+      "get_worksheet_content",
+      expect.anything(),
+    );
+  });
+
   it("handles invoke errors gracefully", async () => {
     vi.mocked(invoke).mockRejectedValue(new Error("Failed to load"));
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {
@@ -654,6 +692,44 @@ describe("App Component", () => {
     // No alert should fire (no parse errors)
     expect(alertCalls).toEqual([]);
     alertSpy.mockRestore();
+  });
+
+  it("reopens a scheduled scenario deep link", async () => {
+    const path =
+      "/Users/benni/SecondBrain/Computer Science/Security/Authentication/SPIFFE-SPIRE and mTLS.scenario.md";
+    const scenario = {
+      title: "SPIFFE-SPIRE and mTLS",
+      path,
+      topic: "Computer Science/Security/Authentication",
+      last_modified: 1234567890,
+      is_scenario: true,
+    };
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve([scenario]);
+      if (cmd === "get_scenario_content")
+        return Promise.resolve({
+          ...scenario,
+          content: "## Scenario\n\nEvidence",
+        });
+      if (cmd === "get_initial_url")
+        return Promise.resolve(
+          "test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.scenario.md",
+        );
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "SPIFFE-SPIRE and mTLS",
+        level: 1,
+      }),
+    ).toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith("get_scenario_content", {
+      path,
+      topic: scenario.topic,
+    });
   });
 
   it("onOpenUrl callback opens the correct quiz", async () => {

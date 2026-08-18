@@ -78,6 +78,7 @@ async fn test_discovery_classifies_spiffe_mtls_scenario_filename() {
     assert_eq!(content[0].title, "SPIFFE-SPIRE and mTLS");
     assert!(content[0].is_scenario);
     assert!(!content[0].is_worksheet);
+    assert!(get_all_quizzes(dir.path().to_str().unwrap()).await.is_empty());
 }
 
 #[tokio::test]

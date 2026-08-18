@@ -56,4 +56,84 @@ The TLS handshake can succeed, but authorization must deny the caller.`,
     ).toBeInTheDocument();
     expect(screen.queryByText("```text")).not.toBeInTheDocument();
   });
+
+  it.each(["Model Answer", "Solution"])(
+    "hides a %s section until it is revealed",
+    (answerHeading) => {
+      render(
+        <ScenarioViewer
+          scenario={{
+            ...scenario,
+            content: `## Scenario\n\nEvidence\n\n## ${answerHeading}\n\nHidden solution`,
+          }}
+        />,
+      );
+
+      expect(screen.queryByText("Hidden solution")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reveal answer key/i }),
+      ).toHaveAttribute("aria-expanded", "false");
+      fireEvent.click(
+        screen.getByRole("button", { name: /reveal answer key/i }),
+      );
+      expect(screen.getByText("Hidden solution")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /hide answer key/i }),
+      ).toHaveAttribute("aria-expanded", "true");
+    },
+  );
+
+  it("handles scenarios without an answer key", () => {
+    render(
+      <ScenarioViewer
+        scenario={{ ...scenario, content: "## Scenario\n\nOnly the prompt." }}
+      />,
+    );
+
+    expect(screen.getByText("Only the prompt.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /answer key/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears a response when the learner switches scenarios", () => {
+    const { rerender } = render(<ScenarioViewer scenario={scenario} />);
+    const response = screen.getByRole("textbox", { name: "Your Response" });
+    fireEvent.change(response, { target: { value: "My diagnosis" } });
+    expect(response).toHaveValue("My diagnosis");
+
+    rerender(
+      <ScenarioViewer
+        scenario={{ ...scenario, path: "/vault/next.scenario.md" }}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "Your Response" })).toHaveValue(
+      "",
+    );
+  });
+
+  it("renders multiple fenced blocks and numbered lists", () => {
+    render(
+      <ScenarioViewer
+        scenario={{
+          ...scenario,
+          content: `## Scenario
+
+\`\`\`text
+first
+\`\`\`
+
+1. Inspect the SVID
+2. Match the policy
+
+\`\`\`text
+second
+\`\`\``,
+        }}
+      />,
+    );
+
+    expect(screen.getAllByText(/^(first|second)$/)).toHaveLength(2);
+    expect(screen.getByRole("list")).toHaveTextContent("Inspect the SVID");
+  });
 });

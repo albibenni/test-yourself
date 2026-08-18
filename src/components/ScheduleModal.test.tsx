@@ -121,6 +121,36 @@ describe("ScheduleModal", () => {
     });
   });
 
+  it("schedules a scenario with its .scenario.md deep link", async () => {
+    render(
+      <ScheduleModal
+        {...defaultProps}
+        quiz={{
+          ...mockQuiz,
+          title: "SPIFFE-SPIRE and mTLS",
+          topic: "Computer Science/Security/Authentication",
+          is_scenario: true,
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(mockGetDefaultSettings).toHaveBeenCalled());
+    expect(
+      screen.getByDisplayValue("Review Scenario: SPIFFE-SPIRE and mTLS"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
+
+    await waitFor(() => {
+      expect(mockAddTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: "Review Scenario: SPIFFE-SPIRE and mTLS",
+          description:
+            "[Open Quiz](test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.scenario.md)",
+        }),
+      );
+    });
+  });
+
   it("does not reset the date when typing '1w' and then hitting Enter", async () => {
     // To properly simulate the bug where useTodoist might return a new instance of getDefaultSettings on re-render
     // we could dynamically return a new mock, but the main goal is to test the '1w' parsing and submit.

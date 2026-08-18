@@ -1,15 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { Quiz } from "../types";
+import type { QuizMetadata } from "../types";
 import { Sidebar } from "./Sidebar";
 
-const mockQuizzes: Record<string, Quiz[]> = {
+const mockQuizzes: Record<string, QuizMetadata[]> = {
   Frontend: [
     {
       title: "React Basics",
       path: "/react.md",
       topic: "Frontend",
-      questions: [],
       last_modified: 0,
     },
   ],
@@ -18,10 +17,17 @@ const mockQuizzes: Record<string, Quiz[]> = {
       title: "Rust Basics",
       path: "/rust.md",
       topic: "Backend",
-      questions: [],
       last_modified: 0,
     },
   ],
+};
+
+const scenario = {
+  title: "SPIFFE-SPIRE and mTLS",
+  path: "/SPIFFE-SPIRE and mTLS.scenario.md",
+  topic: "Security",
+  last_modified: 0,
+  is_scenario: true,
 };
 
 describe("Sidebar Component", () => {
@@ -171,5 +177,26 @@ describe("Sidebar Component", () => {
     const syncBtn = screen.getByRole("button", { name: "Sync Quizzes" });
     fireEvent.click(syncBtn);
     expect(handleSync).toHaveBeenCalledOnce();
+  });
+
+  it("shows scenario files only in the Scenarios tab", () => {
+    render(
+      <Sidebar
+        isSidebarOpen={true}
+        searchQuery=""
+        setSearchQuery={vi.fn()}
+        loading={false}
+        groupedQuizzes={{ Security: [scenario] }}
+        selectedQuiz={null}
+        setSelectedQuiz={vi.fn()}
+        handleSync={vi.fn()}
+        isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(scenario.title)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Scenarios" }));
+    expect(screen.getByText(scenario.title)).toBeInTheDocument();
   });
 });

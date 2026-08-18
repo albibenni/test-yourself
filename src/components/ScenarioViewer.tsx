@@ -98,6 +98,10 @@ function MarkdownContent({ content }: { content: string }) {
 }
 
 export function ScenarioViewer({ scenario }: ScenarioViewerProps) {
+  return <ScenarioBody key={scenario.path} scenario={scenario} />;
+}
+
+function ScenarioBody({ scenario }: ScenarioViewerProps) {
   const sections = useMemo(() => splitSections(scenario.content), [scenario]);
   const answerKey = sections.find((section) =>
     /^(answer key|model answer|solution)$/i.test(section.title),
