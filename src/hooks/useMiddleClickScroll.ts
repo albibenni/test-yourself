@@ -106,6 +106,18 @@ export function useMiddleClickScroll(
 
       // Prevent the webview's platform-specific middle-click behavior.
       event.preventDefault();
+      const reducedMotionPreference =
+        document.documentElement.dataset.reducedMotion;
+      const shouldReduceMotion =
+        reducedMotionPreference === "reduce" ||
+        (reducedMotionPreference !== "reduce" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      if (shouldReduceMotion) {
+        setAnnouncement(
+          "Auto-scroll is disabled while reduced motion is enabled.",
+        );
+        return;
+      }
       if (state.active) {
         stopScrolling();
         return;

@@ -24,8 +24,20 @@ function App() {
   const [resetKey, setResetKey] = useState(0);
   const [pendingLink, setPendingLink] = useState<string | null>(null);
   const isIOS = osType() === "ios";
-  const { theme, accent, textColor, saveTheme, saveAccent, saveTextColor } =
-    useTheme();
+  const {
+    theme,
+    accent,
+    textColor,
+    textScale,
+    contrast,
+    reducedMotion,
+    saveTheme,
+    saveAccent,
+    saveTextColor,
+    saveTextScale,
+    saveContrast,
+    saveReducedMotion,
+  } = useTheme();
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(null), 3000);
@@ -155,9 +167,15 @@ function App() {
       theme={theme}
       accent={accent}
       textColor={textColor}
+      textScale={textScale}
+      contrast={contrast}
+      reducedMotion={reducedMotion}
       saveTheme={saveTheme}
       saveAccent={saveAccent}
       saveTextColor={saveTextColor}
+      saveTextScale={saveTextScale}
+      saveContrast={saveContrast}
+      saveReducedMotion={saveReducedMotion}
       selectIosFolder={selectIosFolder}
       basePath={quizzes.basePath}
       updateBasePath={quizzes.updateBasePath}

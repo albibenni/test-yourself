@@ -15,7 +15,14 @@ import {
   isTodoistOAuthSecret,
   refreshTodoistAccessToken,
 } from "../todoistOAuth";
-import type { AccentColor, TextColor, ThemeType } from "../types";
+import type {
+  AccentColor,
+  ContrastPreference,
+  ReducedMotionPreference,
+  TextColor,
+  TextScale,
+  ThemeType,
+} from "../types";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import "./SettingsView.css";
 
@@ -29,9 +36,15 @@ interface SettingsViewProps {
   theme: ThemeType;
   accent: AccentColor;
   textColor: TextColor;
+  textScale: TextScale;
+  contrast: ContrastPreference;
+  reducedMotion: ReducedMotionPreference;
   onThemeChange: (theme: ThemeType) => void;
   onAccentChange: (accent: AccentColor) => void;
   onTextColorChange: (textColor: TextColor) => void;
+  onTextScaleChange: (textScale: TextScale) => void;
+  onContrastChange: (contrast: ContrastPreference) => void;
+  onReducedMotionChange: (reducedMotion: ReducedMotionPreference) => void;
   updateAvailable?: string | null;
   onSaveSuccess?: () => void;
   onSaveError?: (message: string) => void;
@@ -94,9 +107,15 @@ export function SettingsView({
   theme,
   accent,
   textColor,
+  textScale,
+  contrast,
+  reducedMotion,
   onThemeChange,
   onAccentChange,
   onTextColorChange,
+  onTextScaleChange,
+  onContrastChange,
+  onReducedMotionChange,
   updateAvailable,
   onSaveSuccess,
   onSaveError,
@@ -575,6 +594,50 @@ export function SettingsView({
                   { label: "Neutral", value: "neutral" },
                   { label: "Stone", value: "stone" },
                   { label: "Accent", value: "accent" },
+                ]}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Text Size"
+              subtitle="Increase text size across the app."
+            >
+              <SegmentedControl
+                value={textScale}
+                onChange={onTextScaleChange}
+                options={[
+                  { label: "Small", value: "small" },
+                  { label: "Default", value: "default" },
+                  { label: "Large", value: "large" },
+                  { label: "Larger", value: "larger" },
+                ]}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Contrast"
+              subtitle="Use stronger borders and control outlines."
+            >
+              <SegmentedControl
+                value={contrast}
+                onChange={onContrastChange}
+                options={[
+                  { label: "System", value: "system" },
+                  { label: "High", value: "more" },
+                ]}
+              />
+            </SettingsCard>
+
+            <SettingsCard
+              title="Motion"
+              subtitle="Reduce interface movement and disable continuous auto-scroll."
+            >
+              <SegmentedControl
+                value={reducedMotion}
+                onChange={onReducedMotionChange}
+                options={[
+                  { label: "System", value: "system" },
+                  { label: "Reduce", value: "reduce" },
                 ]}
               />
             </SettingsCard>

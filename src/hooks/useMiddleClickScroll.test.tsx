@@ -28,6 +28,7 @@ describe("useMiddleClickScroll", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     animationFrames = [];
+    document.documentElement.removeAttribute("data-reduced-motion");
   });
 
   function mockAnimationFrame() {
@@ -140,6 +141,22 @@ describe("useMiddleClickScroll", () => {
       "Auto-scroll stopped.",
     );
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+
+  it("does not activate continuous auto-scroll when reduced motion is enabled", () => {
+    mockAnimationFrame();
+    document.documentElement.dataset.reducedMotion = "reduce";
+    const { getByTestId } = render(<ScrollArea />);
+
+    fireEvent.mouseDown(getByTestId("scroll-area"), {
+      button: 1,
+      clientY: 100,
+    });
+
+    expect(animationFrames).toHaveLength(0);
+    expect(getByTestId("announcement")).toHaveTextContent(
+      "Auto-scroll is disabled",
+    );
   });
 
   it("uses a larger scroll distance for line-mode wheel ticks", () => {

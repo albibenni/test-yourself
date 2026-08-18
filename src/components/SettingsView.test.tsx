@@ -71,9 +71,15 @@ describe("SettingsView", () => {
     theme: "system" as ThemeType,
     accent: "blue" as AccentColor,
     textColor: "slate" as TextColor,
+    textScale: "default" as const,
+    contrast: "system" as const,
+    reducedMotion: "system" as const,
     onThemeChange: vi.fn(),
     onAccentChange: vi.fn(),
     onTextColorChange: vi.fn(),
+    onTextScaleChange: vi.fn(),
+    onContrastChange: vi.fn(),
+    onReducedMotionChange: vi.fn(),
   };
 
   it("renders tabs and switches between them", async () => {
@@ -123,6 +129,18 @@ describe("SettingsView", () => {
     // Click Stone text tone
     fireEvent.click(screen.getByRole("button", { name: "Stone" }));
     expect(defaultProps.onTextColorChange).toHaveBeenCalledWith("stone");
+
+    fireEvent.click(screen.getByRole("button", { name: "Large" }));
+    expect(defaultProps.onTextScaleChange).toHaveBeenCalledWith("large");
+
+    fireEvent.click(screen.getByRole("button", { name: "Small" }));
+    expect(defaultProps.onTextScaleChange).toHaveBeenCalledWith("small");
+
+    fireEvent.click(screen.getByRole("button", { name: "High" }));
+    expect(defaultProps.onContrastChange).toHaveBeenCalledWith("more");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reduce" }));
+    expect(defaultProps.onReducedMotionChange).toHaveBeenCalledWith("reduce");
 
     // Click purple accent
     fireEvent.click(screen.getByRole("button", { name: "purple" }));

@@ -1,12 +1,23 @@
 import { load } from "@tauri-apps/plugin-store";
 import { useEffect, useState } from "react";
 import { STORE_FILENAME } from "../constants";
-import type { AccentColor, TextColor, ThemeType as Theme } from "../types";
+import type {
+  AccentColor,
+  ContrastPreference,
+  ReducedMotionPreference,
+  TextColor,
+  TextScale,
+  ThemeType as Theme,
+} from "../types";
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("system");
   const [accent, setAccent] = useState<AccentColor>("blue");
   const [textColor, setTextColor] = useState<TextColor>("slate");
+  const [textScale, setTextScale] = useState<TextScale>("default");
+  const [contrast, setContrast] = useState<ContrastPreference>("system");
+  const [reducedMotion, setReducedMotion] =
+    useState<ReducedMotionPreference>("system");
 
   useEffect(() => {
     async function loadSettings() {
@@ -20,9 +31,19 @@ export function useTheme() {
           (await store.get<AccentColor>("app_accent")) || "blue";
         const storedTextColor =
           (await store.get<TextColor>("app_text_color")) || "slate";
+        const storedTextScale =
+          (await store.get<TextScale>("app_text_scale")) || "default";
+        const storedContrast =
+          (await store.get<ContrastPreference>("app_contrast")) || "system";
+        const storedReducedMotion =
+          (await store.get<ReducedMotionPreference>("app_reduced_motion")) ||
+          "system";
         setTheme(storedTheme);
         setAccent(storedAccent);
         setTextColor(storedTextColor);
+        setTextScale(storedTextScale);
+        setContrast(storedContrast);
+        setReducedMotion(storedReducedMotion);
       } catch (e) {
         console.warn("Could not load theme settings", e);
       }
@@ -41,6 +62,12 @@ export function useTheme() {
       document.documentElement.setAttribute("data-theme", activeTheme);
       document.documentElement.setAttribute("data-accent", accent);
       document.documentElement.setAttribute("data-text-color", textColor);
+      document.documentElement.setAttribute("data-text-scale", textScale);
+      document.documentElement.setAttribute("data-contrast", contrast);
+      document.documentElement.setAttribute(
+        "data-reduced-motion",
+        reducedMotion,
+      );
     };
 
     applyTheme();
@@ -51,7 +78,7 @@ export function useTheme() {
       mediaQuery.addEventListener("change", handler);
       return () => mediaQuery.removeEventListener("change", handler);
     }
-  }, [theme, accent, textColor]);
+  }, [theme, accent, contrast, reducedMotion, textColor, textScale]);
 
   const saveTheme = async (newTheme: Theme) => {
     setTheme(newTheme);
@@ -95,5 +122,41 @@ export function useTheme() {
     }
   };
 
-  return { theme, accent, textColor, saveTheme, saveAccent, saveTextColor };
+  const saveTextScale = async (newTextScale: TextScale) => {
+    setTextScale(newTextScale);
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+    await store.set("app_text_scale", newTextScale);
+    await store.save();
+  };
+
+  const saveContrast = async (newContrast: ContrastPreference) => {
+    setContrast(newContrast);
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+    await store.set("app_contrast", newContrast);
+    await store.save();
+  };
+
+  const saveReducedMotion = async (
+    newReducedMotion: ReducedMotionPreference,
+  ) => {
+    setReducedMotion(newReducedMotion);
+    const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
+    await store.set("app_reduced_motion", newReducedMotion);
+    await store.save();
+  };
+
+  return {
+    theme,
+    accent,
+    textColor,
+    textScale,
+    contrast,
+    reducedMotion,
+    saveTheme,
+    saveAccent,
+    saveTextColor,
+    saveTextScale,
+    saveContrast,
+    saveReducedMotion,
+  };
 }

@@ -262,6 +262,39 @@ kbd {
   }
 }
 
+:root[data-text-scale="small"] {
+  font-size: 14px;
+}
+
+:root[data-text-scale="large"] {
+  font-size: 18px;
+}
+
+:root[data-text-scale="larger"] {
+  font-size: 20px;
+}
+
+:root[data-contrast="more"] {
+  --border-color: var(--text-primary);
+  --glass-border: var(--text-primary);
+}
+
+:root[data-contrast="more"] button,
+:root[data-contrast="more"] input,
+:root[data-contrast="more"] select,
+:root[data-contrast="more"] textarea {
+  border-color: var(--text-primary) !important;
+}
+
+:root[data-reduced-motion="reduce"] *,
+:root[data-reduced-motion="reduce"] *::before,
+:root[data-reduced-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,

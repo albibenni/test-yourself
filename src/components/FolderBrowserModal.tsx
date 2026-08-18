@@ -36,6 +36,11 @@ export function FolderBrowserModal({
   const requestIdRef = useRef(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -318,6 +323,10 @@ export function FolderBrowserModal({
             </div>
           ) : error ? (
             <div
+              aria-live="assertive"
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
               style={{
                 padding: "2rem",
                 textAlign: "center",

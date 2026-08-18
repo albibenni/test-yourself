@@ -11,9 +11,12 @@ import {
 import { useMiddleClickScroll } from "../hooks/useMiddleClickScroll";
 import type {
   AccentColor,
+  ContrastPreference,
   Quiz,
   QuizMetadata,
+  ReducedMotionPreference,
   TextColor,
+  TextScale,
   ThemeType,
   Worksheet,
 } from "../types";
@@ -52,9 +55,15 @@ interface AppLayoutProps {
   theme: ThemeType;
   accent: AccentColor;
   textColor: TextColor;
+  textScale: TextScale;
+  contrast: ContrastPreference;
+  reducedMotion: ReducedMotionPreference;
   saveTheme: (value: ThemeType) => Promise<void>;
   saveAccent: (value: AccentColor) => Promise<void>;
   saveTextColor: (value: TextColor) => Promise<void>;
+  saveTextScale: (value: TextScale) => Promise<void>;
+  saveContrast: (value: ContrastPreference) => Promise<void>;
+  saveReducedMotion: (value: ReducedMotionPreference) => Promise<void>;
   selectIosFolder: (purpose: "quiz" | "vault") => Promise<void>;
   basePath: string | null;
   updateBasePath: (path: string) => Promise<void>;
@@ -116,9 +125,15 @@ export function AppLayout(props: AppLayoutProps) {
     theme,
     accent,
     textColor,
+    textScale,
+    contrast,
+    reducedMotion,
     saveTheme,
     saveAccent,
     saveTextColor,
+    saveTextScale,
+    saveContrast,
+    saveReducedMotion,
     selectIosFolder,
     basePath,
     updateBasePath,
@@ -258,11 +273,17 @@ export function AppLayout(props: AppLayoutProps) {
                   theme={theme}
                   accent={accent}
                   textColor={textColor}
+                  textScale={textScale}
+                  contrast={contrast}
+                  reducedMotion={reducedMotion}
                   onSaveSuccess={() => showToast("Settings saved!")}
                   onSaveError={showToast}
                   onThemeChange={(v) => void saveTheme(v)}
                   onAccentChange={(v) => void saveAccent(v)}
                   onTextColorChange={(v) => void saveTextColor(v)}
+                  onTextScaleChange={(v) => void saveTextScale(v)}
+                  onContrastChange={(v) => void saveContrast(v)}
+                  onReducedMotionChange={(v) => void saveReducedMotion(v)}
                   updateAvailable={updateVersion}
                   onDirtyChange={setSettingsDirty}
                   basePath={basePath}
