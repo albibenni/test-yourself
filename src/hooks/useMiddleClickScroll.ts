@@ -35,6 +35,7 @@ export interface AutoScrollIndicator {
 export function useMiddleClickScroll(
   scrollContainerRef: RefObject<HTMLElement | null>,
 ) {
+  const [announcement, setAnnouncement] = useState("");
   const [indicator, setIndicator] = useState<AutoScrollIndicator | null>(null);
   const stateRef = useRef<ScrollState>({
     active: false,
@@ -64,8 +65,10 @@ export function useMiddleClickScroll(
 
   const stopScrolling = useCallback(() => {
     const state = stateRef.current;
+    const wasActive = state.active;
     state.active = false;
     setIndicator(null);
+    if (wasActive) setAnnouncement("Auto-scroll stopped.");
     if (state.animationFrame !== null) {
       window.cancelAnimationFrame(state.animationFrame);
       state.animationFrame = null;
@@ -112,6 +115,9 @@ export function useMiddleClickScroll(
       state.originY = event.clientY;
       state.pointerY = event.clientY;
       setIndicator({ direction: "idle", x: event.clientX, y: event.clientY });
+      setAnnouncement(
+        "Auto-scroll enabled. Move the pointer up or down to control speed. Press Escape to stop.",
+      );
       window.addEventListener("mousemove", handleMouseMove);
       state.animationFrame = window.requestAnimationFrame(scroll);
     },
@@ -119,6 +125,18 @@ export function useMiddleClickScroll(
   );
 
   useEffect(() => stopScrolling, [stopScrolling]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !stateRef.current.active) return;
+
+      event.preventDefault();
+      stopScrolling();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [stopScrolling]);
 
   const onAuxClick = useCallback((event: MouseEvent<HTMLElement>) => {
     if (event.button === 1) event.preventDefault();
@@ -148,5 +166,5 @@ export function useMiddleClickScroll(
     [scrollContainerRef],
   );
 
-  return { indicator, onAuxClick, onMouseDown, onWheel };
+  return { announcement, indicator, onAuxClick, onMouseDown, onWheel };
 }

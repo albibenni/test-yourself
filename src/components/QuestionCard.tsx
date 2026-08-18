@@ -23,10 +23,14 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
 
   return (
     <div className="question-card">
-      <h3 className="question-title">
+      <h3 className="question-title" id={`question-${question.id}`}>
         {question.id}. {question.text}
       </h3>
-      <div className="options-list">
+      <div
+        aria-labelledby={`question-${question.id}`}
+        className="options-list"
+        role="group"
+      >
         {question.options.map((opt) => {
           return (
             <button

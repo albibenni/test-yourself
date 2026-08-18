@@ -5,6 +5,7 @@ interface TopBarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
   onOpenSettings: () => void;
+  onOpenShortcuts?: () => void;
   hasUpdate?: boolean;
 }
 
@@ -12,6 +13,7 @@ export function TopBar({
   isSidebarOpen,
   setIsSidebarOpen,
   onOpenSettings,
+  onOpenShortcuts,
   hasUpdate,
 }: TopBarProps) {
   const isMacOS =
@@ -54,6 +56,17 @@ export function TopBar({
       </div>
 
       <div className="top-bar-right">
+        {onOpenShortcuts && (
+          <button
+            aria-label="Keyboard shortcuts"
+            className="top-bar-btn"
+            data-hint="Keyboard shortcuts"
+            onClick={onOpenShortcuts}
+            type="button"
+          >
+            ?
+          </button>
+        )}
         <button
           className="top-bar-btn"
           onClick={onOpenSettings}

@@ -48,6 +48,22 @@ describe("TopBar Component", () => {
     expect(setIsSidebarOpen).toHaveBeenCalledWith(false); // Because it was true
   });
 
+  it("opens the keyboard shortcut guide when available", () => {
+    const onOpenShortcuts = vi.fn();
+    render(
+      <TopBar
+        isSidebarOpen={true}
+        onOpenSettings={vi.fn()}
+        onOpenShortcuts={onOpenShortcuts}
+        setIsSidebarOpen={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
+
+    expect(onOpenShortcuts).toHaveBeenCalledOnce();
+  });
+
   it("adds the macOS title-bar spacing class on macOS", () => {
     vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0");

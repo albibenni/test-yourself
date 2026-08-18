@@ -5,7 +5,8 @@ import { useMiddleClickScroll } from "./useMiddleClickScroll";
 
 function ScrollArea() {
   const ref = useRef<HTMLDivElement>(null);
-  const { indicator, onMouseDown, onWheel } = useMiddleClickScroll(ref);
+  const { announcement, indicator, onMouseDown, onWheel } =
+    useMiddleClickScroll(ref);
   return (
     <div
       data-testid="scroll-area"
@@ -16,6 +17,7 @@ function ScrollArea() {
       {indicator && (
         <output data-testid="indicator">{indicator.direction}</output>
       )}
+      <output data-testid="announcement">{announcement}</output>
     </div>
   );
 }
@@ -119,6 +121,24 @@ describe("useMiddleClickScroll", () => {
     animationFrames[0]?.(0);
 
     expect(scrollBy).not.toHaveBeenCalled();
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+
+  it("stops when Escape is pressed and announces the state change", () => {
+    mockAnimationFrame();
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+
+    fireEvent.mouseDown(area, { button: 1, clientY: 100 });
+    expect(getByTestId("announcement")).toHaveTextContent(
+      "Auto-scroll enabled",
+    );
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(getByTestId("announcement")).toHaveTextContent(
+      "Auto-scroll stopped.",
+    );
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
   });
 

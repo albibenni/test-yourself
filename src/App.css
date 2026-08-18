@@ -157,6 +157,111 @@ textarea {
   font: inherit;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 3000;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--accent-color);
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-150%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.shortcuts-overlay {
+  position: fixed;
+  z-index: 2500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.shortcuts-dialog {
+  width: min(100%, 32rem);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--bg-surface);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  padding: 1.25rem;
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+}
+
+.shortcuts-header p,
+.shortcuts-note {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.shortcuts-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.shortcuts-list div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.8fr) 1.2fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.shortcuts-list dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+kbd {
+  display: inline-block;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background: var(--bg-elevated);
+  padding: 0.2rem 0.4rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border-color: var(--text-primary);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border-color: var(--text-primary) !important;
+  }
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
