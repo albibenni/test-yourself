@@ -5,9 +5,14 @@ import { useMiddleClickScroll } from "./useMiddleClickScroll";
 
 function ScrollArea() {
   const ref = useRef<HTMLDivElement>(null);
-  const { indicator, onMouseDown } = useMiddleClickScroll(ref);
+  const { indicator, onMouseDown, onWheel } = useMiddleClickScroll(ref);
   return (
-    <div data-testid="scroll-area" onMouseDown={onMouseDown} ref={ref}>
+    <div
+      data-testid="scroll-area"
+      onMouseDown={onMouseDown}
+      onWheel={onWheel}
+      ref={ref}
+    >
       {indicator && (
         <output data-testid="indicator">{indicator.direction}</output>
       )}
@@ -101,5 +106,30 @@ describe("useMiddleClickScroll", () => {
 
     expect(scrollBy).not.toHaveBeenCalled();
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+
+  it("uses a larger scroll distance for discrete wheel ticks", () => {
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.wheel(area, { deltaMode: WheelEvent.DOM_DELTA_LINE, deltaY: 1 });
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: 96, behavior: "auto" });
+  });
+
+  it("preserves pixel-mode scrolling for touchpads", () => {
+    const { getByTestId } = render(<ScrollArea />);
+    const area = getByTestId("scroll-area");
+    const scrollBy = vi.fn();
+    Object.defineProperty(area, "scrollBy", { value: scrollBy });
+
+    fireEvent.wheel(area, {
+      deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+      deltaY: 20,
+    });
+
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 });

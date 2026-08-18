@@ -87,6 +87,7 @@ export function AppLayout(props: AppLayoutProps) {
     indicator: autoScrollIndicator,
     onAuxClick: handleMainContentAuxClick,
     onMouseDown: handleMainContentMouseDown,
+    onWheel: handleMainContentWheel,
   } = useMiddleClickScroll(mainContentRef);
   const {
     sidebarOpen,
@@ -174,6 +175,7 @@ export function AppLayout(props: AppLayoutProps) {
           ref={mainContentRef}
           onAuxClick={handleMainContentAuxClick}
           onMouseDown={handleMainContentMouseDown}
+          onWheel={handleMainContentWheel}
         >
           {autoScrollIndicator && (
             <div

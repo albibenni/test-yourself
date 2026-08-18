@@ -5,11 +5,13 @@ import {
   useEffect,
   useRef,
   useState,
+  type WheelEvent,
 } from "react";
 
 const DEAD_ZONE_PX = 10;
 const MAX_SCROLL_PER_FRAME = 36;
 const SCROLL_SPEED_MULTIPLIER = 0.15;
+const WHEEL_TICK_SCROLL_PX = 96;
 
 interface ScrollState {
   active: boolean;
@@ -121,5 +123,24 @@ export function useMiddleClickScroll(
     if (event.button === 1) event.preventDefault();
   }, []);
 
-  return { indicator, onAuxClick, onMouseDown };
+  const onWheel = useCallback(
+    (event: WheelEvent<HTMLElement>) => {
+      // Line-mode events represent discrete mouse-wheel ticks. Pixel-mode
+      // events are left to the webview so touchpad scrolling remains natural.
+      if (
+        event.deltaMode !== globalThis.WheelEvent.DOM_DELTA_LINE ||
+        event.deltaY === 0
+      )
+        return;
+
+      event.preventDefault();
+      scrollContainerRef.current?.scrollBy({
+        top: event.deltaY * WHEEL_TICK_SCROLL_PX,
+        behavior: "auto",
+      });
+    },
+    [scrollContainerRef],
+  );
+
+  return { indicator, onAuxClick, onMouseDown, onWheel };
 }
