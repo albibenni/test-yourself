@@ -192,8 +192,8 @@ describe("ScheduleModal", () => {
   });
 
   describe("Check Schedule Button", () => {
-    it("calls searchTasks and shows 'Not currently scheduled.' when no match", async () => {
-      mockSearchTasks.mockResolvedValue([]);
+    it("falls back to all active tasks when the Todoist search filter finds no exact match", async () => {
+      mockGetTasks.mockResolvedValue([]);
       render(<ScheduleModal {...defaultProps} />);
 
       await waitFor(() => {
@@ -205,6 +205,7 @@ describe("ScheduleModal", () => {
 
       await waitFor(() => {
         expect(mockSearchTasks).toHaveBeenCalledWith("React Basics");
+        expect(mockGetTasks).toHaveBeenCalledTimes(2);
       });
 
       expect(mockOnCheckResult).toHaveBeenCalledWith(
@@ -212,11 +213,14 @@ describe("ScheduleModal", () => {
       );
     });
 
-    it("calls searchTasks and shows the scheduled dates when matches found", async () => {
+    it("shows dates for exact task-title matches from the Todoist filter", async () => {
       mockSearchTasks.mockResolvedValue([
         { content: "Review Quiz: React Basics", due: { date: "2026-08-20" } },
         { content: "Review Quiz: React Basics", due: { date: "2026-08-25" } },
-        { content: "Other Quiz", due: { date: "2026-09-01" } },
+        {
+          content: "Review Quiz: React Basics - Advanced",
+          due: { date: "2026-09-01" },
+        },
       ]);
       render(<ScheduleModal {...defaultProps} />);
 
@@ -233,6 +237,25 @@ describe("ScheduleModal", () => {
 
       expect(mockOnCheckResult).toHaveBeenCalledWith(
         "Already scheduled for: 2026-08-20, 2026-08-25",
+      );
+      expect(mockGetTasks).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses the all-tasks fallback when the Todoist filter misses an exact title", async () => {
+      mockSearchTasks.mockResolvedValue([]);
+      mockGetTasks.mockResolvedValue([
+        { content: "Review Quiz: React Basics", due: { date: "2026-08-20" } },
+      ]);
+      render(<ScheduleModal {...defaultProps} />);
+
+      const checkBtn = await screen.findByRole("button", { name: "Check" });
+      fireEvent.click(checkBtn);
+
+      await waitFor(() => {
+        expect(mockGetTasks).toHaveBeenCalledTimes(2);
+      });
+      expect(mockOnCheckResult).toHaveBeenCalledWith(
+        "Already scheduled for: 2026-08-20",
       );
     });
   });

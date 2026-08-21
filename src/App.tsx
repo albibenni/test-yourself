@@ -8,6 +8,7 @@ import { AppLayout } from "./components/AppLayout";
 import { useQuizSession } from "./hooks/useQuizSession";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
+import { completeTodoistAuthorization } from "./todoistOAuth";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -66,22 +67,40 @@ function App() {
         return raw.match(/quiz=([^&]+)/)?.[1] ?? null;
       }
     };
+    const handleDeepLink = async (value: unknown) => {
+      const raw = Array.isArray(value)
+        ? String(value[0] ?? "")
+        : String(value ?? "");
+      try {
+        if (await completeTodoistAuthorization(raw)) {
+          setSettingsOpen(true);
+          showToast("Todoist connected.");
+          return;
+        }
+      } catch (error) {
+        showToast(
+          error instanceof Error
+            ? error.message
+            : "Todoist authorization failed.",
+        );
+        return;
+      }
+      const path = parse(raw);
+      if (path) setPendingLink(path);
+    };
     let removeDeepLink: (() => void) | undefined;
     let removeEvent: (() => void) | undefined;
     void import("@tauri-apps/plugin-deep-link")
       .then(async ({ onOpenUrl }) => {
         removeDeepLink = await onOpenUrl((urls) => {
-          const path = parse(urls);
-          if (path) setPendingLink(path);
+          void handleDeepLink(urls);
         });
         const initial = await invoke<string | null>("get_initial_url");
-        const path = parse(initial);
-        if (path) setPendingLink(path);
+        await handleDeepLink(initial);
       })
       .catch(() => undefined);
     void listen<unknown>("deep-link-received", (event) => {
-      const path = parse(event.payload);
-      if (path) setPendingLink(path);
+      void handleDeepLink(event.payload);
     }).then((remove) => {
       removeEvent = remove;
     });
@@ -89,7 +108,7 @@ function App() {
       removeDeepLink?.();
       removeEvent?.();
     };
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     if (!pendingLink || quizzes.quizzes.length === 0) return;

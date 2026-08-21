@@ -212,12 +212,17 @@ export function ScheduleModal({
           : "Review Quiz";
       const expectedContent = `${prefix}: ${quiz.title}`;
 
-      // Use the dedicated v1 filter endpoint to accurately search all tasks, avoiding pagination limits
-      const tasks = await searchTasks(quiz.title);
-
-      const foundTasks = tasks.filter((t) =>
-        t.content.includes(expectedContent),
+      // Use Todoist's targeted filter first. If its search parser omits an
+      // exact title, fall back to the paginated active-task list so a
+      // schedule check stays accurate without always loading every task.
+      let foundTasks = (await searchTasks(quiz.title)).filter(
+        (t) => t.content === expectedContent,
       );
+      if (foundTasks.length === 0) {
+        foundTasks = (await getTasks()).filter(
+          (t) => t.content === expectedContent,
+        );
+      }
       if (foundTasks.length > 0) {
         const dates = foundTasks.map((t) => {
           if (t.due && t.due.date) {

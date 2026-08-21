@@ -28,6 +28,7 @@ export type StoredOAuthTokens = z.infer<typeof StoredOAuthTokensSchema>;
 // Todoist refresh-token rotation means concurrent refreshes using the same
 // token are not safe. Keep one shared refresh in flight for all callers.
 let refreshInFlight: Promise<StoredOAuthTokens> | null = null;
+let authorizationCompletionInFlight: Promise<boolean> | null = null;
 
 const toBase64Url = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes))
@@ -123,7 +124,7 @@ export async function beginTodoistAuthorization() {
   await openUrl(request.url);
 }
 
-export async function completeTodoistAuthorization(url: string) {
+async function completeTodoistAuthorizationRequest(url: string) {
   const callback = new URL(url);
   if (
     `${callback.protocol}//${callback.host}${callback.pathname}` !==
@@ -153,6 +154,33 @@ export async function completeTodoistAuthorization(url: string) {
   window.sessionStorage.removeItem("todoist_oauth_state");
   window.sessionStorage.removeItem("todoist_oauth_verifier");
   return true;
+}
+
+/**
+ * Exchanges an OAuth callback exactly once. The deep-link plugin can surface
+ * the same callback through more than one delivery mechanism.
+ */
+export function completeTodoistAuthorization(url: string) {
+  let callback: URL;
+  try {
+    callback = new URL(url);
+  } catch {
+    return Promise.resolve(false);
+  }
+  if (
+    `${callback.protocol}//${callback.host}${callback.pathname}` !==
+    TODOIST_OAUTH_CALLBACK_SCHEME
+  ) {
+    return Promise.resolve(false);
+  }
+  if (!authorizationCompletionInFlight) {
+    authorizationCompletionInFlight = completeTodoistAuthorizationRequest(
+      url,
+    ).finally(() => {
+      authorizationCompletionInFlight = null;
+    });
+  }
+  return authorizationCompletionInFlight;
 }
 
 export async function getAuthorizedTodoistToken() {

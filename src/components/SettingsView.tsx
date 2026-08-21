@@ -1,6 +1,5 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
@@ -10,7 +9,6 @@ import { STORE_FILENAME } from "../constants";
 import { TodoistProvider } from "../providers/TodoistProvider";
 import {
   beginTodoistAuthorization,
-  completeTodoistAuthorization,
   getAuthorizedTodoistToken,
   isTodoistOAuthSecret,
   refreshTodoistAccessToken,
@@ -251,26 +249,6 @@ export function SettingsView({
     }
     void fetchSettings();
   }, []);
-
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    void listen<string>("deep-link-received", async (event) => {
-      try {
-        if (!(await completeTodoistAuthorization(event.payload))) return;
-        setTodoistAuthStatus("connected");
-      } catch (error) {
-        setTodoistAuthStatus("disconnected");
-        onSaveError?.(
-          error instanceof Error
-            ? error.message
-            : "Todoist authorization failed.",
-        );
-      }
-    }).then((remove) => {
-      unlisten = remove;
-    });
-    return () => unlisten?.();
-  }, [onSaveError]);
 
   useEffect(() => {
     const isDirty =
