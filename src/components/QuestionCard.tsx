@@ -4,18 +4,26 @@ import type { QuizQuestion } from "../types";
 
 interface QuestionCardProps {
   question: QuizQuestion;
+  selectedLetter?: string;
   onAnswer?: (isCorrect: boolean, selectedLetter: string) => void;
 }
 
-export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
-  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+export function QuestionCard({
+  question,
+  selectedLetter: submittedLetter,
+  onAnswer,
+}: QuestionCardProps) {
+  const [localSelectedLetter, setLocalSelectedLetter] = useState<string | null>(
+    null,
+  );
+  const selectedLetter = submittedLetter ?? localSelectedLetter;
 
   const isAnswered = selectedLetter !== null;
   const isCorrect = selectedLetter === question.correct_answer;
 
   const handleSelect = (letter: string) => {
     if (isAnswered) return;
-    setSelectedLetter(letter);
+    setLocalSelectedLetter(letter);
     if (onAnswer) {
       onAnswer(letter === question.correct_answer, letter);
     }

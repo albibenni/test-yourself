@@ -217,6 +217,7 @@ function QuizQuestions({
             <QuestionCard
               key={`${quiz.path}-${question.id}-${resetKey}`}
               question={question}
+              selectedLetter={answers[question.id]}
               onAnswer={(_, letter) =>
                 setAnswers((previous) => ({
                   ...previous,
