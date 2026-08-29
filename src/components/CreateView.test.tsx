@@ -144,4 +144,26 @@ describe("CreateView", () => {
       await screen.findByRole("button", { name: /choose external file/i }),
     ).toBeEnabled();
   });
+
+  it("explains missing required information when generation is requested", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes") return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /generate quiz/i }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /select a source note and describe what to create/i,
+    );
+  });
 });
