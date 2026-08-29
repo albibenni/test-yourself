@@ -34,7 +34,7 @@ describe("CreateView", () => {
     expect(
       await screen.findByRole("button", { name: /biology\.md/i }),
     ).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Search notes"), {
+    fireEvent.change(screen.getByLabelText(/search notes/i), {
       target: { value: "history" },
     });
     expect(screen.getByText("History.md")).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("CreateView", () => {
       return Promise.resolve(undefined);
     });
     render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
-    const search = await screen.findByLabelText("Search notes");
+    const search = await screen.findByLabelText(/search notes/i);
     fireEvent.keyDown(search, { key: "ArrowDown" });
     fireEvent.keyDown(search, { key: "ArrowDown" });
     fireEvent.keyDown(search, { key: "Enter" });

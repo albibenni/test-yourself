@@ -1077,6 +1077,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  /* Keep the content width stable when a view becomes vertically scrollable. */
+  scrollbar-gutter: stable;
   padding: 2rem;
   min-width: 0;
 }

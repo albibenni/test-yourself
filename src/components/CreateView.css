@@ -12,8 +12,12 @@
 .create-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+  align-items: start;
   gap: 1.5rem;
   margin-top: 1.5rem;
+}
+.create-form {
+  align-self: start;
 }
 .create-view label {
   display: block;
@@ -99,6 +103,28 @@
 }
 .output-row button {
   flex: 0 0 auto;
+}
+.output-directory-card {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 0.75rem;
+  background: var(--glass-bg);
+}
+.output-directory-card h2 {
+  font-size: 1rem;
+}
+.output-directory-card p {
+  margin-top: 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+.output-directory-card output {
+  min-height: 2.8rem;
+  display: flex;
+  align-items: center;
 }
 .creation-warning {
   margin: 0.5rem 0;

@@ -139,11 +139,6 @@ export function CreateView({
     if (typeof selected === "string") setOutputDirectory(selected);
   }
 
-  async function chooseExternalSource() {
-    const selected = await open({ directory: false, multiple: false });
-    if (typeof selected === "string") selectNote(selected);
-  }
-
   async function generate() {
     if (!sourceFile || !outputDirectory || !skill || !request.trim()) return;
     try {
@@ -176,8 +171,20 @@ export function CreateView({
       </header>
       <div className="create-grid">
         <div ref={notePickerRef}>
-          <label htmlFor="note-search">Search notes</label>
-          <div className="note-search-control">
+          <label htmlFor="note-search">Search notes or drop a file here</label>
+          <div
+            className="note-search-control"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = event.dataTransfer.files[0] as
+                | (File & { path?: string })
+                | undefined;
+              if (file?.path) selectNote(file.path);
+              else
+                setStatus("Use the file picker to select this external file.");
+            }}
+          >
             <input
               id="note-search"
               value={query}
@@ -207,18 +214,7 @@ export function CreateView({
             )}
           </div>
           {notePickerOpen && (
-            <div
-              className="note-list"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                const file = event.dataTransfer.files[0] as
-                  | (File & { path?: string })
-                  | undefined;
-                if (file?.path) selectNote(file.path);
-                else setStatus("Use Choose one to select this external file.");
-              }}
-            >
+            <div className="note-list">
               {filteredNotes.map((note, index) => (
                 <button
                   className={
@@ -234,15 +230,29 @@ export function CreateView({
                   <span>{note.relative_path}</span>
                 </button>
               ))}
-              <button
-                className="drop-note"
-                onClick={() => void chooseExternalSource()}
-                type="button"
-              >
-                Drop an external file here, or choose one
-              </button>
             </div>
           )}
+          <section
+            className="output-directory-card"
+            aria-labelledby="output-directory-title"
+          >
+            <div>
+              <h2 id="output-directory-title">Output directory</h2>
+              <p>Where the generated study material will be saved.</p>
+            </div>
+            <div className="output-row">
+              <output>{outputDirectory}</output>
+              <button type="button" onClick={() => void chooseOutput()}>
+                Choose
+              </button>
+            </div>
+            {outputDirectory !== basePath && (
+              <p className="creation-warning">
+                This output is outside your current library and will not appear
+                until you select that folder.
+              </p>
+            )}
+          </section>
         </div>
         <div className="create-form">
           <label htmlFor="creation-type">Create</label>
@@ -298,19 +308,6 @@ export function CreateView({
             onChange={(event) => setRequest(event.target.value)}
             placeholder={`Describe the ${creationType} you want`}
           />
-          <label>Output directory</label>
-          <div className="output-row">
-            <output>{outputDirectory}</output>
-            <button type="button" onClick={() => void chooseOutput()}>
-              Choose
-            </button>
-          </div>
-          {outputDirectory !== basePath && (
-            <p className="creation-warning">
-              This output is outside your current library and will not appear
-              until you select that folder.
-            </p>
-          )}
           <button
             className="primary-btn"
             disabled={
