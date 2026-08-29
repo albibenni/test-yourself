@@ -156,7 +156,9 @@ export function CreateView({
         request,
         creationType,
       });
-      setStatus("The terminal opened. Refreshing your library…");
+      setStatus(
+        "Generation is running in the terminal. Complete any sign-in or approval there, then refresh your library.",
+      );
       onGenerated();
     } catch (error) {
       setStatus(`Could not start generation: ${String(error)}`);

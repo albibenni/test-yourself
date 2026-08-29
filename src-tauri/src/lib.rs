@@ -1,5 +1,10 @@
 pub mod models;
 pub mod parser;
+use std::io::{Read, Write};
+use std::sync::Mutex;
+use tauri::Emitter;
+
+struct InteractiveSession(Mutex<Option<Box<dyn Write + Send>>>);
 
 #[derive(serde::Serialize)]
 struct CreationStatus { agy_available: bool, codex_available: bool, skills: Vec<String> }
@@ -31,7 +36,7 @@ fn creation_status() -> CreationStatus {
 }
 
 #[tauri::command]
-fn generate_material(engine: String, output_directory: String, source_file: String, skill: String, request: String, creation_type: String) -> Result<(), String> {
+fn generate_material(app: tauri::AppHandle, session: tauri::State<InteractiveSession>, engine: String, output_directory: String, source_file: String, skill: String, request: String, creation_type: String) -> Result<(), String> {
     if !matches!(engine.as_str(), "agy" | "codex") || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "scenario") || skill.trim().is_empty() || request.trim().is_empty() { return Err("Invalid generation request".to_string()); }
     let output = std::fs::canonicalize(&output_directory).map_err(|_| "Output directory is not accessible".to_string())?;
     let source = std::fs::canonicalize(&source_file).map_err(|_| "Source file is not accessible".to_string())?;
@@ -39,12 +44,35 @@ fn generate_material(engine: String, output_directory: String, source_file: Stri
     let source_directory = source.parent().ok_or("Source file has no parent directory")?;
     let instruction = format!("Create a {creation_type} using the {skill} skill if available. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
     let command = if engine == "codex" { format!("codex exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("agy --add-dir {} --add-dir {} --prompt {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&format!("/{skill} {instruction}"))) };
-    let terminal_command = format!("{command}; exit_code=$?; printf '\\n\\nTest Yourself finished (exit code %s). Press Enter to close.' \"$exit_code\"; read -r");
-    #[cfg(target_os = "macos")]
-    { let script = format!("tell application \"Terminal\" to do script \"{}\"", terminal_command.replace('\\', "\\\\").replace('"', "\\\"")); std::process::Command::new("osascript").args(["-e", &script]).spawn().map_err(|error| error.to_string())?; }
-    #[cfg(target_os = "linux")]
-    std::process::Command::new("x-terminal-emulator").args(["-e", "/bin/sh", "-lc", &terminal_command]).spawn().map_err(|error| error.to_string())?;
+    let pty_system = portable_pty::native_pty_system();
+    let pair = pty_system.openpty(portable_pty::PtySize { rows: 30, cols: 120, pixel_width: 0, pixel_height: 0 }).map_err(|error| error.to_string())?;
+    let mut process = portable_pty::CommandBuilder::new("/bin/sh");
+    process.args(["-lc", &command]);
+    let mut child = pair.slave.spawn_command(process).map_err(|error| error.to_string())?;
+    drop(pair.slave);
+    let reader = pair.master.try_clone_reader().map_err(|error| error.to_string())?;
+    let writer = pair.master.take_writer().map_err(|error| error.to_string())?;
+    *session.0.lock().map_err(|_| "Generation session is unavailable")? = Some(writer);
+    let output_app = app.clone();
+    std::thread::spawn(move || {
+        let mut reader = reader;
+        let mut buffer = [0; 4096];
+        while let Ok(count) = reader.read(&mut buffer) {
+            if count == 0 { break; }
+            let _ = output_app.emit("generation-output", String::from_utf8_lossy(&buffer[..count]).to_string());
+        }
+        let status = child.wait().map(|result| format!("Generation finished with exit code {}.", result.exit_code())).unwrap_or_else(|error| format!("Generation failed: {error}"));
+        let _ = output_app.emit("generation-complete", status);
+    });
     Ok(())
+}
+
+#[tauri::command]
+fn send_generation_input(session: tauri::State<InteractiveSession>, input: String) -> Result<(), String> {
+    let mut guard = session.0.lock().map_err(|_| "Generation session is unavailable")?;
+    let writer = guard.as_mut().ok_or("No generation is running")?;
+    writer.write_all(format!("{input}\n").as_bytes()).map_err(|error| error.to_string())?;
+    writer.flush().map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -417,6 +445,7 @@ pub fn run() {
             }
             use tauri::Manager;
             app.manage(InitialUrl(std::sync::Mutex::new(found_url)));
+            app.manage(InteractiveSession(Mutex::new(None)));
 
             // Register Rust-side URL handler so macOS open-url events reach the frontend
             #[cfg(desktop)]
@@ -455,6 +484,7 @@ pub fn run() {
             list_markdown_notes,
             creation_status,
             generate_material,
+            send_generation_input,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
