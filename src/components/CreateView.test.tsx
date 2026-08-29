@@ -57,6 +57,71 @@ function searchPage(
 describe("CreateView", () => {
   afterEach(() => vi.clearAllMocks());
 
+  it("loads AI tools and skills when either selector is opened", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status") {
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: true,
+          skills: ["quiz-master"],
+        });
+      }
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "AI tool" }));
+
+    expect(await screen.findByRole("option", { name: "Codex" })).toBeVisible();
+    expect(await screen.findByRole("button", { name: "Skill" })).toBeEnabled();
+  });
+
+  it("defaults to no specific skill when none match the creation type", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation(
+      (command: string, args?: InvokeArgs) => {
+        if (command === "creation_status") {
+          return Promise.resolve({
+            agy_available: true,
+            codex_available: true,
+            skills: ["scenario"],
+          });
+        }
+        if (command === "search_creation_library") {
+          return Promise.resolve(
+            searchPage(getSearchArgs(args).kind, args, [
+              {
+                name: "Biology.md",
+                path: "/SecondBrain/Biology.md",
+                relative_path: "Biology.md",
+              },
+            ]),
+          );
+        }
+        if (command === "generate_material") return Promise.resolve(undefined);
+        return Promise.resolve(undefined);
+      },
+    );
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.focus(screen.getByRole("combobox", { name: /search notes/i }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: /biology\.md/i }),
+    );
+    expect(await screen.findByText("No specific skill")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/what should it create/i), {
+      target: { value: "Revision questions" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /generate quiz/i }));
+
+    expect(vi.mocked(invoke)).toHaveBeenCalledWith(
+      "generate_material",
+      expect.objectContaining({ skill: "" }),
+    );
+  });
+
   it("shows an animated loader instead of an empty-state message while a search is pending", async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     let resolveSearch: ((value: unknown) => void) | undefined;
@@ -155,6 +220,41 @@ describe("CreateView", () => {
             getSearchArgs(args).offset === 20,
         ),
     ).toHaveLength(1);
+  });
+
+  it("clears unfinished note and output-directory searches when focus leaves their pickers", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation(
+      (command: string, args?: InvokeArgs) => {
+        if (command === "creation_status") {
+          return Promise.resolve({
+            agy_available: true,
+            codex_available: true,
+            skills: ["quiz-master"],
+          });
+        }
+        if (command === "search_creation_library") {
+          return Promise.resolve(searchPage(getSearchArgs(args).kind, args));
+        }
+        return Promise.resolve(undefined);
+      },
+    );
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    const noteSearch = screen.getByRole("combobox", { name: /search notes/i });
+    const directorySearch = screen.getByRole("combobox", {
+      name: /search output directories/i,
+    });
+
+    fireEvent.change(noteSearch, { target: { value: "unfinished note" } });
+    fireEvent.mouseDown(document.body);
+    expect(noteSearch).toHaveValue("");
+
+    fireEvent.change(directorySearch, {
+      target: { value: "unfinished directory" },
+    });
+    fireEvent.mouseDown(document.body);
+    expect(directorySearch).toHaveValue("");
   });
 
   it("filters notes from the shared directory and warns for an unrelated skill", async () => {

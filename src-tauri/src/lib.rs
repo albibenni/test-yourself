@@ -81,20 +81,26 @@ async fn search_creation_library(app_handle: tauri::AppHandle, kind: String, que
 }
 
 #[tauri::command]
-fn creation_status() -> CreationStatus {
-    let skills = std::process::Command::new("/bin/sh").args(["-lc", "find .agents ~/.agents ~/.gemini ~/.codex/skills -type f -name SKILL.md -exec dirname {} \\; 2>/dev/null | xargs -n1 basename | sort -u"]).output().map(|output| String::from_utf8_lossy(&output.stdout).lines().map(String::from).collect()).unwrap_or_default();
-    CreationStatus { agy_available: command_available("agy"), codex_available: command_available("codex"), skills }
+async fn creation_status() -> CreationStatus {
+    tokio::task::spawn_blocking(|| {
+        let skills = std::process::Command::new("/bin/sh").args(["-lc", "find .agents ~/.agents ~/.gemini ~/.codex/skills -type f -name SKILL.md -exec dirname {} \\; 2>/dev/null | xargs -n1 basename | sort -u"]).output().map(|output| String::from_utf8_lossy(&output.stdout).lines().map(String::from).collect()).unwrap_or_default();
+        CreationStatus { agy_available: command_available("agy"), codex_available: command_available("codex"), skills }
+    })
+    .await
+    .unwrap_or_else(|_| CreationStatus { agy_available: false, codex_available: false, skills: Vec::new() })
 }
 
 #[tauri::command]
 fn generate_material(app: tauri::AppHandle, session: tauri::State<InteractiveSession>, engine: String, output_directory: String, source_file: String, skill: String, request: String, creation_type: String) -> Result<(), String> {
-    if !matches!(engine.as_str(), "agy" | "codex") || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "scenario") || skill.trim().is_empty() || request.trim().is_empty() { return Err("Invalid generation request".to_string()); }
+    if !matches!(engine.as_str(), "agy" | "codex") || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "scenario") || request.trim().is_empty() { return Err("Invalid generation request".to_string()); }
     let output = std::fs::canonicalize(&output_directory).map_err(|_| "Output directory is not accessible".to_string())?;
     let source = std::fs::canonicalize(&source_file).map_err(|_| "Source file is not accessible".to_string())?;
     if !source.is_file() { return Err("Source must be a file".to_string()); }
     let source_directory = source.parent().ok_or("Source file has no parent directory")?;
-    let instruction = format!("Create a {creation_type} using the {skill} skill if available. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
-    let command = if engine == "codex" { format!("codex exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("agy --add-dir {} --add-dir {} --prompt {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&format!("/{skill} {instruction}"))) };
+    let skill_instruction = if skill.trim().is_empty() { String::new() } else { format!(" using the {skill} skill if available") };
+    let instruction = format!("Create a {creation_type}{skill_instruction}. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
+    let agy_prompt = if skill.trim().is_empty() { instruction.clone() } else { format!("/{skill} {instruction}") };
+    let command = if engine == "codex" { format!("codex exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("agy --add-dir {} --add-dir {} --prompt {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&agy_prompt)) };
     let pty_system = portable_pty::native_pty_system();
     let pair = pty_system.openpty(portable_pty::PtySize { rows: 30, cols: 120, pixel_width: 0, pixel_height: 0 }).map_err(|error| error.to_string())?;
     let mut process = portable_pty::CommandBuilder::new("/bin/sh");

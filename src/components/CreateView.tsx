@@ -89,16 +89,20 @@ function DropdownSelect<T extends string>({
   value,
   options,
   onChange,
+  onOpen,
   invalid = false,
   required = false,
+  loading = false,
 }: {
   id: string;
   label: string;
   value: T;
   options: DropdownOption<T>[];
   onChange: (value: T) => void;
+  onOpen?: () => void;
   invalid?: boolean;
   required?: boolean;
+  loading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -149,16 +153,21 @@ function DropdownSelect<T extends string>({
             ? "picker-select-trigger field-invalid"
             : "picker-select-trigger"
         }
-        disabled={enabledOptions.length === 0}
+        disabled={enabledOptions.length === 0 && !loading}
         id={id}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (!open) onOpen?.();
+          setOpen(!open);
+        }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
             event.preventDefault();
+            onOpen?.();
             setOpen(true);
             selectAdjacentOption(1);
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
+            onOpen?.();
             setOpen(true);
             selectAdjacentOption(-1);
           } else if (event.key === "Escape") {
@@ -177,26 +186,32 @@ function DropdownSelect<T extends string>({
           id={listboxId}
           role="listbox"
         >
-          {options.map((option) => (
-            <button
-              aria-selected={value === option.value}
-              className={
-                value === option.value
-                  ? "picker-select-option active"
-                  : "picker-select-option"
-              }
-              disabled={option.disabled}
-              key={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-              role="option"
-              type="button"
-            >
-              {option.label}
-            </button>
-          ))}
+          {loading && options.length === 0 ? (
+            <p aria-live="polite" className="picker-select-loading">
+              Loading options…
+            </p>
+          ) : (
+            options.map((option) => (
+              <button
+                aria-selected={value === option.value}
+                className={
+                  value === option.value
+                    ? "picker-select-option active"
+                    : "picker-select-option"
+                }
+                disabled={option.disabled}
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -219,6 +234,8 @@ export function CreateView({
   const [skills, setSkills] = useState<string[]>([]);
   const [available, setAvailable] = useState({ agy: false, codex: false });
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
+  const [shouldCheckCreationStatus, setShouldCheckCreationStatus] =
+    useState(false);
   const [query, setQuery] = useState("");
   const [focusedNoteIndex, setFocusedNoteIndex] = useState(0);
   const [notePickerOpen, setNotePickerOpen] = useState(false);
@@ -232,6 +249,8 @@ export function CreateView({
   const directoryRequestId = useRef(0);
   const [sourceFile, setSourceFile] = useState("");
   const [outputDirectory, setOutputDirectory] = useState(basePath);
+  const [hasSelectedOutputDirectory, setHasSelectedOutputDirectory] =
+    useState(false);
   const [creationType, setCreationType] = useState<CreationType>("quiz");
   const [skill, setSkill] = useState("");
   const [engine, setEngine] = useState<Engine>("agy");
@@ -244,12 +263,13 @@ export function CreateView({
   const [selectionAnnouncement, setSelectionAnnouncement] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
   const debouncedOutputQuery = useDebouncedValue(outputQuery, 250);
+  const requestCreationStatus = useCallback(
+    () => setShouldCheckCreationStatus(true),
+    [],
+  );
 
   useEffect(() => {
-    if (
-      (!notePickerOpen && !outputPickerOpen) ||
-      creationStatusRequested.current
-    ) {
+    if (!shouldCheckCreationStatus || creationStatusRequested.current) {
       return;
     }
     creationStatusRequested.current = true;
@@ -264,11 +284,14 @@ export function CreateView({
           agy: creation?.agy_available ?? false,
           codex: creation?.codex_available ?? false,
         });
-        setEngine(creation?.agy_available ? "agy" : "codex");
+        setEngine((current) => {
+          if (creation?.[`${current}_available`]) return current;
+          return creation?.agy_available ? "agy" : "codex";
+        });
       })
       .catch(() => setStatus("Unable to load AI tools."))
       .finally(() => setAvailabilityChecked(true));
-  }, [notePickerOpen, outputPickerOpen]);
+  }, [shouldCheckCreationStatus]);
 
   useEffect(() => {
     let active = true;
@@ -308,12 +331,20 @@ export function CreateView({
       if (
         notePickerRef.current &&
         !notePickerRef.current.contains(event.target as Node)
-      )
+      ) {
+        if (!sourceFile) {
+          noteRequestId.current += 1;
+          setQuery("");
+          setNotes([]);
+          setNotesHasMore(false);
+          setFocusedNoteIndex(0);
+        }
         setNotePickerOpen(false);
+      }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, []);
+  }, [sourceFile]);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -321,12 +352,19 @@ export function CreateView({
         outputPickerRef.current &&
         !outputPickerRef.current.contains(event.target as Node)
       ) {
+        if (!hasSelectedOutputDirectory) {
+          directoryRequestId.current += 1;
+          setOutputQuery("");
+          setOutputDirectories([]);
+          setDirectoriesHaveMore(false);
+          setFocusedOutputIndex(0);
+        }
         setOutputPickerOpen(false);
       }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, []);
+  }, [hasSelectedOutputDirectory]);
 
   const suggestedSkills = useMemo(
     () => skills.filter((item) => item.toLowerCase().includes(creationType)),
@@ -423,10 +461,9 @@ export function CreateView({
   const missingRequirements = [
     !sourceFile && "a source note",
     !request.trim() && "a description of what to create",
-    !skill && "a skill",
     !outputDirectory && "an output directory",
   ].filter(Boolean);
-  const matchingSkill = skill.toLowerCase().includes(creationType);
+  const matchingSkill = !skill || skill.toLowerCase().includes(creationType);
 
   function handleNoteSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
@@ -481,6 +518,7 @@ export function CreateView({
   function selectOutputDirectory(path: string) {
     const directory = outputDirectories.find((item) => item.path === path);
     setOutputDirectory(path);
+    setHasSelectedOutputDirectory(true);
     setOutputQuery(
       directory?.relative_path === "."
         ? ""
@@ -495,9 +533,9 @@ export function CreateView({
 
   useEffect(() => {
     setSkill((current) =>
-      suggestedSkills.includes(current)
+      current && skills.includes(current)
         ? current
-        : (suggestedSkills[0] ?? skills[0] ?? ""),
+        : (suggestedSkills[0] ?? ""),
     );
   }, [skills, suggestedSkills]);
 
@@ -606,11 +644,14 @@ export function CreateView({
                 role="combobox"
                 value={query}
                 onFocus={() => {
+                  requestCreationStatus();
                   setNotesLoading(true);
                   setNotePickerOpen(true);
                 }}
                 onChange={(event) => {
+                  requestCreationStatus();
                   noteRequestId.current += 1;
+                  setSourceFile("");
                   setQuery(event.target.value);
                   setNotes([]);
                   setNotesHasMore(false);
@@ -720,7 +761,10 @@ export function CreateView({
                   aria-required="true"
                   id="output-directory-search"
                   onChange={(event) => {
+                    requestCreationStatus();
                     directoryRequestId.current += 1;
+                    setOutputDirectory(basePath);
+                    setHasSelectedOutputDirectory(false);
                     setOutputQuery(event.target.value);
                     setOutputDirectories([]);
                     setDirectoriesHaveMore(false);
@@ -729,6 +773,7 @@ export function CreateView({
                     setOutputPickerOpen(true);
                   }}
                   onFocus={() => {
+                    requestCreationStatus();
                     setDirectoriesLoading(true);
                     setOutputPickerOpen(true);
                   }}
@@ -744,6 +789,7 @@ export function CreateView({
                     onClick={() => {
                       directoryRequestId.current += 1;
                       setOutputDirectory(basePath);
+                      setHasSelectedOutputDirectory(false);
                       setOutputQuery("");
                       setOutputDirectories([]);
                       setDirectoriesHaveMore(false);
@@ -846,9 +892,10 @@ export function CreateView({
             id="engine"
             label="AI tool"
             onChange={setEngine}
+            onOpen={requestCreationStatus}
             options={[
-              { value: "agy", label: "Antigravity", disabled: !available.agy },
-              { value: "codex", label: "Codex", disabled: !available.codex },
+              { value: "agy", label: "Antigravity" },
+              { value: "codex", label: "Codex" },
             ]}
             value={engine}
           />
@@ -876,14 +923,17 @@ export function CreateView({
               })}
           <DropdownSelect
             id="skill"
-            invalid={showValidationErrors && !skill}
             label="Skill"
+            loading={!availabilityChecked}
             onChange={setSkill}
-            options={orderedSkills.map((item) => ({
-              value: item,
-              label: `${item}${suggestedSkills.includes(item) ? " (suggested)" : ""}`,
-            }))}
-            required
+            onOpen={requestCreationStatus}
+            options={[
+              { value: "", label: "No specific skill" },
+              ...orderedSkills.map((item) => ({
+                value: item,
+                label: `${item}${suggestedSkills.includes(item) ? " (suggested)" : ""}`,
+              })),
+            ]}
             value={skill}
           />
           {!matchingSkill && skill && (
