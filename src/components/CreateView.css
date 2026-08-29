@@ -1,5 +1,5 @@
 .create-view {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   color: var(--text-primary);
@@ -11,10 +11,10 @@
 }
 .create-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: 2rem;
+  margin-top: 2rem;
 }
 .create-form {
   align-self: start;
@@ -29,6 +29,7 @@
 .create-view textarea,
 .output-row output {
   width: 100%;
+  min-height: 3rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   background: var(--bg-surface);
@@ -95,7 +96,7 @@
 }
 .output-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   align-items: center;
 }
 .output-row output {
@@ -103,26 +104,36 @@
 }
 .output-row button {
   flex: 0 0 auto;
+  min-height: 3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+}
+.output-row button:hover,
+.output-row button:focus-visible {
+  border-color: var(--accent-color);
+  background: var(--bg-surface-hover);
 }
 .output-directory-card {
   display: grid;
   gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--glass-border);
-  border-radius: 0.75rem;
-  background: var(--glass-bg);
+  margin-top: 1.5rem;
 }
 .output-directory-card h2 {
+  margin: 0;
   font-size: 1rem;
+  font-weight: 700;
 }
 .output-directory-card p {
-  margin-top: 0.2rem;
+  margin: 0.2rem 0 0;
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
 .output-directory-card output {
-  min-height: 2.8rem;
   display: flex;
   align-items: center;
 }
