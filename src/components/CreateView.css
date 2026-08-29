@@ -253,6 +253,33 @@
   margin: 0;
   padding: 1rem;
 }
+.note-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-secondary);
+  margin: 0;
+  padding: 1rem;
+}
+.search-loader {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: create-search-spin 0.8s linear infinite;
+}
+@keyframes create-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-loader {
+    animation: none;
+  }
+}
 .output-row {
   display: flex;
   gap: 0.75rem;

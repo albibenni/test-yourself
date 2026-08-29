@@ -1,40 +1,30 @@
 pub mod models;
 pub mod parser;
 use std::io::{Read, Write};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use tauri::Emitter;
 
 struct InteractiveSession(Mutex<Option<Box<dyn Write + Send>>>);
 
 #[derive(serde::Serialize)]
 struct CreationStatus { agy_available: bool, codex_available: bool, skills: Vec<String> }
+#[derive(Clone, serde::Serialize)]
+struct LibraryEntry { name: String, path: String, relative_path: String }
+#[derive(Clone)]
+struct CreationLibrary { root: std::path::PathBuf, notes: Vec<LibraryEntry>, directories: Vec<LibraryEntry> }
 #[derive(serde::Serialize)]
-struct NoteMetadata { name: String, path: String, relative_path: String }
-#[derive(serde::Serialize)]
-struct DirectoryMetadata { name: String, path: String, relative_path: String }
+struct CreationSearchPage { items: Vec<LibraryEntry>, has_more: bool }
+
+static CREATION_LIBRARY: OnceLock<Mutex<Option<CreationLibrary>>> = OnceLock::new();
 
 fn command_available(command: &str) -> bool {
     std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command} >/dev/null 2>&1")]).status().map(|status| status.success()).unwrap_or(false)
 }
 fn shell_quote(value: &str) -> String { format!("'{}'", value.replace('\'', "'\"'\"'")) }
 
-#[tauri::command]
-async fn list_markdown_notes(app_handle: tauri::AppHandle) -> Result<Vec<NoteMetadata>, String> {
-    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
+fn build_creation_library(root: std::path::PathBuf) -> CreationLibrary {
     let mut notes = Vec::new();
-    for entry in walkdir::WalkDir::new(&root).into_iter().filter_map(Result::ok) {
-        let path = entry.path();
-        if !entry.file_type().is_file() || path.extension().and_then(|extension| extension.to_str()) != Some("md") { continue; }
-        notes.push(NoteMetadata { name: path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(), path: path.to_string_lossy().into_owned(), relative_path: path.strip_prefix(&root).unwrap_or(path).to_string_lossy().into_owned() });
-    }
-    notes.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
-    Ok(notes)
-}
-
-#[tauri::command]
-async fn list_output_directories(app_handle: tauri::AppHandle) -> Result<Vec<DirectoryMetadata>, String> {
-    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
-    let mut directories = vec![DirectoryMetadata {
+    let mut directories = vec![LibraryEntry {
         name: root.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
         path: root.to_string_lossy().into_owned(),
         relative_path: ".".to_string(),
@@ -45,16 +35,49 @@ async fn list_output_directories(app_handle: tauri::AppHandle) -> Result<Vec<Dir
         .filter_entry(|entry| entry.depth() == 0 || !entry.file_name().to_string_lossy().starts_with('.'))
         .filter_map(Result::ok)
     {
-        if !entry.file_type().is_dir() { continue; }
         let path = entry.path();
-        directories.push(DirectoryMetadata {
+        let item = LibraryEntry {
             name: path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
             path: path.to_string_lossy().into_owned(),
             relative_path: path.strip_prefix(&root).unwrap_or(path).to_string_lossy().into_owned(),
-        });
+        };
+        if entry.file_type().is_dir() { directories.push(item); }
+        else if entry.file_type().is_file() && path.extension().and_then(|extension| extension.to_str()) == Some("md") { notes.push(item); }
     }
+    notes.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
     directories.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
-    Ok(directories)
+    CreationLibrary { root, notes, directories }
+}
+
+#[tauri::command]
+async fn search_creation_library(app_handle: tauri::AppHandle, kind: String, query: String, offset: usize, limit: usize) -> Result<CreationSearchPage, String> {
+    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
+    let cache = CREATION_LIBRARY.get_or_init(|| Mutex::new(None));
+    let library = {
+        let mut cached = cache.lock().map_err(|_| "Creation library is unavailable".to_string())?;
+        match cached.as_ref() {
+            Some(library) if library.root == root => library.clone(),
+            _ => {
+                let library = build_creation_library(root);
+                *cached = Some(library.clone());
+                library
+            }
+        }
+    };
+    let items = match kind.as_str() {
+        "notes" => &library.notes,
+        "directories" => &library.directories,
+        _ => return Err("Invalid creation search type".to_string()),
+    };
+    let normalized_query = query.to_lowercase();
+    let matching_count = items.iter().filter(|item| item.relative_path.to_lowercase().contains(&normalized_query)).count();
+    let page = items.iter()
+        .filter(|item| item.relative_path.to_lowercase().contains(&normalized_query))
+        .skip(offset)
+        .take(limit.clamp(1, 100))
+        .cloned()
+        .collect::<Vec<_>>();
+    Ok(CreationSearchPage { has_more: offset.saturating_add(page.len()) < matching_count, items: page })
 }
 
 #[tauri::command]
@@ -509,8 +532,7 @@ pub fn run() {
             browse_directory,
             import_quiz_files,
             pick_ios_folder,
-            list_markdown_notes,
-            list_output_directories,
+            search_creation_library,
             creation_status,
             generate_material,
             send_generation_input,

@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import "./CreateView.css";
 
 type Note = { name: string; path: string; relative_path: string };
 type Directory = { name: string; path: string; relative_path: string };
+type SearchPage<T> = { items: T[]; has_more: boolean };
 type CreationType = "quiz" | "worksheet" | "scenario";
 type Engine = "agy" | "codex";
 type DropdownOption<T extends string> = {
@@ -42,8 +44,21 @@ const cliInstallDetails: Record<
   },
 };
 
+const SEARCH_PAGE_SIZE = 20;
+
 function isHiddenPath(path: string) {
   return path.split(/[\\/]/).some((segment) => segment.startsWith("."));
+}
+
+function useDebouncedValue(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedValue(value), delay);
+    return () => window.clearTimeout(timeout);
+  }, [delay, value]);
+
+  return debouncedValue;
 }
 
 function SelectChevron() {
@@ -56,6 +71,15 @@ function SelectChevron() {
     >
       <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" />
     </svg>
+  );
+}
+
+function SearchLoading({ children }: { children: string }) {
+  return (
+    <p aria-live="polite" className="note-loading">
+      <span aria-hidden="true" className="search-loader" />
+      {children}
+    </p>
   );
 }
 
@@ -188,6 +212,10 @@ export function CreateView({
 }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [outputDirectories, setOutputDirectories] = useState<Directory[]>([]);
+  const [notesHasMore, setNotesHasMore] = useState(false);
+  const [directoriesHaveMore, setDirectoriesHaveMore] = useState(false);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [directoriesLoading, setDirectoriesLoading] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [available, setAvailable] = useState({ agy: false, codex: false });
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
@@ -195,10 +223,13 @@ export function CreateView({
   const [focusedNoteIndex, setFocusedNoteIndex] = useState(0);
   const [notePickerOpen, setNotePickerOpen] = useState(false);
   const notePickerRef = useRef<HTMLDivElement>(null);
+  const noteRequestId = useRef(0);
+  const creationStatusRequested = useRef(false);
   const [outputQuery, setOutputQuery] = useState("");
   const [focusedOutputIndex, setFocusedOutputIndex] = useState(0);
   const [outputPickerOpen, setOutputPickerOpen] = useState(false);
   const outputPickerRef = useRef<HTMLDivElement>(null);
+  const directoryRequestId = useRef(0);
   const [sourceFile, setSourceFile] = useState("");
   const [outputDirectory, setOutputDirectory] = useState(basePath);
   const [creationType, setCreationType] = useState<CreationType>("quiz");
@@ -211,22 +242,23 @@ export function CreateView({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [selectionAnnouncement, setSelectionAnnouncement] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 250);
+  const debouncedOutputQuery = useDebouncedValue(outputQuery, 250);
 
   useEffect(() => {
-    void Promise.all([
-      invoke<Note[]>("list_markdown_notes"),
-      invoke<Directory[]>("list_output_directories"),
-      invoke<{
-        agy_available: boolean;
-        codex_available: boolean;
-        skills: string[];
-      }>("creation_status"),
-    ])
-      .then(([foundNotes, foundDirectories, creation]) => {
-        setNotes(Array.isArray(foundNotes) ? foundNotes : []);
-        setOutputDirectories(
-          Array.isArray(foundDirectories) ? foundDirectories : [],
-        );
+    if (
+      (!notePickerOpen && !outputPickerOpen) ||
+      creationStatusRequested.current
+    ) {
+      return;
+    }
+    creationStatusRequested.current = true;
+    void invoke<{
+      agy_available: boolean;
+      codex_available: boolean;
+      skills: string[];
+    }>("creation_status")
+      .then((creation) => {
         setSkills(Array.isArray(creation?.skills) ? creation.skills : []);
         setAvailable({
           agy: creation?.agy_available ?? false,
@@ -234,9 +266,9 @@ export function CreateView({
         });
         setEngine(creation?.agy_available ? "agy" : "codex");
       })
-      .catch(() => setStatus("Unable to load notes or AI tools."))
+      .catch(() => setStatus("Unable to load AI tools."))
       .finally(() => setAvailabilityChecked(true));
-  }, []);
+  }, [notePickerOpen, outputPickerOpen]);
 
   useEffect(() => {
     let active = true;
@@ -309,30 +341,83 @@ export function CreateView({
       ),
     [skills, suggestedSkills],
   );
-  const filteredNotes = useMemo(
-    () =>
-      notes.filter((note) =>
-        note.relative_path.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [notes, query],
+  const requestNotesPage = useCallback(
+    async (search: string, offset: number) => {
+      const requestId = ++noteRequestId.current;
+      setNotesLoading(true);
+      try {
+        const page = await invoke<SearchPage<Note>>("search_creation_library", {
+          kind: "notes",
+          query: search,
+          offset,
+          limit: SEARCH_PAGE_SIZE,
+        });
+        if (requestId !== noteRequestId.current) return;
+        const items = Array.isArray(page?.items) ? page.items : [];
+        setNotes((current) => (offset === 0 ? items : [...current, ...items]));
+        setNotesHasMore(Boolean(page?.has_more));
+      } catch {
+        if (requestId === noteRequestId.current) {
+          setStatus("Unable to search the selected directory.");
+          setNotesHasMore(false);
+        }
+      } finally {
+        if (requestId === noteRequestId.current) setNotesLoading(false);
+      }
+    },
+    [],
   );
-  const filteredOutputDirectories = useMemo(
-    () =>
-      outputDirectories.filter(
-        (directory) =>
-          !isHiddenPath(directory.relative_path) &&
-          directory.relative_path
-            .toLowerCase()
-            .includes(outputQuery.toLowerCase()),
-      ),
-    [outputDirectories, outputQuery],
+  const requestDirectoriesPage = useCallback(
+    async (search: string, offset: number) => {
+      const requestId = ++directoryRequestId.current;
+      setDirectoriesLoading(true);
+      try {
+        const page = await invoke<SearchPage<Directory>>(
+          "search_creation_library",
+          {
+            kind: "directories",
+            query: search,
+            offset,
+            limit: SEARCH_PAGE_SIZE,
+          },
+        );
+        if (requestId !== directoryRequestId.current) return;
+        const items = Array.isArray(page?.items)
+          ? page.items.filter(
+              (directory) => !isHiddenPath(directory.relative_path),
+            )
+          : [];
+        setOutputDirectories((current) =>
+          offset === 0 ? items : [...current, ...items],
+        );
+        setDirectoriesHaveMore(Boolean(page?.has_more));
+      } catch {
+        if (requestId === directoryRequestId.current) {
+          setStatus("Unable to search the selected directory.");
+          setDirectoriesHaveMore(false);
+        }
+      } finally {
+        if (requestId === directoryRequestId.current)
+          setDirectoriesLoading(false);
+      }
+    },
+    [],
   );
+
+  useEffect(() => {
+    if (notePickerOpen) void requestNotesPage(debouncedQuery, 0);
+  }, [debouncedQuery, notePickerOpen, requestNotesPage]);
+
+  useEffect(() => {
+    if (outputPickerOpen) void requestDirectoriesPage(debouncedOutputQuery, 0);
+  }, [debouncedOutputQuery, outputPickerOpen, requestDirectoriesPage]);
+
   const activeNoteId =
-    notePickerOpen && filteredNotes.length > 0
+    notePickerOpen && notes.length > 0
       ? `note-search-option-${focusedNoteIndex}`
       : undefined;
   const activeOutputId =
-    outputPickerOpen && filteredOutputDirectories.length > 0
+    outputPickerOpen && outputDirectories.length > 0
       ? `output-directory-option-${focusedOutputIndex}`
       : undefined;
   const missingRequirements = [
@@ -348,14 +433,14 @@ export function CreateView({
       event.preventDefault();
       setNotePickerOpen(true);
       setFocusedNoteIndex((current) =>
-        Math.min(current + 1, Math.max(0, filteredNotes.length - 1)),
+        Math.min(current + 1, Math.max(0, notes.length - 1)),
       );
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setFocusedNoteIndex((current) => Math.max(current - 1, 0));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      const note = filteredNotes[focusedNoteIndex];
+      const note = notes[focusedNoteIndex];
       if (note) selectNote(note.path);
     } else if (event.key === "Escape") {
       setNotePickerOpen(false);
@@ -378,10 +463,7 @@ export function CreateView({
       event.preventDefault();
       setOutputPickerOpen(true);
       setFocusedOutputIndex((current) =>
-        Math.min(
-          current + 1,
-          Math.max(0, filteredOutputDirectories.length - 1),
-        ),
+        Math.min(current + 1, Math.max(0, outputDirectories.length - 1)),
       );
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
@@ -389,7 +471,7 @@ export function CreateView({
       setFocusedOutputIndex((current) => Math.max(current - 1, 0));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      const directory = filteredOutputDirectories[focusedOutputIndex];
+      const directory = outputDirectories[focusedOutputIndex];
       if (directory) selectOutputDirectory(directory.path);
     } else if (event.key === "Escape") {
       setOutputPickerOpen(false);
@@ -523,9 +605,16 @@ export function CreateView({
                 id="note-search"
                 role="combobox"
                 value={query}
-                onFocus={() => setNotePickerOpen(true)}
+                onFocus={() => {
+                  setNotesLoading(true);
+                  setNotePickerOpen(true);
+                }}
                 onChange={(event) => {
+                  noteRequestId.current += 1;
                   setQuery(event.target.value);
+                  setNotes([]);
+                  setNotesHasMore(false);
+                  setNotesLoading(true);
                   setFocusedNoteIndex(0);
                   setNotePickerOpen(true);
                 }}
@@ -537,8 +626,12 @@ export function CreateView({
                   aria-label="Clear selected note"
                   className="clear-note-search"
                   onClick={() => {
+                    noteRequestId.current += 1;
                     setQuery("");
                     setSourceFile("");
+                    setNotes([]);
+                    setNotesHasMore(false);
+                    setNotesLoading(true);
                     setFocusedNoteIndex(0);
                     setNotePickerOpen(true);
                     setSelectionAnnouncement("Selected note cleared.");
@@ -561,14 +654,26 @@ export function CreateView({
                 aria-label="Matching notes"
                 className="note-list"
                 id="note-search-results"
+                onScroll={(event) => {
+                  const list = event.currentTarget;
+                  if (
+                    notesHasMore &&
+                    !notesLoading &&
+                    list.scrollHeight - list.scrollTop - list.clientHeight < 48
+                  ) {
+                    void requestNotesPage(debouncedQuery, notes.length);
+                  }
+                }}
                 role="listbox"
               >
-                {filteredNotes.length === 0 ? (
+                {notesLoading && notes.length === 0 ? (
+                  <SearchLoading>Searching notes…</SearchLoading>
+                ) : notes.length === 0 ? (
                   <p aria-live="polite" className="note-empty">
                     No matching notes in the selected directory.
                   </p>
                 ) : (
-                  filteredNotes.map((note, index) => (
+                  notes.map((note, index) => (
                     <button
                       aria-selected={focusedNoteIndex === index}
                       className={
@@ -586,6 +691,9 @@ export function CreateView({
                       <span>{note.relative_path}</span>
                     </button>
                   ))
+                )}
+                {notesLoading && notes.length > 0 && (
+                  <SearchLoading>Loading more notes…</SearchLoading>
                 )}
               </div>
             )}
@@ -612,11 +720,18 @@ export function CreateView({
                   aria-required="true"
                   id="output-directory-search"
                   onChange={(event) => {
+                    directoryRequestId.current += 1;
                     setOutputQuery(event.target.value);
+                    setOutputDirectories([]);
+                    setDirectoriesHaveMore(false);
+                    setDirectoriesLoading(true);
                     setFocusedOutputIndex(0);
                     setOutputPickerOpen(true);
                   }}
-                  onFocus={() => setOutputPickerOpen(true)}
+                  onFocus={() => {
+                    setDirectoriesLoading(true);
+                    setOutputPickerOpen(true);
+                  }}
                   onKeyDown={handleOutputSearchKeyDown}
                   placeholder="Search your selected directory"
                   role="combobox"
@@ -627,8 +742,12 @@ export function CreateView({
                     aria-label="Clear selected output directory"
                     className="clear-note-search"
                     onClick={() => {
+                      directoryRequestId.current += 1;
                       setOutputDirectory(basePath);
                       setOutputQuery("");
+                      setOutputDirectories([]);
+                      setDirectoriesHaveMore(false);
+                      setDirectoriesLoading(true);
                       setFocusedOutputIndex(0);
                       setOutputPickerOpen(true);
                     }}
@@ -651,14 +770,30 @@ export function CreateView({
                   aria-label="Matching output directories"
                   className="note-list"
                   id="output-directory-results"
+                  onScroll={(event) => {
+                    const list = event.currentTarget;
+                    if (
+                      directoriesHaveMore &&
+                      !directoriesLoading &&
+                      list.scrollHeight - list.scrollTop - list.clientHeight <
+                        48
+                    ) {
+                      void requestDirectoriesPage(
+                        debouncedOutputQuery,
+                        outputDirectories.length,
+                      );
+                    }
+                  }}
                   role="listbox"
                 >
-                  {filteredOutputDirectories.length === 0 ? (
+                  {directoriesLoading && outputDirectories.length === 0 ? (
+                    <SearchLoading>Searching directories…</SearchLoading>
+                  ) : outputDirectories.length === 0 ? (
                     <p aria-live="polite" className="note-empty">
                       No matching directories in the selected directory.
                     </p>
                   ) : (
-                    filteredOutputDirectories.map((directory, index) => (
+                    outputDirectories.map((directory, index) => (
                       <button
                         aria-selected={outputDirectory === directory.path}
                         className={
@@ -681,6 +816,9 @@ export function CreateView({
                         </span>
                       </button>
                     ))
+                  )}
+                  {directoriesLoading && outputDirectories.length > 0 && (
+                    <SearchLoading>Loading more directories…</SearchLoading>
                   )}
                 </div>
               )}
