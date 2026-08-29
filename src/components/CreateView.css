@@ -27,6 +27,13 @@
 .create-view input,
 .create-view select,
 .create-view textarea,
+.output-directory-path,
+.create-view button {
+  box-sizing: border-box;
+}
+.create-view input,
+.create-view select,
+.create-view textarea,
 .output-directory-path {
   width: 100%;
   min-height: 3rem;
@@ -39,6 +46,10 @@
 .create-view textarea {
   min-height: 7rem;
   resize: vertical;
+}
+/* Native selects treat min-height differently from text inputs in WebKit. */
+.create-view select {
+  height: 3rem;
 }
 .create-view .field-invalid {
   border-color: var(--error-color);
