@@ -5,6 +5,7 @@ interface TopBarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
   onOpenSettings: () => void;
+  onOpenCreate?: () => void;
   onOpenShortcuts?: () => void;
   hasUpdate?: boolean;
 }
@@ -13,6 +14,7 @@ export function TopBar({
   isSidebarOpen,
   setIsSidebarOpen,
   onOpenSettings,
+  onOpenCreate,
   onOpenShortcuts,
   hasUpdate,
 }: TopBarProps) {
@@ -56,6 +58,17 @@ export function TopBar({
       </div>
 
       <div className="top-bar-right">
+        {onOpenCreate && (
+          <button
+            aria-label="Create study material"
+            className="top-bar-btn"
+            data-hint="Create"
+            onClick={onOpenCreate}
+            type="button"
+          >
+            +
+          </button>
+        )}
         {onOpenShortcuts && (
           <button
             aria-label="Keyboard shortcuts"

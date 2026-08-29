@@ -21,6 +21,7 @@ import type {
   ThemeType,
   Worksheet,
 } from "../types";
+import { CreateView } from "./CreateView";
 import { FolderBrowserModal } from "./FolderBrowserModal";
 import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 import { QuizViewer } from "./QuizViewer";
@@ -38,6 +39,8 @@ interface AppLayoutProps {
   sidebarOpen: boolean;
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
   settingsOpen: boolean;
+  createOpen: boolean;
+  setCreateOpen: Dispatch<SetStateAction<boolean>>;
   setSettingsOpen: Dispatch<SetStateAction<boolean>>;
   settingsDirty: boolean;
   setSettingsDirty: Dispatch<SetStateAction<boolean>>;
@@ -110,6 +113,8 @@ export function AppLayout(props: AppLayoutProps) {
     sidebarOpen,
     setSidebarOpen,
     settingsOpen,
+    createOpen,
+    setCreateOpen,
     setSettingsOpen,
     settingsDirty,
     setSettingsDirty,
@@ -203,6 +208,10 @@ export function AppLayout(props: AppLayoutProps) {
           isSidebarOpen={sidebarOpen}
           setIsSidebarOpen={setSidebarOpen}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenCreate={() => {
+            setCreateOpen(true);
+            setSettingsOpen(false);
+          }}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           hasUpdate={!!updateVersion}
         />
@@ -265,6 +274,12 @@ export function AppLayout(props: AppLayoutProps) {
                   ↓
                 </span>
               </div>
+            )}
+            {createOpen && basePath && (
+              <CreateView
+                basePath={basePath}
+                onGenerated={() => void handleSync()}
+              />
             )}
             {settingsOpen && (
               <Suspense
@@ -338,7 +353,7 @@ export function AppLayout(props: AppLayoutProps) {
             )}
             <div
               style={{
-                display: settingsOpen ? "none" : "flex",
+                display: settingsOpen || createOpen ? "none" : "flex",
                 flexDirection: "column",
                 flex: 1,
               }}

@@ -1,6 +1,52 @@
 pub mod models;
 pub mod parser;
 
+#[derive(serde::Serialize)]
+struct CreationStatus { agy_available: bool, codex_available: bool, skills: Vec<String> }
+#[derive(serde::Serialize)]
+struct NoteMetadata { name: String, path: String, relative_path: String }
+
+fn command_available(command: &str) -> bool {
+    std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command} >/dev/null 2>&1")]).status().map(|status| status.success()).unwrap_or(false)
+}
+fn shell_quote(value: &str) -> String { format!("'{}'", value.replace('\'', "'\"'\"'")) }
+
+#[tauri::command]
+async fn list_markdown_notes(app_handle: tauri::AppHandle) -> Result<Vec<NoteMetadata>, String> {
+    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
+    let mut notes = Vec::new();
+    for entry in walkdir::WalkDir::new(&root).into_iter().filter_map(Result::ok) {
+        let path = entry.path();
+        if !entry.file_type().is_file() || path.extension().and_then(|extension| extension.to_str()) != Some("md") { continue; }
+        notes.push(NoteMetadata { name: path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(), path: path.to_string_lossy().into_owned(), relative_path: path.strip_prefix(&root).unwrap_or(path).to_string_lossy().into_owned() });
+    }
+    notes.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+    Ok(notes)
+}
+
+#[tauri::command]
+fn creation_status() -> CreationStatus {
+    let skills = std::process::Command::new("/bin/sh").args(["-lc", "find .agents ~/.agents ~/.gemini ~/.codex/skills -type f -name SKILL.md -exec dirname {} \\; 2>/dev/null | xargs -n1 basename | sort -u"]).output().map(|output| String::from_utf8_lossy(&output.stdout).lines().map(String::from).collect()).unwrap_or_default();
+    CreationStatus { agy_available: command_available("agy"), codex_available: command_available("codex"), skills }
+}
+
+#[tauri::command]
+fn generate_material(engine: String, output_directory: String, source_file: String, skill: String, request: String, creation_type: String) -> Result<(), String> {
+    if !matches!(engine.as_str(), "agy" | "codex") || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "scenario") || skill.trim().is_empty() || request.trim().is_empty() { return Err("Invalid generation request".to_string()); }
+    let output = std::fs::canonicalize(&output_directory).map_err(|_| "Output directory is not accessible".to_string())?;
+    let source = std::fs::canonicalize(&source_file).map_err(|_| "Source file is not accessible".to_string())?;
+    if !source.is_file() { return Err("Source must be a file".to_string()); }
+    let source_directory = source.parent().ok_or("Source file has no parent directory")?;
+    let instruction = format!("Create a {creation_type} using the {skill} skill if available. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
+    let command = if engine == "codex" { format!("codex exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("agy --add-dir {} --add-dir {} --prompt {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&format!("/{skill} {instruction}"))) };
+    let terminal_command = format!("{command}; exit_code=$?; printf '\\n\\nTest Yourself finished (exit code %s). Press Enter to close.' \"$exit_code\"; read -r");
+    #[cfg(target_os = "macos")]
+    { let script = format!("tell application \"Terminal\" to do script \"{}\"", terminal_command.replace('\\', "\\\\").replace('"', "\\\"")); std::process::Command::new("osascript").args(["-e", &script]).spawn().map_err(|error| error.to_string())?; }
+    #[cfg(target_os = "linux")]
+    std::process::Command::new("x-terminal-emulator").args(["-e", "/bin/sh", "-lc", &terminal_command]).spawn().map_err(|error| error.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -406,6 +452,9 @@ pub fn run() {
             browse_directory,
             import_quiz_files,
             pick_ios_folder,
+            list_markdown_notes,
+            creation_status,
+            generate_material,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -13,6 +13,7 @@ import { completeTodoistAuthorization } from "./todoistOAuth";
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [folderBrowserOpen, setFolderBrowserOpen] = useState(false);
@@ -169,6 +170,8 @@ function App() {
       setSidebarOpen={setSidebarOpen}
       settingsOpen={settingsOpen}
       setSettingsOpen={setSettingsOpen}
+      createOpen={createOpen}
+      setCreateOpen={setCreateOpen}
       settingsDirty={settingsDirty}
       setSettingsDirty={setSettingsDirty}
       scheduleOpen={scheduleOpen}

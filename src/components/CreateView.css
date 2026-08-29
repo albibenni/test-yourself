@@ -1,0 +1,118 @@
+.create-view {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--text-primary);
+}
+.create-view header p,
+.note span,
+.creation-warning {
+  color: var(--text-secondary);
+}
+.create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.create-view label {
+  display: block;
+  font-weight: 700;
+  margin: 1rem 0 0.4rem;
+}
+.create-view input,
+.create-view select,
+.create-view textarea,
+.output-row output {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 0.7rem;
+}
+.create-view textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+.note-search-control {
+  position: relative;
+}
+.note-search-control input {
+  padding-right: 3rem;
+}
+.clear-note-search {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+}
+.clear-note-search:hover,
+.clear-note-search:focus-visible {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+.note-list {
+  min-height: 22rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: auto;
+}
+.note,
+.drop-note {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  color: inherit;
+  padding: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+.note.active,
+.note:hover,
+.drop-note:hover {
+  background: var(--bg-surface-hover);
+}
+.note span {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+}
+.output-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.output-row output {
+  overflow-wrap: anywhere;
+}
+.output-row button {
+  flex: 0 0 auto;
+}
+.creation-warning {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+.primary-btn {
+  width: 100%;
+  margin-top: 1.5rem;
+}
+@media (max-width: 760px) {
+  .create-grid {
+    grid-template-columns: 1fr;
+  }
+  .create-view {
+    padding: 1rem;
+  }
+}
