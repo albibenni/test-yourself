@@ -42,9 +42,8 @@ describe("CreateView", () => {
       target: { value: "history" },
     });
     expect(screen.getByText("History.md")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Skill"), {
-      target: { value: "scenario" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Skill" }));
+    fireEvent.click(screen.getByRole("option", { name: "scenario" }));
     expect(screen.getByText(/may not create a quiz/i)).toBeInTheDocument();
   });
 
@@ -131,6 +130,35 @@ describe("CreateView", () => {
     fireEvent.keyDown(search, { key: "Escape" });
     expect(search).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("uses the same accessible dropdown pattern for creation options", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: true,
+          skills: ["quiz-master", "scenario"],
+        });
+      if (command === "list_markdown_notes") return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    const creationType = await screen.findByRole("button", {
+      name: "Create",
+    });
+    expect(creationType).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(creationType);
+    expect(screen.getByRole("listbox", { name: "Create" })).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: "Worksheet" }));
+
+    expect(creationType).toHaveTextContent("Worksheet");
+    expect(
+      screen.queryByRole("listbox", { name: "Create" }),
+    ).not.toBeInTheDocument();
   });
 
   it("offers a keyboard-accessible external-file chooser", async () => {
@@ -245,7 +273,7 @@ describe("CreateView", () => {
     ).toBeInTheDocument();
   });
 
-  it("gives the output-directory chooser a specific accessible name", async () => {
+  it("gives the external output-directory chooser a specific accessible name", async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(invoke).mockImplementation((command: string) => {
       if (command === "creation_status")
@@ -260,7 +288,79 @@ describe("CreateView", () => {
 
     render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
     expect(
-      await screen.findByRole("button", { name: /choose output directory/i }),
-    ).toHaveAttribute("aria-describedby", "output-directory-path");
+      await screen.findByRole("button", { name: /choose external directory/i }),
+    ).toBeEnabled();
+  });
+
+  it("searches output directories in the shared library", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes") return Promise.resolve([]);
+      if (command === "list_output_directories")
+        return Promise.resolve([
+          {
+            name: "Exercises",
+            path: "/SecondBrain/Exercises",
+            relative_path: "Exercises",
+          },
+          {
+            name: ".git",
+            path: "/SecondBrain/.git",
+            relative_path: ".git",
+          },
+        ]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    const search = await screen.findByRole("combobox", {
+      name: /search output directories/i,
+    });
+    fireEvent.focus(search);
+    expect(
+      await screen.findByRole("option", { name: /exercises/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /\.git/i }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: /exercises/i }));
+    expect(search).toHaveValue("Exercises");
+    expect(
+      screen.getByRole("button", { name: /choose external directory/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an install command when the selected AI tool is unavailable", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: false,
+          codex_available: true,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes") return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+
+    expect(
+      await screen.findByText(/antigravity cli is not installed/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /antigravity installation guide/i }),
+    ).toHaveAttribute("href", "https://antigravity.google/docs/cli/install/");
   });
 });

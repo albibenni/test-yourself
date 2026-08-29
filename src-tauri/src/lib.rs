@@ -10,6 +10,8 @@ struct InteractiveSession(Mutex<Option<Box<dyn Write + Send>>>);
 struct CreationStatus { agy_available: bool, codex_available: bool, skills: Vec<String> }
 #[derive(serde::Serialize)]
 struct NoteMetadata { name: String, path: String, relative_path: String }
+#[derive(serde::Serialize)]
+struct DirectoryMetadata { name: String, path: String, relative_path: String }
 
 fn command_available(command: &str) -> bool {
     std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command} >/dev/null 2>&1")]).status().map(|status| status.success()).unwrap_or(false)
@@ -27,6 +29,32 @@ async fn list_markdown_notes(app_handle: tauri::AppHandle) -> Result<Vec<NoteMet
     }
     notes.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
     Ok(notes)
+}
+
+#[tauri::command]
+async fn list_output_directories(app_handle: tauri::AppHandle) -> Result<Vec<DirectoryMetadata>, String> {
+    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
+    let mut directories = vec![DirectoryMetadata {
+        name: root.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
+        path: root.to_string_lossy().into_owned(),
+        relative_path: ".".to_string(),
+    }];
+    for entry in walkdir::WalkDir::new(&root)
+        .min_depth(1)
+        .into_iter()
+        .filter_entry(|entry| entry.depth() == 0 || !entry.file_name().to_string_lossy().starts_with('.'))
+        .filter_map(Result::ok)
+    {
+        if !entry.file_type().is_dir() { continue; }
+        let path = entry.path();
+        directories.push(DirectoryMetadata {
+            name: path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
+            path: path.to_string_lossy().into_owned(),
+            relative_path: path.strip_prefix(&root).unwrap_or(path).to_string_lossy().into_owned(),
+        });
+    }
+    directories.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+    Ok(directories)
 }
 
 #[tauri::command]
@@ -482,6 +510,7 @@ pub fn run() {
             import_quiz_files,
             pick_ios_folder,
             list_markdown_notes,
+            list_output_directories,
             creation_status,
             generate_material,
             send_generation_input,
