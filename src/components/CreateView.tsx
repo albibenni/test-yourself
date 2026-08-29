@@ -94,13 +94,17 @@ export function CreateView({
       ),
     [notes, query],
   );
+  const activeNoteId =
+    notePickerOpen && filteredNotes.length > 0
+      ? `note-search-option-${focusedNoteIndex}`
+      : undefined;
   const matchingSkill = skill.toLowerCase().includes(creationType);
 
   function handleNoteSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setFocusedNoteIndex((current) =>
-        Math.min(current + 1, filteredNotes.length - 1),
+        Math.min(current + 1, Math.max(0, filteredNotes.length - 1)),
       );
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
@@ -109,6 +113,8 @@ export function CreateView({
       event.preventDefault();
       const note = filteredNotes[focusedNoteIndex];
       if (note) selectNote(note.path);
+    } else if (event.key === "Escape") {
+      setNotePickerOpen(false);
     }
   }
 
@@ -137,6 +143,15 @@ export function CreateView({
       defaultPath: outputDirectory,
     });
     if (typeof selected === "string") setOutputDirectory(selected);
+  }
+
+  async function chooseExternalSource() {
+    const selected = await open({
+      directory: false,
+      multiple: false,
+      defaultPath: basePath,
+    });
+    if (typeof selected === "string") selectNote(selected);
   }
 
   async function generate() {
@@ -186,7 +201,13 @@ export function CreateView({
             }}
           >
             <input
+              aria-activedescendant={activeNoteId}
+              aria-autocomplete="list"
+              aria-controls="note-search-results"
+              aria-expanded={notePickerOpen}
+              aria-haspopup="listbox"
               id="note-search"
+              role="combobox"
               value={query}
               onFocus={() => setNotePickerOpen(true)}
               onChange={(event) => {
@@ -213,17 +234,32 @@ export function CreateView({
               </button>
             )}
           </div>
+          <button
+            className="external-file-picker"
+            onClick={() => void chooseExternalSource()}
+            type="button"
+          >
+            Choose external file
+          </button>
           {notePickerOpen && (
-            <div className="note-list">
+            <div
+              aria-label="Matching notes"
+              className="note-list"
+              id="note-search-results"
+              role="listbox"
+            >
               {filteredNotes.map((note, index) => (
                 <button
+                  aria-selected={focusedNoteIndex === index}
                   className={
                     sourceFile === note.path || focusedNoteIndex === index
                       ? "note active"
                       : "note"
                   }
+                  id={`note-search-option-${index}`}
                   key={note.path}
                   onClick={() => selectNote(note.path)}
+                  role="option"
                   type="button"
                 >
                   <strong>{note.name}</strong>

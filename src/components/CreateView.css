@@ -46,6 +46,29 @@
 .note-search-control input {
   padding-right: 3rem;
 }
+.external-file-picker {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.45rem 0.7rem;
+}
+.external-file-picker:hover,
+.external-file-picker:focus-visible {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+}
+.external-file-picker:focus-visible,
+.output-row button:focus-visible,
+.primary-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
 .clear-note-search {
   position: absolute;
   right: 0.55rem;
@@ -64,6 +87,8 @@
 .clear-note-search:focus-visible {
   background: var(--bg-surface-hover);
   color: var(--text-primary);
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 .note-list {
   min-height: 22rem;
@@ -88,6 +113,14 @@
 .note:hover,
 .drop-note:hover {
   background: var(--bg-surface-hover);
+}
+.note.active,
+.note:focus-visible {
+  box-shadow: inset 3px 0 0 var(--accent-color);
+}
+.note:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
 }
 .note span {
   display: block;
