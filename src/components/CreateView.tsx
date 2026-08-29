@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   type KeyboardEvent,
@@ -31,7 +32,7 @@ export function CreateView({
   const [available, setAvailable] = useState({ agy: false, codex: false });
   const [query, setQuery] = useState("");
   const [focusedNoteIndex, setFocusedNoteIndex] = useState(0);
-  const [notePickerOpen, setNotePickerOpen] = useState(true);
+  const [notePickerOpen, setNotePickerOpen] = useState(false);
   const notePickerRef = useRef<HTMLDivElement>(null);
   const [sourceFile, setSourceFile] = useState("");
   const [outputDirectory, setOutputDirectory] = useState(basePath);
@@ -40,6 +41,11 @@ export function CreateView({
   const [engine, setEngine] = useState<Engine>("agy");
   const [request, setRequest] = useState("");
   const [status, setStatus] = useState("");
+  const [generationOutput, setGenerationOutput] = useState("");
+  const [sessionInput, setSessionInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [selectionAnnouncement, setSelectionAnnouncement] = useState("");
 
   useEffect(() => {
     void Promise.all([
@@ -51,16 +57,49 @@ export function CreateView({
       }>("creation_status"),
     ])
       .then(([foundNotes, creation]) => {
-        setNotes(foundNotes);
-        setSkills(creation.skills);
+        setNotes(Array.isArray(foundNotes) ? foundNotes : []);
+        setSkills(Array.isArray(creation?.skills) ? creation.skills : []);
         setAvailable({
-          agy: creation.agy_available,
-          codex: creation.codex_available,
+          agy: creation?.agy_available ?? false,
+          codex: creation?.codex_available ?? false,
         });
-        setEngine(creation.agy_available ? "agy" : "codex");
+        setEngine(creation?.agy_available ? "agy" : "codex");
       })
       .catch(() => setStatus("Unable to load notes or AI tools."));
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    let unlistenOutput: (() => void) | undefined;
+    let unlistenComplete: (() => void) | undefined;
+
+    void Promise.all([
+      listen<string>("generation-output", ({ payload }) => {
+        if (!active) return;
+        setGenerationOutput((current) => `${current}${payload}`.slice(-50_000));
+      }),
+      listen<string>("generation-complete", ({ payload }) => {
+        if (!active) return;
+        setIsGenerating(false);
+        setStatus(payload);
+        onGenerated();
+      }),
+    ]).then(([removeOutput, removeComplete]) => {
+      if (active) {
+        unlistenOutput = removeOutput;
+        unlistenComplete = removeComplete;
+      } else {
+        removeOutput();
+        removeComplete();
+      }
+    });
+
+    return () => {
+      active = false;
+      unlistenOutput?.();
+      unlistenComplete?.();
+    };
+  }, [onGenerated]);
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -98,11 +137,18 @@ export function CreateView({
     notePickerOpen && filteredNotes.length > 0
       ? `note-search-option-${focusedNoteIndex}`
       : undefined;
+  const missingRequirements = [
+    !sourceFile && "a source note",
+    !request.trim() && "a description of what to create",
+    !skill && "a skill",
+    !outputDirectory && "an output directory",
+  ].filter(Boolean);
   const matchingSkill = skill.toLowerCase().includes(creationType);
 
   function handleNoteSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      setNotePickerOpen(true);
       setFocusedNoteIndex((current) =>
         Math.min(current + 1, Math.max(0, filteredNotes.length - 1)),
       );
@@ -120,11 +166,12 @@ export function CreateView({
 
   function selectNote(path: string) {
     setSourceFile(path);
-    setQuery(
+    const name =
       notes.find((note) => note.path === path)?.name ??
-        path.split(/[\\/]/).pop() ??
-        path,
-    );
+      path.split(/[\\/]/).pop() ??
+      path;
+    setQuery(name);
+    setSelectionAnnouncement(`Selected note: ${name}`);
     setNotePickerOpen(false);
   }
 
@@ -155,9 +202,17 @@ export function CreateView({
   }
 
   async function generate() {
-    if (!sourceFile || !outputDirectory || !skill || !request.trim()) return;
+    if (missingRequirements.length > 0) {
+      setShowValidationErrors(true);
+      setStatus("Please complete the highlighted required fields.");
+      return;
+    }
     try {
-      setStatus("Opening the terminal…");
+      setShowValidationErrors(false);
+      setStatus("Starting generation…");
+      setGenerationOutput("");
+      setSessionInput("");
+      setIsGenerating(true);
       await invoke("generate_material", {
         engine,
         outputDirectory,
@@ -166,12 +221,20 @@ export function CreateView({
         request,
         creationType,
       });
-      setStatus(
-        "Generation is running in the terminal. Complete any sign-in or approval there, then refresh your library.",
-      );
-      onGenerated();
+      setStatus("Generation is running. Live output is shown below.");
     } catch (error) {
+      setIsGenerating(false);
       setStatus(`Could not start generation: ${String(error)}`);
+    }
+  }
+
+  async function sendSessionInput() {
+    if (!sessionInput.trim()) return;
+    try {
+      await invoke("send_generation_input", { input: sessionInput });
+      setSessionInput("");
+    } catch (error) {
+      setStatus(`Could not send response: ${String(error)}`);
     }
   }
 
@@ -186,6 +249,9 @@ export function CreateView({
       </header>
       <div className="create-grid">
         <div ref={notePickerRef}>
+          <p aria-atomic="true" aria-live="polite" className="sr-only">
+            {selectionAnnouncement}
+          </p>
           <label htmlFor="note-search">Search notes or drop a file here</label>
           <div
             className="note-search-control"
@@ -206,6 +272,13 @@ export function CreateView({
               aria-controls="note-search-results"
               aria-expanded={notePickerOpen}
               aria-haspopup="listbox"
+              aria-required="true"
+              aria-invalid={showValidationErrors && !sourceFile}
+              className={
+                showValidationErrors && !sourceFile
+                  ? "field-invalid"
+                  : undefined
+              }
               id="note-search"
               role="combobox"
               value={query}
@@ -227,6 +300,7 @@ export function CreateView({
                   setSourceFile("");
                   setFocusedNoteIndex(0);
                   setNotePickerOpen(true);
+                  setSelectionAnnouncement("Selected note cleared.");
                 }}
                 type="button"
               >
@@ -248,24 +322,30 @@ export function CreateView({
               id="note-search-results"
               role="listbox"
             >
-              {filteredNotes.map((note, index) => (
-                <button
-                  aria-selected={focusedNoteIndex === index}
-                  className={
-                    sourceFile === note.path || focusedNoteIndex === index
-                      ? "note active"
-                      : "note"
-                  }
-                  id={`note-search-option-${index}`}
-                  key={note.path}
-                  onClick={() => selectNote(note.path)}
-                  role="option"
-                  type="button"
-                >
-                  <strong>{note.name}</strong>
-                  <span>{note.relative_path}</span>
-                </button>
-              ))}
+              {filteredNotes.length === 0 ? (
+                <p aria-live="polite" className="note-empty">
+                  No matching notes in the selected directory.
+                </p>
+              ) : (
+                filteredNotes.map((note, index) => (
+                  <button
+                    aria-selected={focusedNoteIndex === index}
+                    className={
+                      sourceFile === note.path || focusedNoteIndex === index
+                        ? "note active"
+                        : "note"
+                    }
+                    id={`note-search-option-${index}`}
+                    key={note.path}
+                    onClick={() => selectNote(note.path)}
+                    role="option"
+                    type="button"
+                  >
+                    <strong>{note.name}</strong>
+                    <span>{note.relative_path}</span>
+                  </button>
+                ))
+              )}
             </div>
           )}
           <section
@@ -277,9 +357,16 @@ export function CreateView({
               <p>Where the generated study material will be saved.</p>
             </div>
             <div className="output-row">
-              <output>{outputDirectory}</output>
-              <button type="button" onClick={() => void chooseOutput()}>
-                Choose
+              <p className="output-directory-path" id="output-directory-path">
+                {outputDirectory}
+              </p>
+              <button
+                aria-label="Choose output directory"
+                aria-describedby="output-directory-path"
+                onClick={() => void chooseOutput()}
+                type="button"
+              >
+                Choose…
               </button>
             </div>
             {outputDirectory !== basePath && (
@@ -321,6 +408,11 @@ export function CreateView({
           <label htmlFor="skill">Skill</label>
           <select
             id="skill"
+            aria-invalid={showValidationErrors && !skill}
+            className={
+              showValidationErrors && !skill ? "field-invalid" : undefined
+            }
+            required
             value={skill}
             onChange={(event) => setSkill(event.target.value)}
           >
@@ -339,22 +431,67 @@ export function CreateView({
           )}
           <label htmlFor="request">What should it create?</label>
           <textarea
+            aria-required="true"
+            aria-invalid={showValidationErrors && !request.trim()}
+            className={
+              showValidationErrors && !request.trim()
+                ? "field-invalid"
+                : undefined
+            }
             id="request"
             value={request}
             onChange={(event) => setRequest(event.target.value)}
             placeholder={`Describe the ${creationType} you want`}
           />
           <button
+            aria-describedby="generation-requirements"
             className="primary-btn"
-            disabled={
-              !sourceFile || !skill || !request.trim() || !outputDirectory
-            }
             onClick={() => void generate()}
             type="button"
           >
             Generate {labels[creationType]}
           </button>
-          <p role="status">{status}</p>
+          <p className="generation-requirements" id="generation-requirements">
+            Required: select a source note and describe what to create.
+          </p>
+          <p
+            aria-atomic="true"
+            className={
+              status === "Please complete the highlighted required fields."
+                ? "sr-only"
+                : undefined
+            }
+            role="status"
+          >
+            {status}
+          </p>
+          {(isGenerating || generationOutput) && (
+            <section
+              aria-labelledby="generation-activity-title"
+              className="generation-session"
+            >
+              <h2 id="generation-activity-title">Generation activity</h2>
+              <pre aria-atomic="false" aria-live="polite" tabIndex={0}>
+                {generationOutput || "Waiting for the AI tool…"}
+              </pre>
+              <label htmlFor="generation-input">Respond to a prompt</label>
+              <div className="generation-input-row">
+                <input
+                  id="generation-input"
+                  onChange={(event) => setSessionInput(event.target.value)}
+                  placeholder="For example: y, or paste a sign-in code"
+                  value={sessionInput}
+                />
+                <button
+                  disabled={!isGenerating || !sessionInput.trim()}
+                  onClick={() => void sendSessionInput()}
+                  type="button"
+                >
+                  Send
+                </button>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </section>

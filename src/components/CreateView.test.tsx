@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { CreateView } from "./CreateView";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn().mockResolvedValue(vi.fn()),
+}));
 
 describe("CreateView", () => {
   it("filters notes from the shared directory and warns for an unrelated skill", async () => {
@@ -31,6 +34,7 @@ describe("CreateView", () => {
     });
 
     render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.focus(screen.getByRole("combobox", { name: /search notes/i }));
     expect(
       await screen.findByRole("option", { name: /biology\.md/i }),
     ).toBeInTheDocument();
@@ -74,6 +78,7 @@ describe("CreateView", () => {
     fireEvent.keyDown(search, { key: "ArrowDown" });
     fireEvent.keyDown(search, { key: "Enter" });
     expect(search).toHaveValue("Second.md");
+    expect(screen.getByText("Selected note: Second.md")).toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: /first\.md/i }),
     ).not.toBeInTheDocument();
@@ -114,6 +119,8 @@ describe("CreateView", () => {
     const search = await screen.findByRole("combobox", {
       name: /search notes/i,
     });
+    expect(search).toHaveAttribute("aria-expanded", "false");
+    fireEvent.focus(search);
     expect(search).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /first\.md/i })).toHaveAttribute(
@@ -145,7 +152,7 @@ describe("CreateView", () => {
     ).toBeEnabled();
   });
 
-  it("explains missing required information when generation is requested", async () => {
+  it("marks missing required fields when generation is requested", async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(invoke).mockImplementation((command: string) => {
       if (command === "creation_status")
@@ -162,8 +169,98 @@ describe("CreateView", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: /generate quiz/i }),
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /select a source note and describe what to create/i,
+    expect(
+      screen.getByRole("combobox", { name: /search notes/i }),
+    ).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/what should it create/i)).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
+  });
+
+  it("announces when the note search has no matches", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes")
+        return Promise.resolve([
+          {
+            name: "Biology.md",
+            path: "/SecondBrain/Biology.md",
+            relative_path: "Biology.md",
+          },
+        ]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.change(
+      await screen.findByRole("combobox", { name: /search notes/i }),
+      { target: { value: "physics" } },
+    );
+    expect(
+      screen.getByText(/no matching notes in the selected directory/i),
+    ).toHaveAttribute("aria-live", "polite");
+  });
+
+  it("shows live generation activity and a prompt response field", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes")
+        return Promise.resolve([
+          {
+            name: "Biology.md",
+            path: "/SecondBrain/Biology.md",
+            relative_path: "Biology.md",
+          },
+        ]);
+      if (command === "generate_material") return Promise.resolve(undefined);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.focus(screen.getByRole("combobox", { name: /search notes/i }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: /biology\.md/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/what should it create/i), {
+      target: { value: "Ten revision questions" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /generate quiz/i }));
+
+    expect(await screen.findByText(/generation activity/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /respond to a prompt/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("gives the output-directory chooser a specific accessible name", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status")
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: ["quiz-master"],
+        });
+      if (command === "list_markdown_notes") return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    expect(
+      await screen.findByRole("button", { name: /choose output directory/i }),
+    ).toHaveAttribute("aria-describedby", "output-directory-path");
   });
 });

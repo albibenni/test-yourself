@@ -322,6 +322,39 @@ describe("App Component", () => {
     });
   });
 
+  it("treats Create, Settings, and a selected quiz as mutually exclusive views", async () => {
+    render(<App />);
+    await screen.findByText("React Basics");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create study material" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Create study material" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Settings" })[0]);
+    expect(
+      await screen.findByRole("heading", { name: "Settings" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Create study material" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create study material" }),
+    );
+    await screen.findByRole("heading", { name: "Create study material" });
+    fireEvent.click(screen.getByText("React Basics"));
+    expect(
+      await screen.findByRole("heading", { name: "React Basics", level: 1 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Create study material" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("does not open the fallback folder browser when the native picker is canceled", async () => {
     vi.mocked(open).mockResolvedValue(null);
 

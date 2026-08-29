@@ -174,7 +174,13 @@ export function AppLayout(props: AppLayoutProps) {
         return;
       setSettingsOpen(false);
     }
+    setCreateOpen(false);
     setSelectedQuiz(quiz);
+  };
+
+  const openSettings = () => {
+    setCreateOpen(false);
+    setSettingsOpen(true);
   };
 
   useEffect(() => {
@@ -207,7 +213,7 @@ export function AppLayout(props: AppLayoutProps) {
         <TopBar
           isSidebarOpen={sidebarOpen}
           setIsSidebarOpen={setSidebarOpen}
-          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenSettings={openSettings}
           onOpenCreate={() => {
             setCreateOpen(true);
             setSettingsOpen(false);
@@ -227,7 +233,7 @@ export function AppLayout(props: AppLayoutProps) {
             handleSync={handleSync}
             isSyncing={isSyncing}
             setIsSidebarOpen={setSidebarOpen}
-            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSettings={openSettings}
           />
           <main
             className="main-content"
@@ -275,7 +281,7 @@ export function AppLayout(props: AppLayoutProps) {
                 </span>
               </div>
             )}
-            {createOpen && basePath && (
+            {createOpen && !settingsOpen && basePath && (
               <CreateView
                 basePath={basePath}
                 onGenerated={() => void handleSync()}
