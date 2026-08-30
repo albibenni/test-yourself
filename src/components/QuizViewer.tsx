@@ -58,16 +58,18 @@ export function QuizViewer({
 
   return (
     <div className="quiz-viewer">
-      <div className="quiz-header">
-        <div className="header-title-row">
-          <h1>
-            {selectedQuiz.title.includes("_") &&
-            !selectedQuiz.title.includes(" ")
-              ? selectedQuiz.title.replace(/_/g, " ")
-              : selectedQuiz.title}
-          </h1>
+      <div className="quiz-question-toolbar">
+        <div className="quiz-header">
+          <div className="header-title-row">
+            <h1>
+              {selectedQuiz.title.includes("_") &&
+              !selectedQuiz.title.includes(" ")
+                ? selectedQuiz.title.replace(/_/g, " ")
+                : selectedQuiz.title}
+            </h1>
+          </div>
         </div>
-        <div className="quiz-meta-row">
+        <div className="quiz-meta-row quiz-meta-row--sticky">
           <div className="quiz-meta-info">
             <p className="quiz-topic-line">
               Topic:{" "}
@@ -133,33 +135,35 @@ export function QuizViewer({
         </div>
       </div>
 
-      {loadingActiveQuiz ? (
-        <StatusMessage>Loading content...</StatusMessage>
-      ) : activeWorksheet ? (
-        <WorksheetViewer
-          key={`${activeWorksheet.path}-${resetKey}`}
-          worksheet={activeWorksheet}
-        />
-      ) : activeScenario ? (
-        <ScenarioViewer
-          key={`${activeScenario.path}-${resetKey}`}
-          scenario={activeScenario}
-        />
-      ) : activeQuiz ? (
-        <QuizQuestions
-          quiz={activeQuiz}
-          answers={answers}
-          setAnswers={setAnswers}
-          visibleCount={visibleCount}
-          resetKey={resetKey}
-          lastQuestionElementRef={lastQuestionElementRef}
-          isAllAnswered={isAllAnswered}
-          correctCount={correctCount}
-          totalQuestions={totalQuestions}
-        />
-      ) : (
-        <StatusMessage error>Failed to load quiz content.</StatusMessage>
-      )}
+      <div className="quiz-question-content">
+        {loadingActiveQuiz ? (
+          <StatusMessage>Loading content...</StatusMessage>
+        ) : activeWorksheet ? (
+          <WorksheetViewer
+            key={`${activeWorksheet.path}-${resetKey}`}
+            worksheet={activeWorksheet}
+          />
+        ) : activeScenario ? (
+          <ScenarioViewer
+            key={`${activeScenario.path}-${resetKey}`}
+            scenario={activeScenario}
+          />
+        ) : activeQuiz ? (
+          <QuizQuestions
+            quiz={activeQuiz}
+            answers={answers}
+            setAnswers={setAnswers}
+            visibleCount={visibleCount}
+            resetKey={resetKey}
+            lastQuestionElementRef={lastQuestionElementRef}
+            isAllAnswered={isAllAnswered}
+            correctCount={correctCount}
+            totalQuestions={totalQuestions}
+          />
+        ) : (
+          <StatusMessage error>Failed to load quiz content.</StatusMessage>
+        )}
+      </div>
     </div>
   );
 }

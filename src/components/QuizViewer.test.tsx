@@ -65,6 +65,19 @@ function QuizViewerWithSession() {
 }
 
 describe("QuizViewer", () => {
+  it("places topic, progress, and session actions in a sticky question-view row", () => {
+    render(<QuizViewerWithSession />);
+
+    expect(
+      screen.getByText("0 of 2 answered").closest(".quiz-meta-row"),
+    ).toHaveClass("quiz-meta-row--sticky");
+    expect(
+      screen
+        .getByRole("heading", { name: quiz.title })
+        .closest(".quiz-question-toolbar"),
+    ).toBeInTheDocument();
+  });
+
   it("completes when the last question is answered before earlier questions", () => {
     render(<QuizViewerWithSession />);
 

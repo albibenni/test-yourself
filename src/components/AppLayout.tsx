@@ -236,7 +236,11 @@ export function AppLayout(props: AppLayoutProps) {
             onOpenSettings={openSettings}
           />
           <main
-            className="main-content"
+            className={
+              !settingsOpen && !createOpen && selectedQuiz
+                ? "main-content question-view-content"
+                : "main-content"
+            }
             id="main-content"
             ref={mainContentRef}
             onAuxClick={handleMainContentAuxClick}
