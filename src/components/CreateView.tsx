@@ -458,9 +458,10 @@ export function CreateView({
     outputPickerOpen && outputDirectories.length > 0
       ? `output-directory-option-${focusedOutputIndex}`
       : undefined;
+  const descriptionRequired = !skill.trim();
   const missingRequirements = [
     !sourceFile && "a source note",
-    !request.trim() && "a description of what to create",
+    descriptionRequired && !request.trim() && "a description of what to create",
     !outputDirectory && "an output directory",
   ].filter(Boolean);
   const matchingSkill = !skill || skill.toLowerCase().includes(creationType);
@@ -944,10 +945,12 @@ export function CreateView({
           )}
           <label htmlFor="request">What should it create?</label>
           <textarea
-            aria-required="true"
-            aria-invalid={showValidationErrors && !request.trim()}
+            aria-required={descriptionRequired}
+            aria-invalid={
+              showValidationErrors && descriptionRequired && !request.trim()
+            }
             className={
-              showValidationErrors && !request.trim()
+              showValidationErrors && descriptionRequired && !request.trim()
                 ? "field-invalid"
                 : undefined
             }
@@ -965,7 +968,8 @@ export function CreateView({
             Generate {labels[creationType]}
           </button>
           <p className="generation-requirements" id="generation-requirements">
-            Required: select a source note and describe what to create.
+            Required: select a source note
+            {descriptionRequired ? " and describe what to create." : "."}
           </p>
           <p
             aria-atomic="true"

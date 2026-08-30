@@ -122,6 +122,54 @@ describe("CreateView", () => {
     );
   });
 
+  it("allows generation without a description when a skill is selected", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation(
+      (command: string, args?: InvokeArgs) => {
+        if (command === "creation_status") {
+          return Promise.resolve({
+            agy_available: true,
+            codex_available: true,
+            skills: ["quiz-master"],
+          });
+        }
+        if (command === "search_creation_library") {
+          return Promise.resolve(
+            searchPage(getSearchArgs(args).kind, args, [
+              {
+                name: "Biology.md",
+                path: "/SecondBrain/Biology.md",
+                relative_path: "Biology.md",
+              },
+            ]),
+          );
+        }
+        if (command === "generate_material") return Promise.resolve(undefined);
+        return Promise.resolve(undefined);
+      },
+    );
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Skill" }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: /quiz-master/i }),
+    );
+    fireEvent.focus(screen.getByRole("combobox", { name: /search notes/i }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: /biology\.md/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /generate quiz/i }));
+
+    expect(vi.mocked(invoke)).toHaveBeenCalledWith(
+      "generate_material",
+      expect.objectContaining({ request: "", skill: "quiz-master" }),
+    );
+    expect(screen.getByLabelText(/what should it create/i)).toHaveAttribute(
+      "aria-invalid",
+      "false",
+    );
+  });
+
   it("shows an animated loader instead of an empty-state message while a search is pending", async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     let resolveSearch: ((value: unknown) => void) | undefined;
