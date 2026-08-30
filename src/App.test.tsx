@@ -438,6 +438,49 @@ describe("App Component", () => {
     });
   });
 
+  it("opens a deep-linked quiz when Create study material is active", async () => {
+    const path =
+      "/path/Computer Science/Infra/Kubernetes/Exercises and Quiz/Deployment_quiz.md";
+    const linkedQuiz = {
+      ...mockQuizzes[0],
+      path,
+      title: "Deployment_quiz",
+      topic: "Computer Science/Infra/Kubernetes/Exercises and Quiz",
+    };
+    vi.mocked(invoke).mockImplementation((cmd: string) => {
+      if (cmd === "get_quizzes") return Promise.resolve([linkedQuiz]);
+      if (cmd === "get_quiz_content") return Promise.resolve(linkedQuiz);
+      if (cmd === "get_initial_url") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await screen.findByText("Deployment_quiz");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create study material" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Create study material" }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      mockListenCallback({
+        payload:
+          "test-yourself://open?quiz=Computer%20Science%2FInfra%2FKubernetes%2FExercises%20and%20Quiz%2FDeployment_quiz.md",
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Deployment quiz", level: 1 }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("heading", { name: "Create study material" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("preserves quiz state when settings are opened and closed", async () => {
     render(<App />);
 

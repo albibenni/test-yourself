@@ -133,6 +133,7 @@ function App() {
     if (match) {
       quizzes.setSelectedQuizMeta(match);
       setPendingLink(null);
+      setCreateOpen(false);
       setSettingsOpen(false);
     } else {
       showToast(`Quiz not found for deep link: ${target}`);
