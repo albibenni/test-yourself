@@ -17,8 +17,29 @@ struct CreationSearchPage { items: Vec<LibraryEntry>, has_more: bool }
 
 static CREATION_LIBRARY: OnceLock<Mutex<Option<CreationLibrary>>> = OnceLock::new();
 
+fn command_path(command: &str) -> Option<std::path::PathBuf> {
+    let from_shell = std::env::var("SHELL")
+        .ok()
+        .and_then(|shell| std::process::Command::new(shell).args(["-lic", &format!("command -v {command}")]).output().ok())
+        .or_else(|| std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command}")]).output().ok())
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .and_then(|output| output.lines().last().map(std::path::PathBuf::from))
+        .filter(|path| path.is_file());
+    if from_shell.is_some() { return from_shell; }
+
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from)?;
+    [
+        home.join(".local/bin").join(command),
+        home.join("Library/pnpm/bin").join(command),
+        home.join(".npm-global/bin").join(command),
+        home.join(".bun/bin").join(command),
+        home.join(".cargo/bin").join(command),
+    ]
+    .into_iter()
+    .find(|path| path.is_file())
+}
 fn command_available(command: &str) -> bool {
-    std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command} >/dev/null 2>&1")]).status().map(|status| status.success()).unwrap_or(false)
+    command_path(command).is_some()
 }
 fn shell_quote(value: &str) -> String { format!("'{}'", value.replace('\'', "'\"'\"'")) }
 
@@ -96,11 +117,12 @@ fn generate_material(app: tauri::AppHandle, session: tauri::State<InteractiveSes
     let output = std::fs::canonicalize(&output_directory).map_err(|_| "Output directory is not accessible".to_string())?;
     let source = std::fs::canonicalize(&source_file).map_err(|_| "Source file is not accessible".to_string())?;
     if !source.is_file() { return Err("Source must be a file".to_string()); }
+    let executable = command_path(&engine).ok_or_else(|| format!("{} CLI is not installed or is not available to Test Yourself", engine))?;
     let source_directory = source.parent().ok_or("Source file has no parent directory")?;
     let skill_instruction = if skill.trim().is_empty() { String::new() } else { format!(" using the {skill} skill if available") };
     let instruction = format!("Create a {creation_type}{skill_instruction}. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
     let agy_prompt = if skill.trim().is_empty() { instruction.clone() } else { format!("/{skill} {instruction}") };
-    let command = if engine == "codex" { format!("codex exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("agy --add-dir {} --add-dir {} --prompt {}", shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&agy_prompt)) };
+    let command = if engine == "codex" { format!("{} exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&executable.to_string_lossy()), shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("{} --add-dir {} --add-dir {} --prompt {}", shell_quote(&executable.to_string_lossy()), shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&agy_prompt)) };
     let pty_system = portable_pty::native_pty_system();
     let pair = pty_system.openpty(portable_pty::PtySize { rows: 30, cols: 120, pixel_width: 0, pixel_height: 0 }).map_err(|error| error.to_string())?;
     let mut process = portable_pty::CommandBuilder::new("/bin/sh");

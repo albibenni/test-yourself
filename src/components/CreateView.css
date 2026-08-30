@@ -360,13 +360,17 @@
   color: var(--text-primary);
 }
 .cli-install-guide code {
+  display: block;
+  max-width: 100%;
   overflow-x: auto;
   padding: 0.5rem;
   border-radius: 0.25rem;
   background: var(--bg-surface-hover);
   color: var(--text-primary);
   font-size: 0.8rem;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 .cli-install-guide a {
   color: var(--accent-color);
