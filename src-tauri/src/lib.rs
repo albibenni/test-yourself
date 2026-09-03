@@ -509,14 +509,19 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
                 use tauri::Manager;
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.set_focus();
-                }
                 for arg in argv {
                     if arg.starts_with("test-yourself://") {
+                        if let Some(initial_url) = app.try_state::<InitialUrl>() {
+                            if let Ok(mut pending_url) = initial_url.0.lock() {
+                                *pending_url = Some(arg.clone());
+                            }
+                        }
                         use tauri::Emitter;
                         let _ = app.emit("deep-link-received", arg);
                     }
+                }
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_focus();
                 }
             }))
             .plugin(tauri_plugin_updater::Builder::new().build());

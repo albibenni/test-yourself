@@ -113,10 +113,17 @@ function App() {
     }).then((remove) => {
       removeEvent = remove;
     });
+    const handleWindowFocus = () => {
+      void invoke<string | null>("get_initial_url")
+        .then(handleDeepLink)
+        .catch(() => undefined);
+    };
+    window.addEventListener("focus", handleWindowFocus);
     return () => {
       disposed = true;
       removeDeepLink?.();
       removeEvent?.();
+      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [showToast]);
 

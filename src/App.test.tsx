@@ -440,6 +440,29 @@ describe("App Component", () => {
     });
   });
 
+  it("opens a queued deep link when the app regains focus", async () => {
+    let queuedUrl: string | null = null;
+    vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") {
+        const path = (args as { path?: string })?.path;
+        return Promise.resolve(mockQuizzes.find((quiz) => quiz.path === path));
+      }
+      if (cmd === "get_initial_url") return Promise.resolve(queuedUrl);
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+    await screen.findByText("React Basics");
+
+    queuedUrl = "test-yourself://open?quiz=%2Fpath%2Freact.md";
+    window.dispatchEvent(new Event("focus"));
+
+    await expect(
+      screen.findByRole("heading", { name: "React Basics", level: 1 }),
+    ).resolves.toBeInTheDocument();
+  });
+
   it("opens a quiz when launched through the deep-link plugin", async () => {
     vi.mocked(getCurrent).mockResolvedValue([
       "test-yourself://open?quiz=%2Fpath%2Freact.md",
