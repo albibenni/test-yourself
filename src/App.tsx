@@ -89,14 +89,22 @@ function App() {
       const path = parse(raw);
       if (path) setPendingLink(path);
     };
+    let disposed = false;
     let removeDeepLink: (() => void) | undefined;
     let removeEvent: (() => void) | undefined;
     void import("@tauri-apps/plugin-deep-link")
-      .then(async ({ onOpenUrl }) => {
-        removeDeepLink = await onOpenUrl((urls) => {
+      .then(async ({ getCurrent, onOpenUrl }) => {
+        const remove = await onOpenUrl((urls) => {
           void handleDeepLink(urls);
         });
-        const initial = await invoke<string | null>("get_initial_url");
+        if (disposed) {
+          remove();
+          return;
+        }
+        removeDeepLink = remove;
+        const initial =
+          (await getCurrent()) ??
+          (await invoke<string | null>("get_initial_url"));
         await handleDeepLink(initial);
       })
       .catch(() => undefined);
@@ -106,6 +114,7 @@ function App() {
       removeEvent = remove;
     });
     return () => {
+      disposed = true;
       removeDeepLink?.();
       removeEvent?.();
     };

@@ -159,8 +159,6 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-#[cfg(desktop)]
-use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_store::StoreExt;
 
 struct InitialUrl(std::sync::Mutex<Option<String>>);
@@ -493,10 +491,9 @@ async fn import_quiz_files(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default().plugin(tauri_plugin_os::init());
-    builder = builder.plugin(obsidian_folder_picker::init());
+    let mut builder = tauri::Builder::default();
 
-    #[cfg(desktop)]
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
     {
         builder = builder
             .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -514,6 +511,10 @@ pub fn run() {
             .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
+    builder = builder
+        .plugin(tauri_plugin_os::init())
+        .plugin(obsidian_folder_picker::init());
+
     builder
         .setup(|app| {
             let mut found_url = None;
@@ -525,20 +526,6 @@ pub fn run() {
             use tauri::Manager;
             app.manage(InitialUrl(std::sync::Mutex::new(found_url)));
             app.manage(InteractiveSession(Mutex::new(None)));
-
-            // Register Rust-side URL handler so macOS open-url events reach the frontend
-            #[cfg(desktop)]
-            {
-                let handle = app.handle().clone();
-                app.deep_link().on_open_url(move |event| {
-                    use tauri::Emitter;
-                    for url in event.urls() {
-                        eprintln!("[DeepLink Rust] on_open_url: {}", url);
-                        let _ = handle.emit("deep-link-received", url.to_string());
-                    }
-                });
-            }
-
             Ok(())
         })
         .plugin(tauri_plugin_deep_link::init())

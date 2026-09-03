@@ -3,9 +3,14 @@
   <head><meta charset="utf-8" /><title>Return to Test Yourself</title></head>
   <body>
     <p>Returning to Test Yourself…</p>
+    <p>
+      If your browser does not open the app automatically,
+      <a id="open-app" href="test-yourself://todoist-auth">open Test Yourself</a>.
+    </p>
     <script>
       const callback = new URL("test-yourself://todoist-auth");
       callback.search = window.location.search;
+      document.getElementById("open-app").href = callback;
       window.location.replace(callback);
     </script>
   </body>

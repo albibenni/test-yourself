@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrent } from "@tauri-apps/plugin-deep-link";
 import { open } from "@tauri-apps/plugin-dialog";
 import { load } from "@tauri-apps/plugin-store";
 import {
@@ -91,6 +92,7 @@ const mockQuizzes = [
 describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCurrent).mockResolvedValue(null);
     vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
       if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
       if (cmd === "get_quiz_content") {
@@ -430,6 +432,20 @@ describe("App Component", () => {
         payload: "test-yourself://open?quiz=%2Fpath%2Freact.md",
       });
     });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "React Basics", level: 1 }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("opens a quiz when launched through the deep-link plugin", async () => {
+    vi.mocked(getCurrent).mockResolvedValue([
+      "test-yourself://open?quiz=%2Fpath%2Freact.md",
+    ]);
+
+    render(<App />);
 
     await waitFor(() => {
       expect(
