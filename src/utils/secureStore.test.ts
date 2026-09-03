@@ -13,7 +13,9 @@ describe("secureStore", () => {
     await expect(getSecureToken("todoist_token")).resolves.toBe(
       "keychain-token",
     );
-    expect(invoke).toHaveBeenCalledWith("get_secret");
+    expect(invoke).toHaveBeenCalledWith("get_secret", {
+      account: "todoist_token",
+    });
   });
 
   it("writes and clears the Todoist token through the native credential command", async () => {
@@ -21,9 +23,13 @@ describe("secureStore", () => {
     await setSecureToken("todoist_token", "");
 
     expect(invoke).toHaveBeenNthCalledWith(1, "set_secret", {
+      account: "todoist_token",
       secret: "keychain-token",
     });
-    expect(invoke).toHaveBeenNthCalledWith(2, "set_secret", { secret: "" });
+    expect(invoke).toHaveBeenNthCalledWith(2, "set_secret", {
+      account: "todoist_token",
+      secret: "",
+    });
   });
 
   it("rejects unsupported keys instead of writing arbitrary secrets", async () => {

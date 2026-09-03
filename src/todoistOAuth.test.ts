@@ -105,6 +105,38 @@ describe("Todoist OAuth", () => {
     ).resolves.toEqual([true, true]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(setSecureToken).toHaveBeenCalledTimes(1);
+    expect(setSecureToken).toHaveBeenCalledTimes(2);
+    expect(setSecureToken).toHaveBeenLastCalledWith(
+      "todoist_oauth_pending",
+      "",
+    );
+  });
+
+  it("completes an authorization after the WebView session has been recreated", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(
+      JSON.stringify({ state: "expected-state", verifier: "verifier" }),
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        expires_in: 3600,
+        token_type: "Bearer",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      completeTodoistAuthorization(
+        "test-yourself://todoist-auth?code=authorization-code&state=expected-state",
+      ),
+    ).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(setSecureToken).toHaveBeenLastCalledWith(
+      "todoist_oauth_pending",
+      "",
+    );
   });
 });

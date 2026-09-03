@@ -23,6 +23,11 @@ const StoredOAuthTokensSchema = OAuthTokensSchema.extend({
   expires_at: z.number().positive(),
 });
 
+const PendingOAuthSchema = z.object({
+  state: z.string().min(1),
+  verifier: z.string().min(1),
+});
+
 export type StoredOAuthTokens = z.infer<typeof StoredOAuthTokensSchema>;
 
 // Todoist refresh-token rotation means concurrent refreshes using the same
@@ -119,6 +124,10 @@ const readStoredTokens = async () => {
 
 export async function beginTodoistAuthorization() {
   const request = await createTodoistAuthorizationUrl();
+  await setSecureToken(
+    "todoist_oauth_pending",
+    JSON.stringify({ state: request.state, verifier: request.verifier }),
+  );
   window.sessionStorage.setItem("todoist_oauth_state", request.state);
   window.sessionStorage.setItem("todoist_oauth_verifier", request.verifier);
   await openUrl(request.url);
@@ -136,8 +145,22 @@ async function completeTodoistAuthorizationRequest(url: string) {
   if (error) throw new Error(`Todoist authorization failed: ${error}`);
   const state = callback.searchParams.get("state");
   const code = callback.searchParams.get("code");
-  const expectedState = window.sessionStorage.getItem("todoist_oauth_state");
-  const verifier = window.sessionStorage.getItem("todoist_oauth_verifier");
+  const pendingSecret = await getSecureToken("todoist_oauth_pending");
+  const pending = PendingOAuthSchema.safeParse(
+    (() => {
+      try {
+        return pendingSecret ? JSON.parse(pendingSecret) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const expectedState = pending.success
+    ? pending.data.state
+    : window.sessionStorage.getItem("todoist_oauth_state");
+  const verifier = pending.success
+    ? pending.data.verifier
+    : window.sessionStorage.getItem("todoist_oauth_verifier");
   if (!code || !state || !verifier || state !== expectedState) {
     throw new Error("Todoist authorization response could not be verified.");
   }
@@ -151,6 +174,7 @@ async function completeTodoistAuthorizationRequest(url: string) {
     }),
   );
   await storeTokens(tokens);
+  await setSecureToken("todoist_oauth_pending", "");
   window.sessionStorage.removeItem("todoist_oauth_state");
   window.sessionStorage.removeItem("todoist_oauth_verifier");
   return true;

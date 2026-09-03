@@ -164,7 +164,12 @@ use tauri_plugin_store::StoreExt;
 struct InitialUrl(std::sync::Mutex<Option<String>>);
 
 const CREDENTIAL_SERVICE: &str = "com.test-yourself.desktop";
-const CREDENTIAL_ACCOUNT: &str = "todoist_token";
+const TODOIST_TOKEN_ACCOUNT: &str = "todoist_token";
+const TODOIST_PENDING_OAUTH_ACCOUNT: &str = "todoist_oauth_pending";
+
+fn is_supported_credential_account(account: &str) -> bool {
+    matches!(account, TODOIST_TOKEN_ACCOUNT | TODOIST_PENDING_OAUTH_ACCOUNT)
+}
 
 #[cfg(target_os = "ios")]
 #[tauri::command]
@@ -181,12 +186,15 @@ fn pick_ios_folder() -> Result<Option<String>, String> {
 }
 
 #[cfg(not(target_os = "ios"))]
-fn credential_entry() -> Result<keyring::Entry, String> {
-    keyring::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT).map_err(|error| error.to_string())
+fn credential_entry(account: &str) -> Result<keyring::Entry, String> {
+    if !is_supported_credential_account(account) {
+        return Err("Unsupported credential account".to_string());
+    }
+    keyring::Entry::new(CREDENTIAL_SERVICE, account).map_err(|error| error.to_string())
 }
 
 #[cfg(target_os = "ios")]
-fn credential_entry() -> Result<keyring_core::Entry, String> {
+fn credential_entry(account: &str) -> Result<keyring_core::Entry, String> {
     use apple_native_keyring_store::protected::Store;
     use std::sync::OnceLock;
 
@@ -200,21 +208,24 @@ fn credential_entry() -> Result<keyring_core::Entry, String> {
         .as_ref()
         .map_err(Clone::clone)?;
 
-    keyring_core::Entry::new(CREDENTIAL_SERVICE, CREDENTIAL_ACCOUNT)
+    if !is_supported_credential_account(account) {
+        return Err("Unsupported credential account".to_string());
+    }
+    keyring_core::Entry::new(CREDENTIAL_SERVICE, account)
         .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
-fn get_secret() -> Result<Option<String>, String> {
-    match credential_entry()?.get_password() {
+fn get_secret(account: String) -> Result<Option<String>, String> {
+    match credential_entry(&account)?.get_password() {
         Ok(secret) => Ok(Some(secret)),
         Err(_) => Ok(None),
     }
 }
 
 #[tauri::command]
-fn set_secret(secret: String) -> Result<(), String> {
-    let entry = credential_entry()?;
+fn set_secret(account: String, secret: String) -> Result<(), String> {
+    let entry = credential_entry(&account)?;
     if secret.is_empty() {
         let _ = entry.delete_credential();
     } else {
@@ -227,7 +238,7 @@ fn set_secret(secret: String) -> Result<(), String> {
 
 #[cfg(test)]
 mod credential_tests {
-    use super::{get_secret, set_secret};
+    use super::{get_secret, set_secret, TODOIST_TOKEN_ACCOUNT};
     use keyring_core::{mock, set_default_store};
     use std::sync::{Mutex, OnceLock};
 
@@ -248,11 +259,11 @@ mod credential_tests {
             .expect("the platform keyring should initialize");
         set_default_store(mock::Store::new().unwrap());
 
-        assert_eq!(get_secret().unwrap(), None);
-        set_secret("mock-token".to_string()).unwrap();
-        assert_eq!(get_secret().unwrap(), Some("mock-token".to_string()));
-        set_secret(String::new()).unwrap();
-        assert_eq!(get_secret().unwrap(), None);
+        assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), None);
+        set_secret(TODOIST_TOKEN_ACCOUNT.to_string(), "mock-token".to_string()).unwrap();
+        assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), Some("mock-token".to_string()));
+        set_secret(TODOIST_TOKEN_ACCOUNT.to_string(), String::new()).unwrap();
+        assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), None);
     }
 }
 
