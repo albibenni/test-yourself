@@ -4,11 +4,21 @@ on:
     tags:
       - 'v*'
 
+# A rerun for the same tag must wait for the prior run rather than racing its
+# release-asset cleanup/upload requests.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     permissions:
       contents: write
     strategy:
+      # tauri-action creates/updates the same GitHub Release in every matrix
+      # entry. Running these uploads concurrently races when an asset is
+      # replaced, so keep them in a single release-upload lane.
+      max-parallel: 1
       fail-fast: false
       matrix:
         platform: [macos-latest, ubuntu-22.04, windows-latest]
@@ -42,7 +52,18 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - name: Build and Release Tauri app
+      - name: Verify the release tag matches every app version
+        shell: bash
+        run: |
+          expected_version="${GITHUB_REF_NAME#v}"
+          package_version="$(node -p 'require("./package.json").version')"
+          tauri_version="$(node -p 'require("./src-tauri/tauri.conf.json").version')"
+          cargo_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' src-tauri/Cargo.toml | head -n 1)"
+          test "$package_version" = "$expected_version"
+          test "$tauri_version" = "$expected_version"
+          test "$cargo_version" = "$expected_version"
+
+      - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

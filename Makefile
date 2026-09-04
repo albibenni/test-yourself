@@ -161,19 +161,25 @@ coverage:
 #  To bump the major version (e.g. 0.2.0 -> 1.0.0):
 #    make release type=major
 release:
-	@type=$(type); \
+	@set -eu; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Release aborted: commit or stash your working-tree changes first."; \
+		exit 1; \
+	fi; \
+	type=$(type); \
 	if [ -z "$$type" ]; then type="patch"; fi; \
 	echo "Starting $$type release..."; \
+	pnpm run indent:write; \
 	pnpm version $$type --no-git-tag-version; \
 	new_version=$$(node -p "require('./package.json').version"); \
+	test -n "$$new_version"; \
 	node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const conf = JSON.parse(fs.readFileSync(file)); conf.version = '$$new_version'; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');"; \
 	node -e "const fs = require('fs'); const file = 'src-tauri/Cargo.toml'; let toml = fs.readFileSync(file, 'utf8'); toml = toml.replace(/^version = \".*\"$$/m, 'version = \"$$new_version\"'); fs.writeFileSync(file, toml);"; \
 	node -e "const fs = require('fs'); const file = 'aur/PKGBUILD'; let pkg = fs.readFileSync(file, 'utf8'); pkg = pkg.replace(/^pkgver=.*$$/m, 'pkgver=' + '$$new_version'); fs.writeFileSync(file, pkg);"; \
-	git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml aur/PKGBUILD; \
+	git add -A; \
 	git commit -m "chore: release v$$new_version"; \
 	git tag v$$new_version; \
-	git push origin main; \
-	git push origin v$$new_version; \
+	git push --atomic origin main v$$new_version; \
 	echo "\n🎉 Successfully released v$$new_version! GitHub Actions is now building the installers."; \
 	echo ""; \
 	echo "App Store Connect steps after CI finishes:"; \
