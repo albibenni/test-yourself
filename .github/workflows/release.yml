@@ -43,6 +43,12 @@ jobs:
         with:
           targets: x86_64-apple-darwin, aarch64-apple-darwin
 
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Tauri builds from src-tauri, not the repository root.
+          workspaces: src-tauri -> target
+
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |

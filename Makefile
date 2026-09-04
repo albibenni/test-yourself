@@ -1,5 +1,11 @@
 .PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app uninstall-app remove-aur build-aur install-aur
 
+# Use sccache for Make-driven Rust builds when it is installed locally. CI uses
+# its own GitHub Actions cache and does not require this executable.
+ifneq ($(shell command -v sccache 2>/dev/null),)
+export RUSTC_WRAPPER := $(shell command -v sccache)
+endif
+
 # Install dependencies
 i:
 	pnpm install
