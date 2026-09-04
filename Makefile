@@ -177,6 +177,7 @@ release:
 	node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const conf = JSON.parse(fs.readFileSync(file)); conf.version = '$$new_version'; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');"; \
 	node -e "const fs = require('fs'); const file = 'src-tauri/Cargo.toml'; let toml = fs.readFileSync(file, 'utf8'); toml = toml.replace(/^version = \".*\"$$/m, 'version = \"$$new_version\"'); fs.writeFileSync(file, toml);"; \
 	node -e "const fs = require('fs'); const file = 'aur/PKGBUILD'; let pkg = fs.readFileSync(file, 'utf8'); pkg = pkg.replace(/^pkgver=.*$$/m, 'pkgver=' + '$$new_version'); fs.writeFileSync(file, pkg);"; \
+	pnpm tauri build --no-bundle; \
 	pnpm run indent:write; \
 	git add -A; \
 	git commit -m "chore: release v$$new_version"; \
