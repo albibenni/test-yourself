@@ -532,6 +532,11 @@ pub fn run() {
         .plugin(obsidian_folder_picker::init());
 
     builder
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let mut found_url = None;
             for arg in std::env::args() {
@@ -542,13 +547,20 @@ pub fn run() {
             use tauri::Manager;
             app.manage(InitialUrl(std::sync::Mutex::new(found_url)));
             app.manage(InteractiveSession(Mutex::new(None)));
+
+            // Bundled installers normally create this association, but it can
+            // be absent or stale after an update on Windows. Refresh it at
+            // startup so the browser can return the Todoist callback to the
+            // executable that is actually running.
+            #[cfg(target_os = "windows")]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                if let Err(error) = app.deep_link().register_all() {
+                    eprintln!("failed to register deep-link schemes: {error}");
+                }
+            }
             Ok(())
         })
-        .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             greet,
             get_secret,

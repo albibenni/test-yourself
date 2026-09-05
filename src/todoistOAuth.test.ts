@@ -112,6 +112,29 @@ describe("Todoist OAuth", () => {
     );
   });
 
+  it("accepts the trailing slash Windows may add to a custom protocol URL", async () => {
+    window.sessionStorage.setItem("todoist_oauth_state", "expected-state");
+    window.sessionStorage.setItem("todoist_oauth_verifier", "verifier");
+    vi.mocked(getSecureToken).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          access_token: "access-token",
+          refresh_token: "refresh-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(
+      completeTodoistAuthorization(
+        "test-yourself://todoist-auth/?code=authorization-code&state=expected-state",
+      ),
+    ).resolves.toBe(true);
+  });
+
   it("completes an authorization after the WebView session has been recreated", async () => {
     vi.mocked(getSecureToken).mockResolvedValue(
       JSON.stringify({ state: "expected-state", verifier: "verifier" }),

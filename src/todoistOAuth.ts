@@ -35,6 +35,11 @@ export type StoredOAuthTokens = z.infer<typeof StoredOAuthTokensSchema>;
 let refreshInFlight: Promise<StoredOAuthTokens> | null = null;
 let authorizationCompletionInFlight: Promise<boolean> | null = null;
 
+const isTodoistAuthorizationCallback = (url: URL) =>
+  url.protocol === "test-yourself:" &&
+  url.hostname === "todoist-auth" &&
+  (url.pathname === "" || url.pathname === "/");
+
 const toBase64Url = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -135,10 +140,7 @@ export async function beginTodoistAuthorization() {
 
 async function completeTodoistAuthorizationRequest(url: string) {
   const callback = new URL(url);
-  if (
-    `${callback.protocol}//${callback.host}${callback.pathname}` !==
-    TODOIST_OAUTH_CALLBACK_SCHEME
-  ) {
+  if (!isTodoistAuthorizationCallback(callback)) {
     return false;
   }
   const error = callback.searchParams.get("error");
@@ -191,10 +193,7 @@ export function completeTodoistAuthorization(url: string) {
   } catch {
     return Promise.resolve(false);
   }
-  if (
-    `${callback.protocol}//${callback.host}${callback.pathname}` !==
-    TODOIST_OAUTH_CALLBACK_SCHEME
-  ) {
+  if (!isTodoistAuthorizationCallback(callback)) {
     return Promise.resolve(false);
   }
   if (!authorizationCompletionInFlight) {
