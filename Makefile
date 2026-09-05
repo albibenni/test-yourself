@@ -1,4 +1,4 @@
-.PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build windows-test test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app uninstall-app remove-aur build-aur install-aur
+.PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build windows-test test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release releasewin install-app uninstall-app remove-aur build-aur install-aur
 
 # Use sccache for Make-driven Rust builds when it is installed locally. CI uses
 # its own GitHub Actions cache and does not require this executable.
@@ -223,3 +223,13 @@ release:
 	echo "7. Click Add for Review, resolve warnings, and click Submit for Review."; \
 	echo "8. Choose manual release or automatic release after approval."; \
 	echo "Apple review is required before the update becomes public."
+
+# PowerShell-compatible Windows release.
+# Usage: make releasewin [type=patch|minor|major]
+releasewin:
+ifeq ($(OS),Windows_NT)
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/release-windows.ps1 $(if $(type),-Type $(type),)
+else
+	@echo "releasewin is only available on Windows."
+	@exit 1
+endif
