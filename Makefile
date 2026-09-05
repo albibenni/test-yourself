@@ -1,9 +1,16 @@
-.PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app uninstall-app remove-aur build-aur install-aur
+.PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build windows-test test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release install-app uninstall-app remove-aur build-aur install-aur
 
 # Use sccache for Make-driven Rust builds when it is installed locally. CI uses
 # its own GitHub Actions cache and does not require this executable.
+ifeq ($(OS),Windows_NT)
+SCCACHE := $(shell where sccache 2>NUL)
+ifneq ($(strip $(SCCACHE)),)
+export RUSTC_WRAPPER := $(firstword $(SCCACHE))
+endif
+else
 ifneq ($(shell command -v sccache 2>/dev/null),)
 export RUSTC_WRAPPER := $(shell command -v sccache)
+endif
 endif
 
 # Install dependencies
@@ -43,6 +50,20 @@ open-ios:
 # Build the Tauri Desktop App for production (creates the .app)
 build:
 	pnpm tauri build
+
+# Build and launch the release executable without creating an installer.
+# Close any installed copy first so the single-instance plugin does not forward
+# the Todoist OAuth callback to an older running version.
+windows-test:
+ifeq ($(OS),Windows_NT)
+	@echo Close any running installed copy of Test Yourself before continuing.
+	pnpm install --frozen-lockfile
+	pnpm exec tauri build --no-bundle
+	.\src-tauri\target\release\test-yourself.exe
+else
+	@echo "windows-test is only available on Windows."
+	@exit 1
+endif
 
 # Install the app to your local ~/apps folder and register deep links
 install-app:
