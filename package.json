@@ -2,6 +2,7 @@
   "name": "test-yourself",
   "private": true,
   "version": "4.0.8",
+  "packageManager": "pnpm@11.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
