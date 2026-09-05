@@ -13,6 +13,28 @@ function Assert-LastCommand {
     }
 }
 
+function Update-TextFile {
+    param(
+        [string]$Path,
+        [string]$Pattern,
+        [string]$Replacement
+    )
+
+    $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
+    $content = [System.IO.File]::ReadAllText($resolvedPath)
+    $regex = [regex]::new(
+        $Pattern,
+        [System.Text.RegularExpressions.RegexOptions]::Multiline
+    )
+    if (-not $regex.IsMatch($content)) {
+        throw "Could not find the version field in $Path."
+    }
+
+    $updated = $regex.Replace($content, $Replacement, 1)
+    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($resolvedPath, $updated, $utf8WithoutBom)
+}
+
 $workingTreeChanges = & git status --porcelain
 Assert-LastCommand "Reading Git status"
 if ($workingTreeChanges) {
@@ -33,14 +55,18 @@ try {
         throw "The new package version could not be determined."
     }
 
-    & node -e 'const fs = require("fs"); const version = process.argv[1]; const file = "src-tauri/tauri.conf.json"; const conf = JSON.parse(fs.readFileSync(file)); conf.version = version; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + "\n");' $newVersion
-    Assert-LastCommand "Updating the Tauri version"
-
-    & node -e 'const fs = require("fs"); const version = process.argv[1]; const file = "src-tauri/Cargo.toml"; let toml = fs.readFileSync(file, "utf8"); toml = toml.replace(/^version = ".*"$/m, `version = "${version}"`); fs.writeFileSync(file, toml);' $newVersion
-    Assert-LastCommand "Updating the Cargo version"
-
-    & node -e 'const fs = require("fs"); const version = process.argv[1]; const file = "aur/PKGBUILD"; let pkg = fs.readFileSync(file, "utf8"); pkg = pkg.replace(/^pkgver=.*$/m, `pkgver=${version}`); fs.writeFileSync(file, pkg);' $newVersion
-    Assert-LastCommand "Updating the AUR version"
+    Update-TextFile `
+        -Path "src-tauri/tauri.conf.json" `
+        -Pattern '^(\s*"version"\s*:\s*)"[^"]+"' `
+        -Replacement ('${1}"' + $newVersion + '"')
+    Update-TextFile `
+        -Path "src-tauri/Cargo.toml" `
+        -Pattern '^version = ".*"$' `
+        -Replacement ('version = "' + $newVersion + '"')
+    Update-TextFile `
+        -Path "aur/PKGBUILD" `
+        -Pattern '^pkgver=.*$' `
+        -Replacement ('pkgver=' + $newVersion)
 
     & pnpm tauri build --no-bundle
     Assert-LastCommand "Building the application"
