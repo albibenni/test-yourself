@@ -5,6 +5,7 @@ import {
   type SetStateAction,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -161,6 +162,21 @@ export function AppLayout(props: AppLayoutProps) {
     setResetKey,
     session,
   } = props;
+
+  const activeViewKey = settingsOpen
+    ? "settings"
+    : createOpen
+      ? "create"
+      : selectedQuiz
+        ? `quiz:${selectedQuiz.path}:${resetKey}`
+        : basePath
+          ? "quiz-library"
+          : "folder-setup";
+
+  useLayoutEffect(() => {
+    if (!activeViewKey || !mainContentRef.current) return;
+    mainContentRef.current.scrollTop = 0;
+  }, [activeViewKey]);
 
   const chooseQuiz = async (quiz: QuizMetadata) => {
     if (settingsOpen) {

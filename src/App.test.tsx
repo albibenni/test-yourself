@@ -224,6 +224,24 @@ describe("App Component", () => {
     expect(screen.getByText("Facebook made React.")).toBeInTheDocument();
   });
 
+  it("returns to the top when a different quiz is opened", async () => {
+    render(<App />);
+
+    await screen.findByText("React Basics");
+    fireEvent.click(screen.getByText("React Basics"));
+    await screen.findByRole("heading", { name: "React Basics", level: 1 });
+
+    const mainContent = screen.getByRole("main");
+    mainContent.scrollTop = 640;
+
+    fireEvent.click(screen.getByText("Rust Basics"));
+
+    expect(
+      await screen.findByRole("heading", { name: "Rust Basics", level: 1 }),
+    ).toBeInTheDocument();
+    expect(mainContent.scrollTop).toBe(0);
+  });
+
   it("loads a selected scenario through the scenario command", async () => {
     const scenario = {
       title: "SPIFFE-SPIRE and mTLS",
