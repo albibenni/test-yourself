@@ -15,4 +15,5 @@ export interface TaskProvider {
   getTasks(args?: { filter?: string }): Promise<Task[]>;
   searchTasks(query: string): Promise<Task[]>;
   addTask(task: AddTaskArgs): Promise<Task>;
+  deleteTask(taskId: string): Promise<void>;
 }

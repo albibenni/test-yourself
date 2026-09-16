@@ -26,6 +26,7 @@ export class TodoistProvider implements TaskProvider {
         `Todoist API error: ${response.status} ${response.statusText}`,
       );
     }
+    if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
 
@@ -99,5 +100,11 @@ export class TodoistProvider implements TaskProvider {
       }),
     });
     return TaskSchema.parse(response);
+  }
+
+  async deleteTask(taskId: string): Promise<void> {
+    await this.request<void>(`/tasks/${encodeURIComponent(taskId)}`, {
+      method: "DELETE",
+    });
   }
 }

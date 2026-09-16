@@ -25,6 +25,7 @@ vi.mock("../providers/TodoistProvider", () => {
           .fn()
           .mockResolvedValue([{ id: "3", content: "Searched task" }]),
         addTask: vi.fn().mockResolvedValue({ id: "2", content: "New task" }),
+        deleteTask: vi.fn().mockResolvedValue(undefined),
       };
     }),
   };
@@ -164,6 +165,21 @@ describe("useTodoist hook", () => {
     });
 
     expect(newTask).toEqual({ id: "2", content: "New task" });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe("");
+  });
+
+  it("deletes a task successfully using the provider", async () => {
+    vi.mocked(getSecureToken).mockResolvedValue(oauthSession());
+
+    const { result } = renderHook(() => useTodoist());
+
+    await act(async () => {
+      await result.current.deleteTask("task-123");
+    });
+
+    const provider = vi.mocked(TodoistProvider).mock.results[0].value;
+    expect(provider.deleteTask).toHaveBeenCalledWith("task-123");
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBe("");
   });

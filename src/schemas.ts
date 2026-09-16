@@ -67,6 +67,7 @@ export const TaskSchema = z
   .object({
     id: z.string(),
     content: z.string(),
+    project_id: z.string().optional(),
     due: z
       .object({
         date: z.string(),

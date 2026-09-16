@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTodoist } from "../hooks/useTodoist";
-import type { QuizMetadata } from "../types";
+import type { Project, QuizMetadata, Task } from "../types";
+import { ScheduleManagementDialog } from "./ScheduleManagementDialog";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -8,11 +9,6 @@ interface ScheduleModalProps {
   quiz: QuizMetadata | null;
   onSuccess?: (dateText: string) => void;
   onCheckResult?: (message: string) => void;
-}
-
-interface Project {
-  id: string;
-  name: string;
 }
 
 interface TaskCountMap {
@@ -34,12 +30,14 @@ export function ScheduleModal({
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [taskCounts, setTaskCounts] = useState<TaskCountMap>({});
+  const [matchingTasks, setMatchingTasks] = useState<Task[] | null>(null);
 
   const {
     getProjects,
     getTasks,
     searchTasks,
     addTask,
+    deleteTask,
     getDefaultSettings,
     loading,
     error,
@@ -133,6 +131,7 @@ export function ScheduleModal({
       setShowProjectDropdown(false);
       setShowProjectSelectDropdown(false);
       setShowInfoDropdown(false);
+      setMatchingTasks(null);
     }
   }, [isOpen, quiz]);
 
@@ -187,7 +186,7 @@ export function ScheduleModal({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (e.key === "Escape" && isOpen && !matchingTasks) {
         onClose();
       }
     };
@@ -195,7 +194,7 @@ export function ScheduleModal({
       document.addEventListener("keydown", handleKeyDown);
     }
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, matchingTasks, onClose]);
 
   const [isScheduling, setIsScheduling] = useState(false);
   const [isCheckingSchedule, setIsCheckingSchedule] = useState(false);
@@ -224,15 +223,7 @@ export function ScheduleModal({
         );
       }
       if (foundTasks.length > 0) {
-        const dates = foundTasks.map((t) => {
-          if (t.due && t.due.date) {
-            return t.due.date;
-          }
-          return "No date";
-        });
-        const uniqueDates = Array.from(new Set(dates)).sort();
-        const msg = `Already scheduled for: ${uniqueDates.join(", ")}`;
-        onCheckResult?.(msg);
+        setMatchingTasks(foundTasks);
       } else {
         const msg = "Not currently scheduled.";
         onCheckResult?.(msg);
@@ -565,6 +556,7 @@ export function ScheduleModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (matchingTasks) return;
       if (e.key === "Escape") {
         onClose();
       } else if (e.key === "Enter" && !e.shiftKey) {
@@ -581,7 +573,7 @@ export function ScheduleModal({
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [isOpen, isScheduling, onClose]);
+  }, [isOpen, isScheduling, matchingTasks, onClose]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -591,6 +583,23 @@ export function ScheduleModal({
   }, []);
 
   if (!isOpen || !quiz) return null;
+
+  if (matchingTasks) {
+    return (
+      <ScheduleManagementDialog
+        tasks={matchingTasks}
+        projects={projects}
+        onClose={() => {
+          setError("");
+          setMatchingTasks(null);
+        }}
+        onDeleteTask={deleteTask}
+        onTasksChange={setMatchingTasks}
+        onResult={(message) => onCheckResult?.(message)}
+        onAllDeleted={onClose}
+      />
+    );
+  }
 
   return (
     <div className="modal-overlay">

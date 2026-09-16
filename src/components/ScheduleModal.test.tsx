@@ -14,6 +14,7 @@ describe("ScheduleModal", () => {
   let mockGetTasks: Mock;
   let mockSearchTasks: Mock;
   let mockAddTask: Mock;
+  let mockDeleteTask: Mock;
   let mockGetDefaultSettings: Mock;
   let mockOnCheckResult: Mock;
 
@@ -40,6 +41,7 @@ describe("ScheduleModal", () => {
     mockGetTasks = vi.fn().mockResolvedValue([]);
     mockSearchTasks = vi.fn().mockResolvedValue([]);
     mockAddTask = vi.fn().mockResolvedValue({ id: "t1" });
+    mockDeleteTask = vi.fn().mockResolvedValue(undefined);
     mockOnCheckResult = vi.fn();
     defaultProps.onCheckResult = mockOnCheckResult;
     mockGetDefaultSettings = vi.fn().mockResolvedValue({
@@ -53,6 +55,7 @@ describe("ScheduleModal", () => {
       getTasks: mockGetTasks,
       searchTasks: mockSearchTasks,
       addTask: mockAddTask,
+      deleteTask: mockDeleteTask,
       getDefaultSettings: mockGetDefaultSettings,
       loading: false,
       error: "",
@@ -192,6 +195,31 @@ describe("ScheduleModal", () => {
   });
 
   describe("Check Schedule Button", () => {
+    it("opens an unselected management dialog when matching schedules exist", async () => {
+      mockSearchTasks.mockResolvedValue([
+        {
+          id: "t1",
+          content: "Review Quiz: React Basics",
+          due: { date: "2026-08-20" },
+          project_id: "p1",
+        },
+      ]);
+      render(<ScheduleModal {...defaultProps} />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Check" }));
+
+      expect(
+        await screen.findByRole("dialog", { name: "Manage schedules" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", {
+          name: "Select schedule due 2026-08-20",
+        }),
+      ).not.toBeChecked();
+      expect(screen.getByText("Inbox")).toBeInTheDocument();
+      expect(mockOnCheckResult).not.toHaveBeenCalled();
+    });
+
     it("falls back to all active tasks when the Todoist search filter finds no exact match", async () => {
       mockGetTasks.mockResolvedValue([]);
       render(<ScheduleModal {...defaultProps} />);
@@ -213,11 +241,20 @@ describe("ScheduleModal", () => {
       );
     });
 
-    it("shows dates for exact task-title matches from the Todoist filter", async () => {
+    it("shows exact task-title matches from the Todoist filter in the manager", async () => {
       mockSearchTasks.mockResolvedValue([
-        { content: "Review Quiz: React Basics", due: { date: "2026-08-20" } },
-        { content: "Review Quiz: React Basics", due: { date: "2026-08-25" } },
         {
+          id: "t1",
+          content: "Review Quiz: React Basics",
+          due: { date: "2026-08-20" },
+        },
+        {
+          id: "t2",
+          content: "Review Quiz: React Basics",
+          due: { date: "2026-08-25" },
+        },
+        {
+          id: "t3",
           content: "Review Quiz: React Basics - Advanced",
           due: { date: "2026-09-01" },
         },
@@ -235,16 +272,22 @@ describe("ScheduleModal", () => {
         expect(mockSearchTasks).toHaveBeenCalledWith("React Basics");
       });
 
-      expect(mockOnCheckResult).toHaveBeenCalledWith(
-        "Already scheduled for: 2026-08-20, 2026-08-25",
-      );
+      expect(
+        await screen.findByRole("dialog", { name: "Manage schedules" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("2026-08-20")).toBeInTheDocument();
+      expect(screen.getByText("2026-08-25")).toBeInTheDocument();
       expect(mockGetTasks).toHaveBeenCalledTimes(1);
     });
 
     it("uses the all-tasks fallback when the Todoist filter misses an exact title", async () => {
       mockSearchTasks.mockResolvedValue([]);
       mockGetTasks.mockResolvedValue([
-        { content: "Review Quiz: React Basics", due: { date: "2026-08-20" } },
+        {
+          id: "t1",
+          content: "Review Quiz: React Basics",
+          due: { date: "2026-08-20" },
+        },
       ]);
       render(<ScheduleModal {...defaultProps} />);
 
@@ -254,9 +297,9 @@ describe("ScheduleModal", () => {
       await waitFor(() => {
         expect(mockGetTasks).toHaveBeenCalledTimes(2);
       });
-      expect(mockOnCheckResult).toHaveBeenCalledWith(
-        "Already scheduled for: 2026-08-20",
-      );
+      expect(
+        screen.getByRole("dialog", { name: "Manage schedules" }),
+      ).toBeInTheDocument();
     });
   });
 });

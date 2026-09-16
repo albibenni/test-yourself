@@ -128,4 +128,26 @@ describe("TodoistProvider", () => {
       );
     });
   });
+
+  describe("deleteTask", () => {
+    it("deletes the requested task through the v1 API", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => null,
+      });
+
+      await provider.deleteTask("task-123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.todoist.com/api/v1/tasks/task-123",
+        expect.objectContaining({
+          method: "DELETE",
+          headers: expect.objectContaining({
+            Authorization: "Bearer fake_token",
+          }),
+        }),
+      );
+    });
+  });
 });

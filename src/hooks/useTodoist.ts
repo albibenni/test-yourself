@@ -87,6 +87,23 @@ export function useTodoist() {
     [getProvider],
   );
 
+  const deleteTask = useCallback(
+    async (taskId: string): Promise<void> => {
+      setLoading(true);
+      setError("");
+      try {
+        const provider = await getProvider();
+        await provider.deleteTask(taskId);
+      } catch (err: unknown) {
+        setError("Failed to delete task.");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getProvider],
+  );
+
   const getDefaultSettings = useCallback(async () => {
     const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
     return {
@@ -104,6 +121,7 @@ export function useTodoist() {
     getTasks,
     searchTasks,
     addTask,
+    deleteTask,
     getDefaultSettings,
     loading,
     error,

@@ -1551,6 +1551,134 @@ body {
   height: auto !important;
 }
 
+.schedule-management-dialog {
+  width: min(440px, 90vw);
+  max-height: min(620px, 85vh);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-dark);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+}
+
+.schedule-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.schedule-management-header p,
+.schedule-management-dialog > p {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.schedule-management-dialog > h2,
+.schedule-management-dialog > p,
+.schedule-confirm-list {
+  margin-left: 1.25rem;
+  margin-right: 1.25rem;
+}
+
+.schedule-management-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.schedule-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1.25rem;
+  border-block: 1px solid var(--border-dark);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.schedule-task-list {
+  overflow-y: auto;
+}
+
+.schedule-task-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-dark);
+  cursor: pointer;
+}
+
+.schedule-task-row:hover {
+  background: var(--bg-secondary);
+}
+
+.schedule-task-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.schedule-task-row strong {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.schedule-task-row small {
+  color: var(--text-secondary);
+}
+
+.schedule-task-row input,
+.schedule-select-all input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-soft);
+}
+
+.schedule-confirm-list {
+  max-height: 220px;
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+
+.schedule-management-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-elevated-dark);
+}
+
+.button-danger {
+  padding: 0.5rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--error-color) 65%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--error-color) 16%, transparent);
+  color: var(--error-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--error-color) 26%, transparent);
+}
+
+.button-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .quick-add-input-wrapper {
   padding: 16px 16px 8px 16px;
 }
