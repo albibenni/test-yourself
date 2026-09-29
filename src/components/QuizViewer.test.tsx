@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Quiz, QuizMetadata } from "../types";
 import { QuizViewer } from "./QuizViewer";
 
@@ -92,5 +92,23 @@ describe("QuizViewer", () => {
     expect(
       screen.getByText("You scored 2 out of 2 (100%)"),
     ).toBeInTheDocument();
+  });
+
+  it("centers and focuses the next unanswered question after an answer", () => {
+    render(<QuizViewerWithSession />);
+
+    const nextCard = screen
+      .getByText("2. Last question")
+      .closest<HTMLElement>(".question-card")!;
+    const scrollIntoView = vi.fn();
+    nextCard.scrollIntoView = scrollIntoView;
+
+    fireEvent.click(screen.getByText("First answer"));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+    expect(screen.getByText("Last answer").closest("button")).toHaveFocus();
   });
 });

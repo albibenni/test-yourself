@@ -1,5 +1,11 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import type { Dispatch, RefObject, SetStateAction } from "react";
+import {
+  type Dispatch,
+  type RefObject,
+  type SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import { DEFAULT_TOPIC } from "../constants";
 import type { Quiz, QuizMetadata, Scenario, Worksheet } from "../types";
 import { QuestionCard } from "./QuestionCard";
@@ -213,6 +219,45 @@ function QuizQuestions({
   correctCount,
   totalQuestions,
 }: QuizQuestionsProps) {
+  const [navigationTargetIndex, setNavigationTargetIndex] = useState<
+    number | null
+  >(null);
+
+  useEffect(() => {
+    if (navigationTargetIndex === null) return;
+    const targetQuestion = quiz.questions[navigationTargetIndex];
+    const targetCard = targetQuestion
+      ? document
+          .getElementById(`question-${targetQuestion.id}`)
+          ?.closest<HTMLElement>(".question-card")
+      : null;
+    targetCard
+      ?.querySelector<HTMLButtonElement>(".option-button:not(:disabled)")
+      ?.focus({ preventScroll: true });
+    targetCard?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    setNavigationTargetIndex(null);
+  }, [navigationTargetIndex, quiz.questions]);
+
+  const handleAnswer = (questionIndex: number, letter: string) => {
+    const question = quiz.questions[questionIndex];
+    if (!question) return;
+
+    setAnswers((previous) => ({
+      ...previous,
+      [question.id]: letter,
+    }));
+
+    const nextUnansweredIndex = quiz.questions.findIndex(
+      (candidate, candidateIndex) =>
+        candidateIndex > questionIndex &&
+        candidateIndex < visibleCount &&
+        answers[candidate.id] === undefined,
+    );
+    setNavigationTargetIndex(
+      nextUnansweredIndex === -1 ? null : nextUnansweredIndex,
+    );
+  };
+
   return (
     <>
       <div className="questions-container">
@@ -222,12 +267,7 @@ function QuizQuestions({
               key={`${quiz.path}-${question.id}-${resetKey}`}
               question={question}
               selectedLetter={answers[question.id]}
-              onAnswer={(_, letter) =>
-                setAnswers((previous) => ({
-                  ...previous,
-                  [question.id]: letter,
-                }))
-              }
+              onAnswer={(_, letter) => handleAnswer(index, letter)}
             />
           );
           return index === visibleCount - 1 ? (
