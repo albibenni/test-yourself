@@ -210,7 +210,7 @@ describe("App Component", () => {
     const btnA = screen.getByText("A library").closest("button")!;
     fireEvent.click(btnA);
 
-    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(screen.getByText("Correct!")).toBeInTheDocument();
     expect(screen.getByText("React is a UI library.")).toBeInTheDocument();
 
     // Buttons should be disabled
@@ -220,7 +220,7 @@ describe("App Component", () => {
     const btnA2 = screen.getByText("Google").closest("button")!;
     fireEvent.click(btnA2);
 
-    expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
+    expect(screen.getByText("Incorrect")).toBeInTheDocument();
     expect(screen.getByText("Facebook made React.")).toBeInTheDocument();
   });
 
@@ -557,7 +557,7 @@ describe("App Component", () => {
     fireEvent.click(btnA);
 
     // Verify it was answered
-    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(screen.getByText("Correct!")).toBeInTheDocument();
     expect(btnA).toBeDisabled();
 
     // Open settings
@@ -587,7 +587,7 @@ describe("App Component", () => {
     });
 
     // Verify the state is preserved (still says Correct and disabled)
-    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(screen.getByText("Correct!")).toBeInTheDocument();
     const btnAAfter = screen.getByText("A library").closest("button")!;
     expect(btnAAfter).toBeDisabled();
   });

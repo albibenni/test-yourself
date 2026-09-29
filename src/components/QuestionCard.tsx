@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import { type Ref, useState } from "react";
 import type { QuizQuestion } from "../types";
+import { StatusIcon } from "./StatusIcon";
 
 interface QuestionCardProps {
   question: QuizQuestion;
@@ -73,7 +74,8 @@ export function QuestionCard({
           className={clsx("feedback-block", isCorrect ? "success" : "error")}
         >
           <div className="feedback-title">
-            {isCorrect ? "✨ Correct!" : "❌ Incorrect"}
+            <StatusIcon kind={isCorrect ? "success" : "error"} />
+            <span>{isCorrect ? "Correct!" : "Incorrect"}</span>
           </div>
           {question.explanation && (
             <div className="feedback-explanation">{question.explanation}</div>

@@ -12,6 +12,8 @@ import type { Quiz, QuizMetadata, Scenario, Worksheet } from "../types";
 import { focusAndCenter } from "../utils/focusAndCenter";
 import { QuestionCard } from "./QuestionCard";
 import { ScenarioViewer } from "./ScenarioViewer";
+import { StatusIcon } from "./StatusIcon";
+import { StatusView } from "./StatusView";
 import { WorksheetViewer } from "./WorksheetViewer";
 
 interface QuizSessionState {
@@ -147,7 +149,9 @@ export function QuizViewer({
 
       <div className="quiz-question-content">
         {loadingActiveQuiz ? (
-          <StatusMessage>Loading content...</StatusMessage>
+          <StatusView compact kind="loading">
+            Loading content...
+          </StatusView>
         ) : activeWorksheet ? (
           <WorksheetViewer
             key={`${activeWorksheet.path}-${resetKey}`}
@@ -172,29 +176,11 @@ export function QuizViewer({
             totalQuestions={totalQuestions}
           />
         ) : (
-          <StatusMessage error>Failed to load quiz content.</StatusMessage>
+          <StatusView compact kind="error">
+            Failed to load quiz content.
+          </StatusView>
         )}
       </div>
-    </div>
-  );
-}
-
-function StatusMessage({
-  children,
-  error = false,
-}: {
-  children: React.ReactNode;
-  error?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        padding: "2rem",
-        textAlign: "center",
-        color: error ? "var(--error-color)" : "var(--text-secondary)",
-      }}
-    >
-      {children}
     </div>
   );
 }
@@ -319,57 +305,35 @@ function QuizReview({
   | "isAllAnswered"
 >) {
   return (
-    <div
-      className="quiz-summary"
-      style={{
-        marginTop: "3rem",
-        padding: "1.5rem",
-        backgroundColor: "var(--bg-secondary)",
-        borderRadius: "8px",
-      }}
-    >
-      <h2 style={{ marginTop: 0, marginBottom: "0.5rem" }}>Quiz Review</h2>
-      <p
-        style={{ fontSize: "1.1rem", fontWeight: 500, marginBottom: "1.5rem" }}
-      >
+    <div className="quiz-summary">
+      <h2 className="quiz-summary-title">Quiz Review</h2>
+      <p className="quiz-summary-score">
         You scored {correctCount} out of {totalQuestions} (
         {Math.round((correctCount / totalQuestions) * 100)}%)
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div className="quiz-review-list">
         {quiz.questions.map((question) => {
           const selected = answers[question.id];
           const isCorrect = selected === question.correct_answer;
           return (
             <div
               key={`review-${question.id}`}
-              style={{
-                padding: "1rem",
-                borderLeft: `4px solid ${isCorrect ? "var(--success-color)" : "var(--error-color)"}`,
-                backgroundColor: "var(--bg-primary)",
-                borderRadius: "4px",
-              }}
+              className={`quiz-review-item ${isCorrect ? "correct" : "incorrect"}`}
             >
-              <strong style={{ display: "block", marginBottom: "0.5rem" }}>
+              <strong className="quiz-review-question">
                 {question.id}. {question.text}
               </strong>
-              <div style={{ marginBottom: "0.5rem" }}>
+              <div className="quiz-review-answer">
                 Your answer: <strong>{selected}</strong>{" "}
-                {isCorrect ? "✨" : "❌"}{" "}
+                <StatusIcon kind={isCorrect ? "success" : "error"} />{" "}
                 {!isCorrect && (
-                  <span style={{ marginLeft: "0.5rem" }}>
+                  <span>
                     (Correct: <strong>{question.correct_answer}</strong>)
                   </span>
                 )}
               </div>
               {question.explanation && (
-                <div
-                  style={{
-                    fontSize: "0.9rem",
-                    color: "var(--text-secondary)",
-                    fontStyle: "italic",
-                    marginTop: "0.5rem",
-                  }}
-                >
+                <div className="quiz-review-explanation">
                   Explanation: {question.explanation}
                 </div>
               )}

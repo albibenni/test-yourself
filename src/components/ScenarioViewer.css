@@ -1,6 +1,7 @@
 .scenario-viewer {
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
   color: var(--text-primary);
   padding: 2rem;
 }
@@ -30,7 +31,7 @@
 .scenario-code-block {
   background-color: rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   margin: 1rem 0;
   overflow-x: auto;
   padding: 1rem;
@@ -44,14 +45,14 @@
 
 .scenario-content :not(pre) > code {
   background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0.1em 0.3em;
 }
 
 .scenario-response {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   box-sizing: border-box;
   color: var(--text-primary);
   font: inherit;
@@ -65,7 +66,7 @@
 .scenario-response:focus {
   border-color: var(--accent-color);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
 }
 
 .scenario-answer-content {

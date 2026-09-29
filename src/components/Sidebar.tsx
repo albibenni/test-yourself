@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { APP_TITLE, DEFAULT_TOPIC } from "../constants";
 import type { QuizMetadata } from "../types";
+import { StatusView } from "./StatusView";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -33,6 +34,9 @@ export function Sidebar({
 }: SidebarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [focusedQuizIndex, setFocusedQuizIndex] = useState<number>(0);
+  const [collapsedTopics, setCollapsedTopics] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [activeTab, setActiveTab] = useState<
     "quizzes" | "worksheets" | "scenarios"
   >("quizzes");
@@ -67,8 +71,29 @@ export function Sidebar({
   const flatQuizzes = useMemo(() => {
     return Object.entries(filteredGroupedQuizzes)
       .sort(([a], [b]) => a.localeCompare(b))
-      .flatMap(([, quizzes]) => quizzes);
-  }, [filteredGroupedQuizzes]);
+      .flatMap(([topic, quizzes]) =>
+        collapsedTopics.has(topic) && !searchQuery ? [] : quizzes,
+      );
+  }, [collapsedTopics, filteredGroupedQuizzes, searchQuery]);
+
+  const filteredQuizCount = useMemo(
+    () =>
+      Object.values(filteredGroupedQuizzes).reduce(
+        (total, quizzes) => total + quizzes.length,
+        0,
+      ),
+    [filteredGroupedQuizzes],
+  );
+
+  const toggleTopic = (topic: string) => {
+    setCollapsedTopics((current) => {
+      const next = new Set(current);
+      if (next.has(topic)) next.delete(topic);
+      else next.add(topic);
+      return next;
+    });
+    setFocusedQuizIndex(0);
+  };
 
   const handleSelectQuiz = (quizToOpen: QuizMetadata) => {
     setSelectedQuiz(quizToOpen);
@@ -220,32 +245,10 @@ export function Sidebar({
           </svg>
         </button>
       </div>
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid var(--border-color)",
-          margin: "0",
-        }}
-      >
+      <div className="sidebar-tabs">
         <button
-          style={{
-            flex: 1,
-            padding: "0.75rem 0.5rem",
-            background: "none",
-            border: "none",
-            borderBottom:
-              activeTab === "quizzes"
-                ? "2px solid var(--accent-color)"
-                : "2px solid transparent",
-            color:
-              activeTab === "quizzes"
-                ? "var(--text-primary)"
-                : "var(--text-secondary)",
-            fontWeight: activeTab === "quizzes" ? 600 : 400,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            fontSize: "0.9rem",
-          }}
+          className={clsx("sidebar-tab", activeTab === "quizzes" && "active")}
+          aria-pressed={activeTab === "quizzes"}
           onClick={() => {
             setActiveTab("quizzes");
             setFocusedQuizIndex(0);
@@ -254,24 +257,11 @@ export function Sidebar({
           Quizzes
         </button>
         <button
-          style={{
-            flex: 1,
-            padding: "0.75rem 0.5rem",
-            background: "none",
-            border: "none",
-            borderBottom:
-              activeTab === "worksheets"
-                ? "2px solid var(--accent-color)"
-                : "2px solid transparent",
-            color:
-              activeTab === "worksheets"
-                ? "var(--text-primary)"
-                : "var(--text-secondary)",
-            fontWeight: activeTab === "worksheets" ? 600 : 400,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            fontSize: "0.9rem",
-          }}
+          className={clsx(
+            "sidebar-tab",
+            activeTab === "worksheets" && "active",
+          )}
+          aria-pressed={activeTab === "worksheets"}
           onClick={() => {
             setActiveTab("worksheets");
             setFocusedQuizIndex(0);
@@ -280,24 +270,8 @@ export function Sidebar({
           Worksheets
         </button>
         <button
-          style={{
-            flex: 1,
-            padding: "0.75rem 0.5rem",
-            background: "none",
-            border: "none",
-            borderBottom:
-              activeTab === "scenarios"
-                ? "2px solid var(--accent-color)"
-                : "2px solid transparent",
-            color:
-              activeTab === "scenarios"
-                ? "var(--text-primary)"
-                : "var(--text-secondary)",
-            fontWeight: activeTab === "scenarios" ? 600 : 400,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            fontSize: "0.9rem",
-          }}
+          className={clsx("sidebar-tab", activeTab === "scenarios" && "active")}
+          aria-pressed={activeTab === "scenarios"}
           onClick={() => {
             setActiveTab("scenarios");
             setFocusedQuizIndex(0);
@@ -309,66 +283,90 @@ export function Sidebar({
       <hr className="sidebar-divider" style={{ marginTop: 0 }} />
       <div className="sidebar-content">
         {loading ? (
-          <div className="loading">Loading...</div>
+          <StatusView compact kind="loading">
+            Loading...
+          </StatusView>
         ) : Object.keys(filteredGroupedQuizzes).length === 0 ? (
-          <div
-            className="sidebar-empty"
-            style={{
-              padding: "1rem",
-              color: "var(--text-secondary)",
-              textAlign: "center",
-              fontSize: "0.9rem",
-            }}
-          >
+          <StatusView compact kind="quiz">
             {searchQuery
               ? `No ${activeTab} match your search.`
               : `No ${activeTab} found in this folder.`}
-          </div>
+          </StatusView>
         ) : (
           Object.entries(filteredGroupedQuizzes)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([topic, topicQuizzes]) => (
-              <div key={topic} className="topic-group">
-                <div className="topic-title">{topic || DEFAULT_TOPIC}</div>
-                {topicQuizzes.map((quiz) => (
+            .map(([topic, topicQuizzes]) => {
+              const isCollapsed = collapsedTopics.has(topic) && !searchQuery;
+              const itemLabel =
+                activeTab === "quizzes"
+                  ? topicQuizzes.length === 1
+                    ? "quiz"
+                    : "quizzes"
+                  : activeTab === "worksheets"
+                    ? topicQuizzes.length === 1
+                      ? "worksheet"
+                      : "worksheets"
+                    : topicQuizzes.length === 1
+                      ? "scenario"
+                      : "scenarios";
+
+              return (
+                <div key={topic} className="topic-group">
                   <button
-                    key={quiz.path}
-                    className={clsx(
-                      "quiz-item",
-                      selectedQuiz?.path === quiz.path && "active",
-                      flatQuizzes[focusedQuizIndex]?.path === quiz.path &&
-                        "focused",
-                    )}
+                    className="topic-title"
                     type="button"
-                    aria-current={
-                      selectedQuiz?.path === quiz.path ? "page" : undefined
-                    }
-                    style={{ fontFamily: "inherit", textAlign: "left" }}
-                    onClick={() => {
-                      handleSelectQuiz(quiz);
-                    }}
+                    aria-expanded={!isCollapsed}
+                    onClick={() => toggleTopic(topic)}
                   >
-                    {quiz.title}
+                    <span>{topic || DEFAULT_TOPIC}</span>
+                    <span className="topic-count">
+                      {topicQuizzes.length} {itemLabel}
+                    </span>
+                    <svg
+                      aria-hidden="true"
+                      className="topic-chevron"
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                    >
+                      <path
+                        d="m6 9 6 6 6-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
-                ))}
-              </div>
-            ))
+                  {!isCollapsed &&
+                    topicQuizzes.map((quiz) => (
+                      <button
+                        key={quiz.path}
+                        className={clsx(
+                          "quiz-item",
+                          selectedQuiz?.path === quiz.path && "active",
+                          flatQuizzes[focusedQuizIndex]?.path === quiz.path &&
+                            "focused",
+                        )}
+                        type="button"
+                        aria-current={
+                          selectedQuiz?.path === quiz.path ? "page" : undefined
+                        }
+                        onClick={() => handleSelectQuiz(quiz)}
+                      >
+                        {quiz.title}
+                      </button>
+                    ))}
+                </div>
+              );
+            })
         )}
       </div>
       <hr className="sidebar-divider" />
-      <div
-        className="sidebar-footer"
-        style={{
-          padding: "0.75rem 1.5rem",
-          fontSize: "0.8125rem",
-          color: "var(--text-secondary)",
-          textAlign: "center",
-          backgroundColor:
-            "color-mix(in srgb, var(--text-primary) 2%, transparent)",
-        }}
-      >
-        {flatQuizzes.length}{" "}
-        {flatQuizzes.length === 1
+      <div className="sidebar-footer">
+        {filteredQuizCount}{" "}
+        {filteredQuizCount === 1
           ? activeTab === "quizzes"
             ? "quiz"
             : activeTab === "worksheets"

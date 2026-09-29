@@ -27,6 +27,8 @@ import { FolderBrowserModal } from "./FolderBrowserModal";
 import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 import { QuizViewer } from "./QuizViewer";
 import { Sidebar } from "./Sidebar";
+import { StatusIcon } from "./StatusIcon";
+import { StatusView } from "./StatusView";
 import { TopBar } from "./TopBar";
 
 const SettingsView = lazy(() =>
@@ -385,32 +387,34 @@ export function AppLayout(props: AppLayoutProps) {
               }}
             >
               {!basePath ? (
-                <div className="empty-state">
-                  <h2 className="empty-state-title">Select Quiz Folder</h2>
-                  <p>
-                    Please select a directory containing your Markdown quizzes.
-                  </p>
-                  <button
-                    className="primary-btn"
-                    onClick={async () => {
-                      if (isIOS) return selectIosFolder("quiz");
-                      const { open } = await import(
-                        "@tauri-apps/plugin-dialog"
-                      );
-                      const selected = await open({
-                        directory: true,
-                        multiple: false,
-                        recursive: true,
-                        fileAccessMode: "scoped",
-                      });
-                      if (typeof selected === "string") {
-                        await updateBasePath(selected);
-                      }
-                    }}
-                  >
-                    Choose Folder
-                  </button>
-                </div>
+                <StatusView
+                  kind="folder"
+                  title="Select Quiz Folder"
+                  action={
+                    <button
+                      className="button-primary"
+                      onClick={async () => {
+                        if (isIOS) return selectIosFolder("quiz");
+                        const { open } = await import(
+                          "@tauri-apps/plugin-dialog"
+                        );
+                        const selected = await open({
+                          directory: true,
+                          multiple: false,
+                          recursive: true,
+                          fileAccessMode: "scoped",
+                        });
+                        if (typeof selected === "string") {
+                          await updateBasePath(selected);
+                        }
+                      }}
+                    >
+                      Choose Folder
+                    </button>
+                  }
+                >
+                  Please select a directory containing your Markdown quizzes.
+                </StatusView>
               ) : selectedQuiz ? (
                 <QuizViewer
                   selectedQuiz={selectedQuiz}
@@ -424,13 +428,10 @@ export function AppLayout(props: AppLayoutProps) {
                   {...session}
                 />
               ) : (
-                <div className="empty-state">
-                  <h2 className="empty-state-title">Select a Quiz</h2>
-                  <p>
-                    Choose a topic from the sidebar to begin testing your
-                    knowledge.
-                  </p>
-                </div>
+                <StatusView kind="quiz" title="Select a Quiz">
+                  Choose a topic from the sidebar to begin testing your
+                  knowledge.
+                </StatusView>
               )}
             </div>
           </main>
@@ -462,7 +463,8 @@ export function AppLayout(props: AppLayoutProps) {
         />
         {toastMessage && (
           <div role="status" aria-live="polite" className="toast-notification">
-            ✓ {toastMessage}
+            <StatusIcon kind="success" />
+            <span>{toastMessage}</span>
           </div>
         )}
       </div>

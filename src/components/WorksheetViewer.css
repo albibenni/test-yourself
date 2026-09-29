@@ -1,6 +1,7 @@
 .worksheet-viewer {
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
   padding: 2rem;
   font-size: 1.1rem;
   line-height: 1.6;
@@ -34,7 +35,7 @@
 .worksheet-code-block {
   background-color: rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 1rem;
   margin: 1rem 0;
   font-family:
@@ -68,12 +69,12 @@
   border: 1px solid var(--border-color);
   background-color: var(--bg-surface);
   color: var(--text-primary);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 1rem;
   text-align: center;
   min-width: 60px;
-  transition: all 0.2s ease;
+  transition: var(--transition-control);
 }
 
 @media (max-width: 768px) {
@@ -132,7 +133,7 @@
 .worksheet-input:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
 }
 
 .worksheet-input.correct {

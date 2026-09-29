@@ -45,7 +45,7 @@ describe("QuestionCard Component", () => {
     const btnB = screen.getByText("Paris").closest("button")!;
     fireEvent.click(btnB);
 
-    expect(screen.getByText("✨ Correct!")).toBeInTheDocument();
+    expect(screen.getByText("Correct!")).toBeInTheDocument();
     expect(
       screen.getByText("Paris is the capital of France."),
     ).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe("QuestionCard Component", () => {
     const btnA = screen.getByText("London").closest("button")!;
     fireEvent.click(btnA);
 
-    expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
+    expect(screen.getByText("Incorrect")).toBeInTheDocument();
     expect(
       screen.getByText("Paris is the capital of France."),
     ).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe("QuestionCard Component", () => {
 
     fireEvent.click(btnB); // try to select correct afterwards
     // Should NOT change selected letter, so B should not be visually 'selected', it just shows 'correct' because it's the right answer, but the overall state is already answered.
-    expect(screen.getByText("❌ Incorrect")).toBeInTheDocument();
+    expect(screen.getByText("Incorrect")).toBeInTheDocument();
   });
 
   it("evaluates shuffled answers independently and keeps each explanation", () => {
@@ -115,13 +115,13 @@ describe("QuestionCard Component", () => {
       .closest<HTMLDivElement>(".question-card")!;
 
     fireEvent.click(within(firstCard).getByText("Paris"));
-    expect(within(firstCard).getByText("✨ Correct!")).toBeInTheDocument();
+    expect(within(firstCard).getByText("Correct!")).toBeInTheDocument();
     expect(
       within(firstCard).getByText("Paris is the capital of France."),
     ).toBeInTheDocument();
 
     fireEvent.click(within(secondCard).getByText("Earth"));
-    expect(within(secondCard).getByText("❌ Incorrect")).toBeInTheDocument();
+    expect(within(secondCard).getByText("Incorrect")).toBeInTheDocument();
     expect(
       within(secondCard).getByText(
         "Mars appears red because of iron oxides in its surface dust.",

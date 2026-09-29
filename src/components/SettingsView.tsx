@@ -624,14 +624,7 @@ export function SettingsView({
               title="Accent Color"
               subtitle="Select the primary brand color for buttons and highlights."
             >
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  flexWrap: "wrap",
-                  padding: "0.5rem 0",
-                }}
-              >
+              <div className="accent-picker">
                 {[
                   { id: "blue", color: "#3b82f6" },
                   { id: "purple", color: "#a855f7" },
@@ -645,25 +638,17 @@ export function SettingsView({
                     key={a.id}
                     type="button"
                     onClick={() => onAccentChange(a.id as AccentColor)}
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      backgroundColor: a.color,
-                      border:
-                        accent === a.id
-                          ? "3px solid var(--text-primary)"
-                          : "3px solid transparent",
-                      cursor: "pointer",
-                      boxShadow:
-                        accent === a.id
-                          ? "0 0 0 2px var(--bg-surface)"
-                          : "0 2px 5px rgba(0,0,0,0.1)",
-                      transition: "all 0.2s ease",
-                    }}
+                    className="accent-swatch"
+                    style={{ backgroundColor: a.color }}
                     aria-label={a.id}
                     aria-pressed={accent === a.id}
-                  />
+                  >
+                    {accent === a.id && (
+                      <svg aria-hidden="true" viewBox="0 0 24 24">
+                        <path d="m6 12 4 4 8-8" />
+                      </svg>
+                    )}
+                  </button>
                 ))}
               </div>
             </SettingsCard>

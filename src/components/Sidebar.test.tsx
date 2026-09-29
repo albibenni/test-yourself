@@ -53,6 +53,35 @@ describe("Sidebar Component", () => {
     expect(screen.getByText("Rust Basics")).toBeInTheDocument();
   });
 
+  it("shows topic counts and collapses a topic group", () => {
+    render(
+      <Sidebar
+        isSidebarOpen={true}
+        searchQuery=""
+        setSearchQuery={vi.fn()}
+        loading={false}
+        groupedQuizzes={mockQuizzes}
+        selectedQuiz={null}
+        setSelectedQuiz={vi.fn()}
+        handleSync={vi.fn()}
+        isSyncing={false}
+        setIsSidebarOpen={vi.fn()}
+      />,
+    );
+
+    const frontendTopic = screen.getByRole("button", {
+      name: /frontend.*1 quiz/i,
+    });
+    expect(frontendTopic).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(frontendTopic);
+
+    expect(frontendTopic).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("React Basics")).not.toBeInTheDocument();
+    expect(screen.getByText("Rust Basics")).toBeInTheDocument();
+    expect(screen.getByText("2 quizzes")).toBeInTheDocument();
+  });
+
   it("shows loading state when loading is true", () => {
     render(
       <Sidebar
