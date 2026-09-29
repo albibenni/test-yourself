@@ -193,7 +193,11 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
 
   useEffect(() => {
     if (focusTargetIndex === null) return;
-    inputRefs.current[focusTargetIndex]?.focus();
+    const targetInput = inputRefs.current[focusTargetIndex];
+    targetInput?.focus({ preventScroll: true });
+    targetInput
+      ?.closest(".question-card, .worksheet-content")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
     setFocusTargetIndex(null);
   }, [focusTargetIndex]);
 

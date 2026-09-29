@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorksheetViewer } from "./WorksheetViewer";
 
 describe("WorksheetViewer", () => {
@@ -84,6 +84,9 @@ describe("WorksheetViewer", () => {
   });
 
   it("moves focus to the next unanswered question after Enter checks one", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
     render(
       <WorksheetViewer
         worksheet={{
@@ -100,6 +103,10 @@ describe("WorksheetViewer", () => {
 
     expect(firstInput).toBeDisabled();
     expect(secondInput).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
   });
 
   it("cycles Tab and Shift+Tab between unanswered blanks instead of buttons", () => {
