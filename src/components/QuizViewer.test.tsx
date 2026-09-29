@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Quiz, QuizMetadata } from "../types";
 import { QuizViewer } from "./QuizViewer";
 
@@ -27,21 +27,28 @@ const quiz: Quiz = {
   ],
 };
 
-const selectedQuiz: QuizMetadata = {
-  title: quiz.title,
-  path: quiz.path,
-  topic: quiz.topic,
-  last_modified: 0,
-};
-
-function QuizViewerWithSession() {
+function QuizViewerWithSession({
+  sessionQuiz = quiz,
+  initialVisibleCount = sessionQuiz.questions.length,
+}: {
+  sessionQuiz?: Quiz;
+  initialVisibleCount?: number;
+} = {}) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
   const answeredCount = Object.keys(answers).length;
+
+  const sessionMetadata: QuizMetadata = {
+    title: sessionQuiz.title,
+    path: sessionQuiz.path,
+    topic: sessionQuiz.topic,
+    last_modified: sessionQuiz.last_modified,
+  };
 
   return (
     <QuizViewer
-      selectedQuiz={selectedQuiz}
-      activeQuiz={quiz}
+      selectedQuiz={sessionMetadata}
+      activeQuiz={sessionQuiz}
       activeWorksheet={null}
       activeScenario={null}
       loadingActiveQuiz={false}
@@ -50,21 +57,34 @@ function QuizViewerWithSession() {
       onSchedule={() => undefined}
       answers={answers}
       setAnswers={setAnswers}
-      visibleCount={quiz.questions.length}
-      totalQuestions={quiz.questions.length}
+      visibleCount={visibleCount}
+      ensureQuestionVisible={(index) =>
+        setVisibleCount((current) => Math.max(current, index + 1))
+      }
+      totalQuestions={sessionQuiz.questions.length}
       answeredCount={answeredCount}
       correctCount={
-        quiz.questions.filter(
+        sessionQuiz.questions.filter(
           (question) => answers[question.id] === question.correct_answer,
         ).length
       }
-      isAllAnswered={answeredCount === quiz.questions.length}
+      isAllAnswered={answeredCount === sessionQuiz.questions.length}
       lastQuestionElementRef={() => undefined}
     />
   );
 }
 
 describe("QuizViewer", () => {
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
+
+  afterEach(() => {
+    if (originalScrollIntoView) {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+    } else {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it("places topic, progress, and session actions in a sticky question-view row", () => {
     render(<QuizViewerWithSession />);
 
@@ -110,5 +130,75 @@ describe("QuizViewer", () => {
       block: "center",
     });
     expect(screen.getByText("Last answer").closest("button")).toHaveFocus();
+  });
+
+  it("skips answered questions when navigating forward", () => {
+    const threeQuestionQuiz: Quiz = {
+      ...quiz,
+      questions: [
+        ...quiz.questions,
+        {
+          id: "3",
+          text: "Third question",
+          options: [{ letter: "C", text: "Third answer" }],
+          correct_answer: "C",
+          explanation: "",
+        },
+      ],
+    };
+    render(<QuizViewerWithSession sessionQuiz={threeQuestionQuiz} />);
+
+    fireEvent.click(screen.getByText("Last answer"));
+    const thirdCard = screen
+      .getByText("3. Third question")
+      .closest<HTMLElement>(".question-card")!;
+    const scrollIntoView = vi.fn();
+    thirdCard.scrollIntoView = scrollIntoView;
+
+    fireEvent.click(screen.getByText("First answer"));
+
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(screen.getByText("Third answer").closest("button")).toHaveFocus();
+  });
+
+  it("reveals and navigates to the next lazy-loaded question", () => {
+    const paginatedQuiz: Quiz = {
+      ...quiz,
+      questions: Array.from({ length: 11 }, (_, index) => ({
+        id: String(index + 1),
+        text: `Question ${index + 1}`,
+        options: [{ letter: "A", text: `Answer ${index + 1}` }],
+        correct_answer: "A",
+        explanation: "",
+      })),
+    };
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    render(
+      <QuizViewerWithSession
+        sessionQuiz={paginatedQuiz}
+        initialVisibleCount={10}
+      />,
+    );
+
+    expect(screen.queryByText("11. Question 11")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Answer 10"));
+
+    expect(screen.getByText("11. Question 11")).toBeInTheDocument();
+    expect(screen.getByText("Answer 11").closest("button")).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+  });
+
+  it("does not navigate after answering the final question", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    render(<QuizViewerWithSession />);
+
+    fireEvent.click(screen.getByText("Last answer"));
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

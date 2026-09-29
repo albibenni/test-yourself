@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorksheetViewer } from "./WorksheetViewer";
 
 describe("WorksheetViewer", () => {
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
   const mockWorksheet = {
     title: "Test Worksheet",
     path: "/path/to/worksheet",
@@ -11,8 +12,12 @@ describe("WorksheetViewer", () => {
     last_modified: 1234567890,
   };
 
-  beforeEach(() => {
-    // Render before each test
+  afterEach(() => {
+    if (originalScrollIntoView) {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+    } else {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
   });
 
   it("renders the text and input fields correctly", () => {

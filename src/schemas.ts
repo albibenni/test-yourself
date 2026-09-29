@@ -16,13 +16,27 @@ export const QuizQuestionSchema = z.object({
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
-export const QuizSchema = z.object({
-  title: z.string(),
-  path: z.string(),
-  topic: z.string(),
-  questions: z.array(QuizQuestionSchema),
-  last_modified: z.number(),
-});
+export const QuizSchema = z
+  .object({
+    title: z.string(),
+    path: z.string(),
+    topic: z.string(),
+    questions: z.array(QuizQuestionSchema),
+    last_modified: z.number(),
+  })
+  .superRefine((quiz, context) => {
+    const seenIds = new Set<string>();
+    quiz.questions.forEach((question, index) => {
+      if (seenIds.has(question.id)) {
+        context.addIssue({
+          code: "custom",
+          message: "Question IDs must be unique",
+          path: ["questions", index, "id"],
+        });
+      }
+      seenIds.add(question.id);
+    });
+  });
 export type Quiz = z.infer<typeof QuizSchema>;
 
 export const QuizMetadataSchema = z.object({

@@ -4,10 +4,12 @@ import {
   type RefObject,
   type SetStateAction,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { DEFAULT_TOPIC } from "../constants";
 import type { Quiz, QuizMetadata, Scenario, Worksheet } from "../types";
+import { focusAndCenter } from "../utils/focusAndCenter";
 import { QuestionCard } from "./QuestionCard";
 import { ScenarioViewer } from "./ScenarioViewer";
 import { WorksheetViewer } from "./WorksheetViewer";
@@ -16,6 +18,7 @@ interface QuizSessionState {
   answers: Record<string, string>;
   setAnswers: Dispatch<SetStateAction<Record<string, string>>>;
   visibleCount: number;
+  ensureQuestionVisible: (questionIndex: number) => void;
   totalQuestions: number;
   answeredCount: number;
   correctCount: number;
@@ -48,6 +51,7 @@ export function QuizViewer({
   answers,
   setAnswers,
   visibleCount,
+  ensureQuestionVisible,
   totalQuestions,
   answeredCount,
   correctCount,
@@ -160,6 +164,7 @@ export function QuizViewer({
             answers={answers}
             setAnswers={setAnswers}
             visibleCount={visibleCount}
+            ensureQuestionVisible={ensureQuestionVisible}
             resetKey={resetKey}
             lastQuestionElementRef={lastQuestionElementRef}
             isAllAnswered={isAllAnswered}
@@ -199,6 +204,7 @@ interface QuizQuestionsProps {
   answers: Record<string, string>;
   setAnswers: Dispatch<SetStateAction<Record<string, string>>>;
   visibleCount: number;
+  ensureQuestionVisible: (questionIndex: number) => void;
   resetKey: number;
   lastQuestionElementRef:
     | RefObject<HTMLDivElement | null>
@@ -213,6 +219,7 @@ function QuizQuestions({
   answers,
   setAnswers,
   visibleCount,
+  ensureQuestionVisible,
   resetKey,
   lastQuestionElementRef,
   isAllAnswered,
@@ -222,21 +229,23 @@ function QuizQuestions({
   const [navigationTargetIndex, setNavigationTargetIndex] = useState<
     number | null
   >(null);
+  const questionCardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
     if (navigationTargetIndex === null) return;
-    const targetQuestion = quiz.questions[navigationTargetIndex];
-    const targetCard = targetQuestion
-      ? document
-          .getElementById(`question-${targetQuestion.id}`)
-          ?.closest<HTMLElement>(".question-card")
-      : null;
-    targetCard
-      ?.querySelector<HTMLButtonElement>(".option-button:not(:disabled)")
-      ?.focus({ preventScroll: true });
-    targetCard?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    if (navigationTargetIndex >= visibleCount) {
+      ensureQuestionVisible(navigationTargetIndex);
+      return;
+    }
+
+    const targetCard = questionCardRefs.current[navigationTargetIndex] ?? null;
+    const targetOption =
+      targetCard?.querySelector<HTMLButtonElement>(
+        ".option-button:not(:disabled)",
+      ) ?? null;
+    focusAndCenter(targetOption, targetCard);
     setNavigationTargetIndex(null);
-  }, [navigationTargetIndex, quiz.questions]);
+  }, [ensureQuestionVisible, navigationTargetIndex, visibleCount]);
 
   const handleAnswer = (questionIndex: number, letter: string) => {
     const question = quiz.questions[questionIndex];
@@ -249,9 +258,7 @@ function QuizQuestions({
 
     const nextUnansweredIndex = quiz.questions.findIndex(
       (candidate, candidateIndex) =>
-        candidateIndex > questionIndex &&
-        candidateIndex < visibleCount &&
-        answers[candidate.id] === undefined,
+        candidateIndex > questionIndex && answers[candidate.id] === undefined,
     );
     setNavigationTargetIndex(
       nextUnansweredIndex === -1 ? null : nextUnansweredIndex,
@@ -268,6 +275,9 @@ function QuizQuestions({
               question={question}
               selectedLetter={answers[question.id]}
               onAnswer={(_, letter) => handleAnswer(index, letter)}
+              cardRef={(card) => {
+                questionCardRefs.current[index] = card;
+              }}
             />
           );
           return index === visibleCount - 1 ? (
@@ -303,6 +313,7 @@ function QuizReview({
   QuizQuestionsProps,
   | "setAnswers"
   | "visibleCount"
+  | "ensureQuestionVisible"
   | "resetKey"
   | "lastQuestionElementRef"
   | "isAllAnswered"

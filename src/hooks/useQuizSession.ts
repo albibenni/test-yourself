@@ -14,6 +14,15 @@ export function useQuizSession(
   const [visibleCount, setVisibleCount] = useState(10);
   const totalQuestions = shuffledQuestions.length;
 
+  const ensureQuestionVisible = useCallback(
+    (questionIndex: number) => {
+      setVisibleCount((current) =>
+        Math.min(Math.max(current, questionIndex + 1), totalQuestions),
+      );
+    },
+    [totalQuestions],
+  );
+
   useEffect(() => {
     setAnswers({});
     setVisibleCount(sessionKey ? 10 : 0);
@@ -45,6 +54,7 @@ export function useQuizSession(
     setAnswers,
     questions: shuffledQuestions,
     visibleCount,
+    ensureQuestionVisible,
     totalQuestions,
     answeredCount,
     correctCount,

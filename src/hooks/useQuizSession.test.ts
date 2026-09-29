@@ -39,4 +39,20 @@ describe("useQuizSession", () => {
     expect(result.current.isAllAnswered).toBe(true);
     expect(result.current.correctCount).toBe(1);
   });
+
+  it("reveals a requested question beyond the current lazy-loaded page", () => {
+    const manyQuestions = Array.from({ length: 11 }, (_, index) => ({
+      ...questions[0]!,
+      id: String(index + 1),
+    }));
+    const { result } = renderHook(() =>
+      useQuizSession("/quizzes/a.md:0", manyQuestions),
+    );
+
+    expect(result.current.visibleCount).toBe(10);
+
+    act(() => result.current.ensureQuestionVisible(10));
+
+    expect(result.current.visibleCount).toBe(11);
+  });
 });

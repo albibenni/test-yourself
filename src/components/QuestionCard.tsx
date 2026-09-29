@@ -1,17 +1,19 @@
 import { clsx } from "clsx";
-import { useState } from "react";
+import { type Ref, useState } from "react";
 import type { QuizQuestion } from "../types";
 
 interface QuestionCardProps {
   question: QuizQuestion;
   selectedLetter?: string;
   onAnswer?: (isCorrect: boolean, selectedLetter: string) => void;
+  cardRef?: Ref<HTMLDivElement>;
 }
 
 export function QuestionCard({
   question,
   selectedLetter: submittedLetter,
   onAnswer,
+  cardRef,
 }: QuestionCardProps) {
   const [localSelectedLetter, setLocalSelectedLetter] = useState<string | null>(
     null,
@@ -30,7 +32,7 @@ export function QuestionCard({
   };
 
   return (
-    <div className="question-card">
+    <div className="question-card" ref={cardRef}>
       <h3 className="question-title" id={`question-${question.id}`}>
         {question.id}. {question.text}
       </h3>

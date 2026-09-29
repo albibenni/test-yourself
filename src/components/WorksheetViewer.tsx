@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Worksheet } from "../types";
+import { focusAndCenter } from "../utils/focusAndCenter";
 import "./WorksheetViewer.css";
 
 const normalizeAnswer = (ans: string | undefined) => {
@@ -194,10 +195,10 @@ export function WorksheetViewer({ worksheet }: WorksheetViewerProps) {
   useEffect(() => {
     if (focusTargetIndex === null) return;
     const targetInput = inputRefs.current[focusTargetIndex];
-    targetInput?.focus({ preventScroll: true });
-    targetInput
-      ?.closest(".question-card, .worksheet-content")
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    focusAndCenter(
+      targetInput ?? null,
+      targetInput?.closest(".question-card, .worksheet-content") ?? null,
+    );
     setFocusTargetIndex(null);
   }, [focusTargetIndex]);
 

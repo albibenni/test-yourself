@@ -7,6 +7,7 @@ import {
   useState,
   type WheelEvent,
 } from "react";
+import { shouldReduceMotion } from "../utils/motionPreference";
 
 const DEAD_ZONE_PX = 10;
 const MAX_SCROLL_PER_FRAME = 120;
@@ -106,13 +107,7 @@ export function useMiddleClickScroll(
 
       // Prevent the webview's platform-specific middle-click behavior.
       event.preventDefault();
-      const reducedMotionPreference =
-        document.documentElement.dataset.reducedMotion;
-      const shouldReduceMotion =
-        reducedMotionPreference === "reduce" ||
-        (reducedMotionPreference !== "reduce" &&
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      if (shouldReduceMotion) {
+      if (shouldReduceMotion()) {
         setAnnouncement(
           "Auto-scroll is disabled while reduced motion is enabled.",
         );
