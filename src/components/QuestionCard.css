@@ -1,0 +1,146 @@
+/* Question Card */
+.question-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease;
+}
+
+.question-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: var(--accent-color);
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option-button {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  padding: 1rem;
+  background: var(--surface-interactive);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--quiz-option-text);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-control);
+  line-height: 1.4;
+}
+
+.option-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--text-primary) 20%, transparent);
+}
+
+.option-letter {
+  font-weight: 600;
+  margin-right: 0.75rem;
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Result States */
+.option-button.correct {
+  background: var(--success-bg);
+  border-color: var(--success-color);
+}
+
+.option-button.correct .option-letter {
+  color: var(--success-color);
+}
+
+.option-button.incorrect {
+  background: var(--error-bg);
+  border-color: var(--error-color);
+  opacity: 0.7;
+}
+
+.option-button.incorrect .option-letter {
+  color: var(--error-color);
+}
+
+.option-button:disabled {
+  cursor: default;
+}
+
+/* Feedback Block */
+.feedback-block {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  animation: slideDown 0.3s ease forwards;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.feedback-block.success {
+  background: var(--success-bg);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.feedback-block.error {
+  background: var(--error-bg);
+  border: 1px solid color-mix(in srgb, var(--error-color) 20%, transparent);
+}
+
+.feedback-title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-icon {
+  display: inline-block;
+  width: 1.125em;
+  height: 1.125em;
+  flex: none;
+  vertical-align: -0.18em;
+}
+
+.status-icon--success {
+  color: var(--success-color);
+}
+
+.status-icon--error {
+  color: var(--error-color);
+}
+
+.status-icon--loading {
+  animation: spin 1s linear infinite;
+}
+
+.feedback-block.success .feedback-title {
+  color: var(--success-color);
+}
+
+.feedback-block.error .feedback-title {
+  color: var(--error-color);
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

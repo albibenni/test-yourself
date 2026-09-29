@@ -1,0 +1,414 @@
+.quick-add-modal {
+  padding: 0 !important;
+  border-radius: var(--radius-lg) !important;
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-dark) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+  max-width: 480px !important;
+  width: 100% !important;
+  gap: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.schedule-management-dialog {
+  width: min(440px, 90vw);
+  max-height: min(620px, 85vh);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.schedule-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.schedule-management-header p,
+.schedule-management-dialog > p {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.schedule-management-dialog > h2,
+.schedule-management-dialog > p,
+.schedule-confirm-list {
+  margin-left: 1.25rem;
+  margin-right: 1.25rem;
+}
+
+.schedule-management-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.schedule-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1.25rem;
+  border-block: 1px solid var(--border-dark);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.schedule-task-list {
+  overflow-y: auto;
+}
+
+.schedule-task-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-dark);
+  cursor: pointer;
+}
+
+.schedule-task-row:hover {
+  background: var(--bg-secondary);
+}
+
+.schedule-task-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.schedule-task-row strong {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.schedule-task-row small {
+  color: var(--text-secondary);
+}
+
+.schedule-task-row input,
+.schedule-select-all input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-soft);
+}
+
+.schedule-confirm-list {
+  max-height: 220px;
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+
+.schedule-management-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-elevated-dark);
+}
+
+.button-danger {
+  padding: 0.5rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--error-color) 65%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--error-color) 16%, transparent);
+  color: var(--error-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--error-color) 26%, transparent);
+}
+
+.button-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quick-add-input-wrapper {
+  padding: 16px 16px 8px 16px;
+}
+
+.quick-add-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 400;
+  outline: none;
+  padding: 3px 6px;
+  line-height: 1.5;
+}
+
+.quick-add-input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  outline-offset: 0;
+  border-radius: var(--radius-md);
+}
+
+.quick-add-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+@media (min-width: 769px) {
+  .quick-add-input {
+    padding: 8px 10px;
+  }
+
+  .quick-add-input:not(.quick-add-desc) {
+    padding: 4px 10px;
+    line-height: 1.5;
+  }
+}
+
+.quick-add-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-add-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px 16px 16px;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: transparent;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  cursor: pointer;
+  height: 28px;
+  transition: var(--transition-control);
+}
+
+.action-pill:hover {
+  background-color: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .action-pill svg {
+    display: block;
+    flex: 0 0 auto;
+  }
+}
+
+.date-pill {
+  color: var(--date-accent);
+  border-color: rgba(5, 133, 39, 0.3);
+}
+
+.date-pill:hover {
+  background-color: rgba(5, 133, 39, 0.1);
+}
+
+.custom-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.custom-select-wrapper .action-icon {
+  position: absolute;
+  left: 8px;
+  pointer-events: none;
+  color: var(--text-primary);
+}
+
+.select-pill {
+  padding-left: 28px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.quick-add-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-dark);
+  background-color: var(--bg-elevated-dark);
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.quick-add-footer .button-primary {
+  background: rgba(var(--accent-rgb), 0.15);
+  color: var(--accent-soft);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.quick-add-footer .button-primary:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.25);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
+
+.quick-add-footer .button-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 6px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.quick-add-footer .button-secondary:hover {
+  background-color: var(--bg-secondary-hover);
+}
+
+.calendar-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  width: 260px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.cal-header button {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.cal-header button:hover {
+  background-color: var(--border-dark);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.cal-dow {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.cal-day {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 12px;
+}
+
+.cal-day:not(.empty):hover {
+  background-color: var(--border-dark);
+}
+
+.cal-day.is-today {
+  background-color: color-mix(in srgb, var(--text-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  font-weight: 600;
+}
+
+.cal-day.selected {
+  background-color: var(--brand-todoist);
+  color: var(--text-primary);
+}
+
+.cal-task-count {
+  position: absolute;
+  bottom: 2px;
+  font-size: 8px;
+  background-color: var(--date-accent);
+  color: var(--text-primary);
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 16px;
+  background-color: var(--bg-elevated-light);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 8px 0;
+  width: 250px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.project-dropdown-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.project-dropdown-item:hover {
+  background-color: var(--border-dark);
+}
