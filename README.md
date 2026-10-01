@@ -1,11 +1,11 @@
 # Test Yourself
 
-A local-first quiz application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" lets you point to a local folder of Markdown-based quizzes and worksheets to test your knowledge, review topics, and schedule follow-ups. Desktop is the supported release target; iOS development support is in progress—see [Mobile compatibility](#mobile-compatibility).
+A local-first study application built with **Tauri**, **React**, and **TypeScript**. "Test Yourself" lets you point to a local folder of Markdown-based quizzes, worksheets, and open-question documents to test your knowledge, review topics, and schedule follow-ups. Desktop is the supported release target; iOS development support is in progress—see [Mobile compatibility](#mobile-compatibility).
 
 ## Key Features
 
-- **Local-First**: Works directly with your local directory of markdown quizzes and worksheets.
-- **Interactive Quizzes & Worksheets**: Parses standard markdown into an interactive Q&A format, and `.worksheet.md` into fill-in-the-blank exercises.
+- **Local-First**: Works directly with your local directory of Markdown study materials.
+- **Interactive Study Modes**: Parses standard quizzes, `.worksheet.md` fill-in-the-blank exercises, and `.question.md` open questions with individually revealed suggested answers.
 - **Per-Session Answer Shuffling**: Shuffles every question's options when a quiz opens or resets, while keeping scoring and explanations correct.
 - **Dark & Glassmorphic UI**: Beautiful, eye-friendly design.
 - **Keyboard Navigation**: Optimized for keyboard-heavy workflows.

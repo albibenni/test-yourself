@@ -30,13 +30,20 @@ pub async fn parse_quiz_metadata(
         .ok()?
         .as_secs();
 
+    let file_stem = filepath.file_stem()?.to_string_lossy().to_string();
+    let title = file_stem
+        .strip_suffix(".worksheet")
+        .or_else(|| file_stem.strip_suffix(".question"))
+        .unwrap_or(&file_stem)
+        .to_string();
+
     Some(crate::models::QuizMetadata {
-        title: filepath.file_stem()?.to_string_lossy().to_string(),
+        title,
         path: filepath.to_path_buf(),
         topic: topic.to_string(),
         last_modified,
         is_worksheet: filepath.to_string_lossy().ends_with(".worksheet.md"),
-        is_scenario: filepath.to_string_lossy().ends_with(".scenario.md"),
+        is_question: filepath.to_string_lossy().ends_with(".question.md"),
     })
 }
 
@@ -75,10 +82,10 @@ pub async fn parse_worksheet_file(
     })
 }
 
-pub async fn parse_scenario_file(
+pub async fn parse_question_file(
     filepath: &Path,
     topic: &str,
-) -> Option<crate::models::Scenario> {
+) -> Option<crate::models::QuestionDocument> {
     let content = tokio::fs::read_to_string(filepath).await.ok()?;
     let metadata = tokio::fs::metadata(filepath).await.ok()?;
     let last_modified = metadata
@@ -88,16 +95,142 @@ pub async fn parse_scenario_file(
         .ok()?
         .as_secs();
     let file_stem = filepath.file_stem()?.to_string_lossy().to_string();
-    let title = file_stem.replace(".scenario", "");
+    let title = file_stem
+        .strip_suffix(".question")
+        .unwrap_or(&file_stem)
+        .to_string();
     let actual_content = strip_frontmatter(&content);
+    let (question_section, answer_section) = split_question_sections(actual_content)?;
+    let question_entries = parse_numbered_entries(question_section)?;
+    let answer_entries = parse_numbered_entries(answer_section)?;
 
-    Some(crate::models::Scenario {
+    if question_entries.len() < 2 || question_entries.len() != answer_entries.len() {
+        return None;
+    }
+
+    let questions = question_entries
+        .into_iter()
+        .zip(answer_entries)
+        .enumerate()
+        .map(|(index, ((question_id, question), (answer_id, answer)))| {
+            let expected_id = u32::try_from(index + 1).ok()?;
+            if question_id != expected_id || answer_id != expected_id {
+                return None;
+            }
+            Some(crate::models::QuestionEntry {
+                id: expected_id,
+                question,
+                answer,
+            })
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    Some(crate::models::QuestionDocument {
         title,
         path: filepath.to_path_buf(),
         topic: topic.to_string(),
-        content: actual_content.trim_start().to_string(),
+        questions,
         last_modified,
     })
+}
+
+fn split_question_sections(content: &str) -> Option<(&str, &str)> {
+    let mut questions_heading = None;
+    let mut answers_heading = None;
+    let mut offset = 0;
+    let mut in_fence = false;
+
+    for line in content.split_inclusive('\n') {
+        let trimmed = line.trim_end_matches(['\r', '\n']);
+        if trimmed.trim_start().starts_with("```") {
+            in_fence = !in_fence;
+        } else if !in_fence {
+            let heading = trimmed.strip_prefix("## ").map(str::trim);
+            if let Some(heading) = heading {
+                if heading.eq_ignore_ascii_case("questions")
+                    || heading.eq_ignore_ascii_case("domande")
+                {
+                    if questions_heading
+                        .replace((offset, offset + line.len()))
+                        .is_some()
+                    {
+                        return None;
+                    }
+                } else if heading.eq_ignore_ascii_case("suggested answers")
+                    || heading.eq_ignore_ascii_case("risposte suggerite")
+                {
+                    if answers_heading
+                        .replace((offset, offset + line.len()))
+                        .is_some()
+                    {
+                        return None;
+                    }
+                }
+            }
+        }
+        offset += line.len();
+    }
+
+    let (questions_start, questions_content_start) = questions_heading?;
+    let (answers_start, answers_content_start) = answers_heading?;
+    if questions_start >= answers_start {
+        return None;
+    }
+
+    Some((
+        &content[questions_content_start..answers_start],
+        &content[answers_content_start..],
+    ))
+}
+
+fn parse_numbered_entries(section: &str) -> Option<Vec<(u32, String)>> {
+    let mut entries = Vec::new();
+    let mut current_id = None;
+    let mut current_lines = Vec::new();
+    let mut in_fence = false;
+
+    for line in section.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") {
+            in_fence = !in_fence;
+        }
+
+        let entry = if !in_fence && line.len() == trimmed.len() {
+            trimmed
+                .split_once(". ")
+                .and_then(|(id, content)| id.parse::<u32>().ok().map(|id| (id, content)))
+        } else {
+            None
+        };
+
+        if let Some((id, entry_content)) = entry {
+            if let Some(previous_id) = current_id.take() {
+                let content = current_lines.join("\n").trim().to_string();
+                if content.is_empty() {
+                    return None;
+                }
+                entries.push((previous_id, content));
+                current_lines.clear();
+            } else if current_lines
+                .iter()
+                .any(|line: &String| !line.trim().is_empty())
+            {
+                return None;
+            }
+            current_id = Some(id);
+            current_lines.push(entry_content.to_string());
+        } else {
+            current_lines.push(line.to_string());
+        }
+    }
+
+    let id = current_id?;
+    let content = current_lines.join("\n").trim().to_string();
+    if content.is_empty() {
+        return None;
+    }
+    entries.push((id, content));
+    Some(entries)
 }
 
 fn strip_frontmatter(content: &str) -> &str {

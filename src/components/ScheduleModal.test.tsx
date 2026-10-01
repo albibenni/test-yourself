@@ -124,7 +124,7 @@ describe("ScheduleModal", () => {
     });
   });
 
-  it("schedules a scenario with its .scenario.md deep link", async () => {
+  it("schedules a question with its .question.md deep link", async () => {
     render(
       <ScheduleModal
         {...defaultProps}
@@ -132,23 +132,23 @@ describe("ScheduleModal", () => {
           ...mockQuiz,
           title: "SPIFFE-SPIRE and mTLS",
           topic: "Computer Science/Security/Authentication",
-          is_scenario: true,
+          is_question: true,
         }}
       />,
     );
 
     await waitFor(() => expect(mockGetDefaultSettings).toHaveBeenCalled());
     expect(
-      screen.getByDisplayValue("Review Scenario: SPIFFE-SPIRE and mTLS"),
+      screen.getByDisplayValue("Review Questions: SPIFFE-SPIRE and mTLS"),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
 
     await waitFor(() => {
       expect(mockAddTask).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: "Review Scenario: SPIFFE-SPIRE and mTLS",
+          content: "Review Questions: SPIFFE-SPIRE and mTLS",
           description:
-            "[Open Quiz](test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.scenario.md)",
+            "[Open Quiz](test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.question.md)",
         }),
       );
     });

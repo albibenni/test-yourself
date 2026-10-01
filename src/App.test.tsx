@@ -242,37 +242,43 @@ describe("App Component", () => {
     expect(mainContent.scrollTop).toBe(0);
   });
 
-  it("loads a selected scenario through the scenario command", async () => {
-    const scenario = {
+  it("loads a selected question document through the question command", async () => {
+    const questionDocument = {
       title: "SPIFFE-SPIRE and mTLS",
-      path: "/path/SPIFFE-SPIRE and mTLS.scenario.md",
+      path: "/path/SPIFFE-SPIRE and mTLS.question.md",
       topic: "Security",
       last_modified: 1234567890,
-      is_scenario: true,
+      is_question: true,
     };
-    const scenarioContent = {
-      ...scenario,
-      content:
-        "## Scenario\n\nA trusted certificate has the wrong SPIFFE ID.\n\n## Answer Key\n\nDeny it.",
+    const questionContent = {
+      ...questionDocument,
+      questions: [
+        {
+          id: 1,
+          question: "What identity is presented?",
+          answer: "A mismatched SPIFFE ID.",
+        },
+        { id: 2, question: "Should it be authorized?", answer: "No, deny it." },
+      ],
     };
     vi.mocked(invoke).mockImplementation((cmd: string) => {
       if (cmd === "get_quizzes")
-        return Promise.resolve([...mockQuizzes, scenario]);
-      if (cmd === "get_scenario_content")
-        return Promise.resolve(scenarioContent);
+        return Promise.resolve([...mockQuizzes, questionDocument]);
+      if (cmd === "get_question_content")
+        return Promise.resolve(questionContent);
       if (cmd === "get_initial_url") return Promise.resolve(null);
       return Promise.resolve(null);
     });
 
     render(<App />);
     await screen.findByText("React Basics");
-    fireEvent.click(screen.getByRole("button", { name: "Scenarios" }));
-    fireEvent.click(screen.getByText(scenario.title));
+    fireEvent.click(screen.getByRole("button", { name: "Questions" }));
+    fireEvent.click(screen.getByText(questionDocument.title));
 
-    expect(await screen.findByText("Scenario lab")).toBeInTheDocument();
-    expect(invoke).toHaveBeenCalledWith("get_scenario_content", {
-      path: scenario.path,
-      topic: scenario.topic,
+    expect(await screen.findByText("Open questions")).toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith("get_question_content", {
+      path: questionDocument.path,
+      topic: questionDocument.topic,
     });
     expect(invoke).not.toHaveBeenCalledWith(
       "get_worksheet_content",
@@ -827,26 +833,29 @@ describe("App Component", () => {
     alertSpy.mockRestore();
   });
 
-  it("reopens a scheduled scenario deep link", async () => {
+  it("reopens a scheduled question-document deep link", async () => {
     const path =
-      "/Users/benni/SecondBrain/Computer Science/Security/Authentication/SPIFFE-SPIRE and mTLS.scenario.md";
-    const scenario = {
+      "/Users/benni/SecondBrain/Computer Science/Security/Authentication/SPIFFE-SPIRE and mTLS.question.md";
+    const questionDocument = {
       title: "SPIFFE-SPIRE and mTLS",
       path,
       topic: "Computer Science/Security/Authentication",
       last_modified: 1234567890,
-      is_scenario: true,
+      is_question: true,
     };
     vi.mocked(invoke).mockImplementation((cmd: string) => {
-      if (cmd === "get_quizzes") return Promise.resolve([scenario]);
-      if (cmd === "get_scenario_content")
+      if (cmd === "get_quizzes") return Promise.resolve([questionDocument]);
+      if (cmd === "get_question_content")
         return Promise.resolve({
-          ...scenario,
-          content: "## Scenario\n\nEvidence",
+          ...questionDocument,
+          questions: [
+            { id: 1, question: "First?", answer: "First." },
+            { id: 2, question: "Second?", answer: "Second." },
+          ],
         });
       if (cmd === "get_initial_url")
         return Promise.resolve(
-          "test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.scenario.md",
+          "test-yourself://open?quiz=Computer%20Science%2FSecurity%2FAuthentication%2FSPIFFE-SPIRE%20and%20mTLS.question.md",
         );
       return Promise.resolve(null);
     });
@@ -859,9 +868,9 @@ describe("App Component", () => {
         level: 1,
       }),
     ).toBeInTheDocument();
-    expect(invoke).toHaveBeenCalledWith("get_scenario_content", {
+    expect(invoke).toHaveBeenCalledWith("get_question_content", {
       path,
-      topic: scenario.topic,
+      topic: questionDocument.topic,
     });
   });
 

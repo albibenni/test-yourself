@@ -22,12 +22,12 @@ const mockQuizzes: Record<string, QuizMetadata[]> = {
   ],
 };
 
-const scenario = {
+const question = {
   title: "SPIFFE-SPIRE and mTLS",
-  path: "/SPIFFE-SPIRE and mTLS.scenario.md",
+  path: "/SPIFFE-SPIRE and mTLS.question.md",
   topic: "Security",
   last_modified: 0,
-  is_scenario: true,
+  is_question: true,
 };
 
 describe("Sidebar Component", () => {
@@ -208,14 +208,14 @@ describe("Sidebar Component", () => {
     expect(handleSync).toHaveBeenCalledOnce();
   });
 
-  it("shows scenario files only in the Scenarios tab", () => {
+  it("shows question files only in the Questions tab", () => {
     render(
       <Sidebar
         isSidebarOpen={true}
         searchQuery=""
         setSearchQuery={vi.fn()}
         loading={false}
-        groupedQuizzes={{ Security: [scenario] }}
+        groupedQuizzes={{ Security: [question] }}
         selectedQuiz={null}
         setSelectedQuiz={vi.fn()}
         handleSync={vi.fn()}
@@ -224,8 +224,8 @@ describe("Sidebar Component", () => {
       />,
     );
 
-    expect(screen.queryByText(scenario.title)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Scenarios" }));
-    expect(screen.getByText(scenario.title)).toBeInTheDocument();
+    expect(screen.queryByText(question.title)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Questions" }));
+    expect(screen.getByText(question.title)).toBeInTheDocument();
   });
 });

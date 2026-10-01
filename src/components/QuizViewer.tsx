@@ -8,10 +8,10 @@ import {
   useState,
 } from "react";
 import { DEFAULT_TOPIC } from "../constants";
-import type { Quiz, QuizMetadata, Scenario, Worksheet } from "../types";
+import type { QuestionDocument, Quiz, QuizMetadata, Worksheet } from "../types";
 import { focusAndCenter } from "../utils/focusAndCenter";
 import { QuestionCard } from "./QuestionCard";
-import { ScenarioViewer } from "./ScenarioViewer";
+import { QuestionViewer } from "./QuestionViewer";
 import { StatusIcon } from "./StatusIcon";
 import { StatusView } from "./StatusView";
 import { WorksheetViewer } from "./WorksheetViewer";
@@ -34,7 +34,7 @@ interface QuizViewerProps extends QuizSessionState {
   selectedQuiz: QuizMetadata;
   activeQuiz: Quiz | null;
   activeWorksheet: Worksheet | null;
-  activeScenario: Scenario | null;
+  activeQuestionDocument: QuestionDocument | null;
   loadingActiveQuiz: boolean;
   resetKey: number;
   onReset: () => void;
@@ -45,7 +45,7 @@ export function QuizViewer({
   selectedQuiz,
   activeQuiz,
   activeWorksheet,
-  activeScenario,
+  activeQuestionDocument,
   loadingActiveQuiz,
   resetKey,
   onReset,
@@ -96,8 +96,8 @@ export function QuizViewer({
             <p className="quiz-progress-line">
               {selectedQuiz.is_worksheet
                 ? "Worksheet"
-                : selectedQuiz.is_scenario
-                  ? "Scenario lab"
+                : selectedQuiz.is_question
+                  ? "Open questions"
                   : `${answeredCount} of ${totalQuestions} answered`}
             </p>
           </div>
@@ -157,10 +157,10 @@ export function QuizViewer({
             key={`${activeWorksheet.path}-${resetKey}`}
             worksheet={activeWorksheet}
           />
-        ) : activeScenario ? (
-          <ScenarioViewer
-            key={`${activeScenario.path}-${resetKey}`}
-            scenario={activeScenario}
+        ) : activeQuestionDocument ? (
+          <QuestionViewer
+            key={`${activeQuestionDocument.path}-${resetKey}`}
+            document={activeQuestionDocument}
           />
         ) : activeQuiz ? (
           <QuizQuestions

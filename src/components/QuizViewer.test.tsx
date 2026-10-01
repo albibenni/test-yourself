@@ -50,7 +50,7 @@ function QuizViewerWithSession({
       selectedQuiz={sessionMetadata}
       activeQuiz={sessionQuiz}
       activeWorksheet={null}
-      activeScenario={null}
+      activeQuestionDocument={null}
       loadingActiveQuiz={false}
       resetKey={0}
       onReset={() => undefined}

@@ -85,7 +85,7 @@ describe("CreateView", () => {
           return Promise.resolve({
             agy_available: true,
             codex_available: true,
-            skills: ["scenario"],
+            skills: ["question"],
           });
         }
         if (command === "search_creation_library") {
@@ -313,7 +313,7 @@ describe("CreateView", () => {
           return Promise.resolve({
             agy_available: true,
             codex_available: true,
-            skills: ["quiz-master", "scenario"],
+            skills: ["quiz-master", "question"],
           });
         if (command === "search_creation_library")
           return Promise.resolve(
@@ -344,7 +344,7 @@ describe("CreateView", () => {
     });
     expect(await screen.findByText("History.md")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Skill" }));
-    fireEvent.click(screen.getByRole("option", { name: "scenario" }));
+    fireEvent.click(screen.getByRole("option", { name: "question" }));
     expect(screen.getByText(/may not create a quiz/i)).toBeInTheDocument();
   });
 
@@ -450,7 +450,7 @@ describe("CreateView", () => {
           return Promise.resolve({
             agy_available: true,
             codex_available: true,
-            skills: ["quiz-master", "scenario"],
+            skills: ["quiz-master", "question"],
           });
         if (command === "search_creation_library")
           return Promise.resolve(searchPage(getSearchArgs(args).kind, args));

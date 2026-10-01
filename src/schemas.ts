@@ -45,7 +45,7 @@ export const QuizMetadataSchema = z.object({
   topic: z.string(),
   last_modified: z.number(),
   is_worksheet: z.boolean().optional(),
-  is_scenario: z.boolean().optional(),
+  is_question: z.boolean().optional(),
 });
 export type QuizMetadata = z.infer<typeof QuizMetadataSchema>;
 export const QuizMetadataArraySchema = z.array(QuizMetadataSchema);
@@ -59,14 +59,21 @@ export const WorksheetSchema = z.object({
 });
 export type Worksheet = z.infer<typeof WorksheetSchema>;
 
-export const ScenarioSchema = z.object({
+export const QuestionEntrySchema = z.object({
+  id: z.number().int().positive(),
+  question: z.string(),
+  answer: z.string(),
+});
+export type QuestionEntry = z.infer<typeof QuestionEntrySchema>;
+
+export const QuestionDocumentSchema = z.object({
   title: z.string(),
   path: z.string(),
   topic: z.string(),
-  content: z.string(),
+  questions: z.array(QuestionEntrySchema).min(2),
   last_modified: z.number(),
 });
-export type Scenario = z.infer<typeof ScenarioSchema>;
+export type QuestionDocument = z.infer<typeof QuestionDocumentSchema>;
 
 // Task Provider Schemas
 export const ProjectSchema = z

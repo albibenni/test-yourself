@@ -6,10 +6,11 @@ This guide covers everything you need to know to get the most out of **Test Your
 
 1. **Select a Folder**: When you first launch the app, click **"Choose Folder"** to select a local directory on your computer that contains your Markdown files.
 2. **Sync**: The app will recursively parse your markdown files and categorize them by topic (which are determined by the folder structure). You can manually refresh by clicking the sync icon next to the app title in the sidebar.
-3. **Quizzes and Worksheets**: The sidebar features two tabs to help organize your study materials:
+3. **Quizzes, Worksheets, and Questions**: The sidebar separates the supported study materials:
    - **Quizzes**: Standard `.md` files that parse into interactive Q&A flashcards.
    - **Worksheets**: Files ending in `.worksheet.md` that allow you to test complex flows (like architecture or authentication steps) using fill-in-the-blank exercises with `{{answer}}` syntax.
-4. **Select a File**: Click on a quiz or worksheet from the sidebar to open it in the main view and start testing yourself!
+   - **Questions**: Files ending in `.question.md` that contain open-ended questions with individually revealed suggested answers.
+4. **Select a File**: Click a study document in the sidebar to open it and start testing yourself!
 
 ## Keyboard Shortcuts
 
@@ -87,4 +88,26 @@ Worksheets are fill-in-the-blank style exercises.
 Example:
 ```markdown
 To authorize a user in OAuth2 using PKCE, the client first generates a {{code_verifier}} and then hashes it to create the {{code_challenge}}.
+```
+
+### 3. Open Questions (`.question.md`)
+
+Question documents require at least two consecutively numbered questions and exactly one matching suggested answer for each. The section headings may independently use English or Italian, case-insensitively: `Questions` or `Domande`, followed by `Suggested Answers` or `Risposte suggerite`.
+
+Each numbered entry can contain multiline Markdown, including nested lists and fenced code blocks. In the app, write a response and reveal suggested answers one at a time.
+
+```markdown
+# Authentication Review
+
+## Questions
+
+1. Why must authentication and authorization be evaluated separately?
+
+2. What should happen when a valid identity has no matching policy?
+
+## Risposte suggerite
+
+1. Authentication establishes identity; authorization decides what that identity may do.
+
+2. The request should be denied.
 ```

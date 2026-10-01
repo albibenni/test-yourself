@@ -13,10 +13,10 @@ import { useMiddleClickScroll } from "../hooks/useMiddleClickScroll";
 import type {
   AccentColor,
   ContrastPreference,
+  QuestionDocument,
   Quiz,
   QuizMetadata,
   ReducedMotionPreference,
-  Scenario,
   TextColor,
   TextScale,
   ThemeType,
@@ -85,7 +85,7 @@ interface AppLayoutProps {
   isSyncing: boolean;
   activeQuiz: Quiz | null;
   activeWorksheet: Worksheet | null;
-  activeScenario: Scenario | null;
+  activeQuestionDocument: QuestionDocument | null;
   loadingActiveQuiz: boolean;
   resetKey: number;
   setResetKey: Dispatch<SetStateAction<number>>;
@@ -94,7 +94,7 @@ interface AppLayoutProps {
     | "selectedQuiz"
     | "activeQuiz"
     | "activeWorksheet"
-    | "activeScenario"
+    | "activeQuestionDocument"
     | "loadingActiveQuiz"
     | "resetKey"
     | "onReset"
@@ -158,7 +158,7 @@ export function AppLayout(props: AppLayoutProps) {
     isSyncing,
     activeQuiz,
     activeWorksheet,
-    activeScenario,
+    activeQuestionDocument,
     loadingActiveQuiz,
     resetKey,
     setResetKey,
@@ -420,7 +420,7 @@ export function AppLayout(props: AppLayoutProps) {
                   selectedQuiz={selectedQuiz}
                   activeQuiz={activeQuiz}
                   activeWorksheet={activeWorksheet}
-                  activeScenario={activeScenario}
+                  activeQuestionDocument={activeQuestionDocument}
                   loadingActiveQuiz={loadingActiveQuiz}
                   resetKey={resetKey}
                   onReset={() => setResetKey((k) => k + 1)}

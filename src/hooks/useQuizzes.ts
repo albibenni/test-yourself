@@ -10,12 +10,12 @@ import {
   TAURI_COMMAND_GET_QUIZZES,
 } from "../constants";
 import {
+  type QuestionDocument,
+  QuestionDocumentSchema,
   type Quiz,
   type QuizMetadata,
   QuizMetadataArraySchema,
   QuizSchema,
-  type Scenario,
-  ScenarioSchema,
   type Worksheet,
   WorksheetSchema,
 } from "../schemas";
@@ -31,7 +31,8 @@ export function useQuizzes() {
   const [activeWorksheet, setActiveWorksheet] = useState<Worksheet | null>(
     null,
   );
-  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
+  const [activeQuestionDocument, setActiveQuestionDocument] =
+    useState<QuestionDocument | null>(null);
   const [loadingActiveQuiz, setLoadingActiveQuiz] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,19 +101,19 @@ export function useQuizzes() {
       if (!selectedQuizMeta) {
         setActiveQuiz(null);
         setActiveWorksheet(null);
-        setActiveScenario(null);
+        setActiveQuestionDocument(null);
         return;
       }
       setLoadingActiveQuiz(true);
       try {
-        if (selectedQuizMeta.is_scenario) {
-          const rawData = await invoke("get_scenario_content", {
+        if (selectedQuizMeta.is_question) {
+          const rawData = await invoke("get_question_content", {
             path: selectedQuizMeta.path,
             topic: selectedQuizMeta.topic,
           });
-          const fetchedScenario = ScenarioSchema.parse(rawData);
+          const fetchedQuestionDocument = QuestionDocumentSchema.parse(rawData);
           if (isCurrent) {
-            setActiveScenario(fetchedScenario);
+            setActiveQuestionDocument(fetchedQuestionDocument);
             setActiveWorksheet(null);
             setActiveQuiz(null);
           }
@@ -125,7 +126,7 @@ export function useQuizzes() {
           if (isCurrent) {
             setActiveWorksheet(fetchedWorksheet);
             setActiveQuiz(null);
-            setActiveScenario(null);
+            setActiveQuestionDocument(null);
           }
         } else {
           const rawData = await invoke("get_quiz_content", {
@@ -136,18 +137,23 @@ export function useQuizzes() {
           if (isCurrent) {
             setActiveQuiz(fetchedQuiz);
             setActiveWorksheet(null);
-            setActiveScenario(null);
+            setActiveQuestionDocument(null);
           }
         }
       } catch (error) {
         console.warn("Failed to load active content:", error);
+        const contentType = selectedQuizMeta.is_question
+          ? "question document"
+          : selectedQuizMeta.is_worksheet
+            ? "worksheet"
+            : "quiz";
         alert(
-          `Failed to load quiz content! Your markdown file might have a syntax error.\n\nError details: ${String(error)}`,
+          `Failed to load ${contentType} content! Your markdown file might have a syntax error.\n\nError details: ${String(error)}`,
         );
         if (isCurrent) {
           setActiveQuiz(null);
           setActiveWorksheet(null);
-          setActiveScenario(null);
+          setActiveQuestionDocument(null);
         }
       } finally {
         if (isCurrent) setLoadingActiveQuiz(false);
@@ -264,7 +270,7 @@ export function useQuizzes() {
     setSelectedQuizMeta,
     activeQuiz,
     activeWorksheet,
-    activeScenario,
+    activeQuestionDocument,
     loadingActiveQuiz,
     searchQuery,
     setSearchQuery,

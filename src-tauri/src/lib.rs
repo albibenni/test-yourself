@@ -7,25 +7,52 @@ use tauri::Emitter;
 struct InteractiveSession(Mutex<Option<Box<dyn Write + Send>>>);
 
 #[derive(serde::Serialize)]
-struct CreationStatus { agy_available: bool, codex_available: bool, skills: Vec<String> }
+struct CreationStatus {
+    agy_available: bool,
+    codex_available: bool,
+    skills: Vec<String>,
+}
 #[derive(Clone, serde::Serialize)]
-struct LibraryEntry { name: String, path: String, relative_path: String }
+struct LibraryEntry {
+    name: String,
+    path: String,
+    relative_path: String,
+}
 #[derive(Clone)]
-struct CreationLibrary { root: std::path::PathBuf, notes: Vec<LibraryEntry>, directories: Vec<LibraryEntry> }
+struct CreationLibrary {
+    root: std::path::PathBuf,
+    notes: Vec<LibraryEntry>,
+    directories: Vec<LibraryEntry>,
+}
 #[derive(serde::Serialize)]
-struct CreationSearchPage { items: Vec<LibraryEntry>, has_more: bool }
+struct CreationSearchPage {
+    items: Vec<LibraryEntry>,
+    has_more: bool,
+}
 
 static CREATION_LIBRARY: OnceLock<Mutex<Option<CreationLibrary>>> = OnceLock::new();
 
 fn command_path(command: &str) -> Option<std::path::PathBuf> {
     let from_shell = std::env::var("SHELL")
         .ok()
-        .and_then(|shell| std::process::Command::new(shell).args(["-lic", &format!("command -v {command}")]).output().ok())
-        .or_else(|| std::process::Command::new("/bin/sh").args(["-lc", &format!("command -v {command}")]).output().ok())
+        .and_then(|shell| {
+            std::process::Command::new(shell)
+                .args(["-lic", &format!("command -v {command}")])
+                .output()
+                .ok()
+        })
+        .or_else(|| {
+            std::process::Command::new("/bin/sh")
+                .args(["-lc", &format!("command -v {command}")])
+                .output()
+                .ok()
+        })
         .and_then(|output| String::from_utf8(output.stdout).ok())
         .and_then(|output| output.lines().last().map(std::path::PathBuf::from))
         .filter(|path| path.is_file());
-    if from_shell.is_some() { return from_shell; }
+    if from_shell.is_some() {
+        return from_shell;
+    }
 
     let home = std::env::var_os("HOME").map(std::path::PathBuf::from)?;
     [
@@ -41,41 +68,76 @@ fn command_path(command: &str) -> Option<std::path::PathBuf> {
 fn command_available(command: &str) -> bool {
     command_path(command).is_some()
 }
-fn shell_quote(value: &str) -> String { format!("'{}'", value.replace('\'', "'\"'\"'")) }
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\"'\"'"))
+}
 
 fn build_creation_library(root: std::path::PathBuf) -> CreationLibrary {
     let mut notes = Vec::new();
     let mut directories = vec![LibraryEntry {
-        name: root.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
+        name: root
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default()
+            .to_string(),
         path: root.to_string_lossy().into_owned(),
         relative_path: ".".to_string(),
     }];
     for entry in walkdir::WalkDir::new(&root)
         .min_depth(1)
         .into_iter()
-        .filter_entry(|entry| entry.depth() == 0 || !entry.file_name().to_string_lossy().starts_with('.'))
+        .filter_entry(|entry| {
+            entry.depth() == 0 || !entry.file_name().to_string_lossy().starts_with('.')
+        })
         .filter_map(Result::ok)
     {
         let path = entry.path();
         let item = LibraryEntry {
-            name: path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_string(),
+            name: path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or_default()
+                .to_string(),
             path: path.to_string_lossy().into_owned(),
-            relative_path: path.strip_prefix(&root).unwrap_or(path).to_string_lossy().into_owned(),
+            relative_path: path
+                .strip_prefix(&root)
+                .unwrap_or(path)
+                .to_string_lossy()
+                .into_owned(),
         };
-        if entry.file_type().is_dir() { directories.push(item); }
-        else if entry.file_type().is_file() && path.extension().and_then(|extension| extension.to_str()) == Some("md") { notes.push(item); }
+        if entry.file_type().is_dir() {
+            directories.push(item);
+        } else if entry.file_type().is_file()
+            && path.extension().and_then(|extension| extension.to_str()) == Some("md")
+        {
+            notes.push(item);
+        }
     }
     notes.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
     directories.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
-    CreationLibrary { root, notes, directories }
+    CreationLibrary {
+        root,
+        notes,
+        directories,
+    }
 }
 
 #[tauri::command]
-async fn search_creation_library(app_handle: tauri::AppHandle, kind: String, query: String, offset: usize, limit: usize) -> Result<CreationSearchPage, String> {
-    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?).await.map_err(|_| "Configured directory is not accessible".to_string())?;
+async fn search_creation_library(
+    app_handle: tauri::AppHandle,
+    kind: String,
+    query: String,
+    offset: usize,
+    limit: usize,
+) -> Result<CreationSearchPage, String> {
+    let root = tokio::fs::canonicalize(configured_quiz_root(&app_handle).await?)
+        .await
+        .map_err(|_| "Configured directory is not accessible".to_string())?;
     let cache = CREATION_LIBRARY.get_or_init(|| Mutex::new(None));
     let library = {
-        let mut cached = cache.lock().map_err(|_| "Creation library is unavailable".to_string())?;
+        let mut cached = cache
+            .lock()
+            .map_err(|_| "Creation library is unavailable".to_string())?;
         match cached.as_ref() {
             Some(library) if library.root == root => library.clone(),
             _ => {
@@ -91,14 +153,29 @@ async fn search_creation_library(app_handle: tauri::AppHandle, kind: String, que
         _ => return Err("Invalid creation search type".to_string()),
     };
     let normalized_query = query.to_lowercase();
-    let matching_count = items.iter().filter(|item| item.relative_path.to_lowercase().contains(&normalized_query)).count();
-    let page = items.iter()
-        .filter(|item| item.relative_path.to_lowercase().contains(&normalized_query))
+    let matching_count = items
+        .iter()
+        .filter(|item| {
+            item.relative_path
+                .to_lowercase()
+                .contains(&normalized_query)
+        })
+        .count();
+    let page = items
+        .iter()
+        .filter(|item| {
+            item.relative_path
+                .to_lowercase()
+                .contains(&normalized_query)
+        })
         .skip(offset)
         .take(limit.clamp(1, 100))
         .cloned()
         .collect::<Vec<_>>();
-    Ok(CreationSearchPage { has_more: offset.saturating_add(page.len()) < matching_count, items: page })
+    Ok(CreationSearchPage {
+        has_more: offset.saturating_add(page.len()) < matching_count,
+        items: page,
+    })
 }
 
 #[tauri::command]
@@ -112,45 +189,129 @@ async fn creation_status() -> CreationStatus {
 }
 
 #[tauri::command]
-fn generate_material(app: tauri::AppHandle, session: tauri::State<InteractiveSession>, engine: String, output_directory: String, source_file: String, skill: String, request: String, creation_type: String) -> Result<(), String> {
-    if !matches!(engine.as_str(), "agy" | "codex") || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "scenario") || request.trim().is_empty() { return Err("Invalid generation request".to_string()); }
-    let output = std::fs::canonicalize(&output_directory).map_err(|_| "Output directory is not accessible".to_string())?;
-    let source = std::fs::canonicalize(&source_file).map_err(|_| "Source file is not accessible".to_string())?;
-    if !source.is_file() { return Err("Source must be a file".to_string()); }
-    let executable = command_path(&engine).ok_or_else(|| format!("{} CLI is not installed or is not available to Test Yourself", engine))?;
-    let source_directory = source.parent().ok_or("Source file has no parent directory")?;
-    let skill_instruction = if skill.trim().is_empty() { String::new() } else { format!(" using the {skill} skill if available") };
+fn generate_material(
+    app: tauri::AppHandle,
+    session: tauri::State<InteractiveSession>,
+    engine: String,
+    output_directory: String,
+    source_file: String,
+    skill: String,
+    request: String,
+    creation_type: String,
+) -> Result<(), String> {
+    if !matches!(engine.as_str(), "agy" | "codex")
+        || !matches!(creation_type.as_str(), "quiz" | "worksheet" | "question")
+        || request.trim().is_empty()
+    {
+        return Err("Invalid generation request".to_string());
+    }
+    let output = std::fs::canonicalize(&output_directory)
+        .map_err(|_| "Output directory is not accessible".to_string())?;
+    let source = std::fs::canonicalize(&source_file)
+        .map_err(|_| "Source file is not accessible".to_string())?;
+    if !source.is_file() {
+        return Err("Source must be a file".to_string());
+    }
+    let executable = command_path(&engine).ok_or_else(|| {
+        format!(
+            "{} CLI is not installed or is not available to Test Yourself",
+            engine
+        )
+    })?;
+    let source_directory = source
+        .parent()
+        .ok_or("Source file has no parent directory")?;
+    let skill_instruction = if skill.trim().is_empty() {
+        String::new()
+    } else {
+        format!(" using the {skill} skill if available")
+    };
     let instruction = format!("Create a {creation_type}{skill_instruction}. {request} Use this source file as context: {}. Write the Markdown result to the selected output directory.", source.display());
-    let agy_prompt = if skill.trim().is_empty() { instruction.clone() } else { format!("/{skill} {instruction}") };
-    let command = if engine == "codex" { format!("{} exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}", shell_quote(&executable.to_string_lossy()), shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&instruction)) } else { format!("{} --add-dir {} --add-dir {} --prompt {}", shell_quote(&executable.to_string_lossy()), shell_quote(&output.to_string_lossy()), shell_quote(&source_directory.to_string_lossy()), shell_quote(&agy_prompt)) };
+    let agy_prompt = if skill.trim().is_empty() {
+        instruction.clone()
+    } else {
+        format!("/{skill} {instruction}")
+    };
+    let command = if engine == "codex" {
+        format!(
+            "{} exec --sandbox workspace-write --skip-git-repo-check -C {} --add-dir {} {}",
+            shell_quote(&executable.to_string_lossy()),
+            shell_quote(&output.to_string_lossy()),
+            shell_quote(&source_directory.to_string_lossy()),
+            shell_quote(&instruction)
+        )
+    } else {
+        format!(
+            "{} --add-dir {} --add-dir {} --prompt {}",
+            shell_quote(&executable.to_string_lossy()),
+            shell_quote(&output.to_string_lossy()),
+            shell_quote(&source_directory.to_string_lossy()),
+            shell_quote(&agy_prompt)
+        )
+    };
     let pty_system = portable_pty::native_pty_system();
-    let pair = pty_system.openpty(portable_pty::PtySize { rows: 30, cols: 120, pixel_width: 0, pixel_height: 0 }).map_err(|error| error.to_string())?;
+    let pair = pty_system
+        .openpty(portable_pty::PtySize {
+            rows: 30,
+            cols: 120,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|error| error.to_string())?;
     let mut process = portable_pty::CommandBuilder::new("/bin/sh");
     process.args(["-lc", &command]);
-    let mut child = pair.slave.spawn_command(process).map_err(|error| error.to_string())?;
+    let mut child = pair
+        .slave
+        .spawn_command(process)
+        .map_err(|error| error.to_string())?;
     drop(pair.slave);
-    let reader = pair.master.try_clone_reader().map_err(|error| error.to_string())?;
-    let writer = pair.master.take_writer().map_err(|error| error.to_string())?;
-    *session.0.lock().map_err(|_| "Generation session is unavailable")? = Some(writer);
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|error| error.to_string())?;
+    let writer = pair
+        .master
+        .take_writer()
+        .map_err(|error| error.to_string())?;
+    *session
+        .0
+        .lock()
+        .map_err(|_| "Generation session is unavailable")? = Some(writer);
     let output_app = app.clone();
     std::thread::spawn(move || {
         let mut reader = reader;
         let mut buffer = [0; 4096];
         while let Ok(count) = reader.read(&mut buffer) {
-            if count == 0 { break; }
-            let _ = output_app.emit("generation-output", String::from_utf8_lossy(&buffer[..count]).to_string());
+            if count == 0 {
+                break;
+            }
+            let _ = output_app.emit(
+                "generation-output",
+                String::from_utf8_lossy(&buffer[..count]).to_string(),
+            );
         }
-        let status = child.wait().map(|result| format!("Generation finished with exit code {}.", result.exit_code())).unwrap_or_else(|error| format!("Generation failed: {error}"));
+        let status = child
+            .wait()
+            .map(|result| format!("Generation finished with exit code {}.", result.exit_code()))
+            .unwrap_or_else(|error| format!("Generation failed: {error}"));
         let _ = output_app.emit("generation-complete", status);
     });
     Ok(())
 }
 
 #[tauri::command]
-fn send_generation_input(session: tauri::State<InteractiveSession>, input: String) -> Result<(), String> {
-    let mut guard = session.0.lock().map_err(|_| "Generation session is unavailable")?;
+fn send_generation_input(
+    session: tauri::State<InteractiveSession>,
+    input: String,
+) -> Result<(), String> {
+    let mut guard = session
+        .0
+        .lock()
+        .map_err(|_| "Generation session is unavailable")?;
     let writer = guard.as_mut().ok_or("No generation is running")?;
-    writer.write_all(format!("{input}\n").as_bytes()).map_err(|error| error.to_string())?;
+    writer
+        .write_all(format!("{input}\n").as_bytes())
+        .map_err(|error| error.to_string())?;
     writer.flush().map_err(|error| error.to_string())
 }
 
@@ -168,7 +329,10 @@ const TODOIST_TOKEN_ACCOUNT: &str = "todoist_token";
 const TODOIST_PENDING_OAUTH_ACCOUNT: &str = "todoist_oauth_pending";
 
 fn is_supported_credential_account(account: &str) -> bool {
-    matches!(account, TODOIST_TOKEN_ACCOUNT | TODOIST_PENDING_OAUTH_ACCOUNT)
+    matches!(
+        account,
+        TODOIST_TOKEN_ACCOUNT | TODOIST_PENDING_OAUTH_ACCOUNT
+    )
 }
 
 #[cfg(target_os = "ios")]
@@ -211,8 +375,7 @@ fn credential_entry(account: &str) -> Result<keyring_core::Entry, String> {
     if !is_supported_credential_account(account) {
         return Err("Unsupported credential account".to_string());
     }
-    keyring_core::Entry::new(CREDENTIAL_SERVICE, account)
-        .map_err(|error| error.to_string())
+    keyring_core::Entry::new(CREDENTIAL_SERVICE, account).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -261,7 +424,10 @@ mod credential_tests {
 
         assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), None);
         set_secret(TODOIST_TOKEN_ACCOUNT.to_string(), "mock-token".to_string()).unwrap();
-        assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), Some("mock-token".to_string()));
+        assert_eq!(
+            get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(),
+            Some("mock-token".to_string())
+        );
         set_secret(TODOIST_TOKEN_ACCOUNT.to_string(), String::new()).unwrap();
         assert_eq!(get_secret(TODOIST_TOKEN_ACCOUNT.to_string()).unwrap(), None);
     }
@@ -361,15 +527,15 @@ async fn get_worksheet_content(
 }
 
 #[tauri::command]
-async fn get_scenario_content(
+async fn get_question_content(
     app_handle: tauri::AppHandle,
     path: String,
     topic: String,
-) -> Result<models::Scenario, String> {
+) -> Result<models::QuestionDocument, String> {
     let path_buf = resolve_quiz_path(&app_handle, &path).await?;
-    parser::markdown::parse_scenario_file(&path_buf, &topic)
+    parser::markdown::parse_question_file(&path_buf, &topic)
         .await
-        .ok_or_else(|| format!("Could not parse scenario: {}", path))
+        .ok_or_else(|| format!("Invalid question document: {}. Expected at least two consecutively numbered questions and matching suggested answers.", path))
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
@@ -568,7 +734,7 @@ pub fn run() {
             get_quizzes,
             get_quiz_content,
             get_worksheet_content,
-            get_scenario_content,
+            get_question_content,
             get_initial_url,
             is_arch_linux,
             custom_linux_relaunch,

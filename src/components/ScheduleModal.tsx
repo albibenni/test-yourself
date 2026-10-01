@@ -118,8 +118,8 @@ export function ScheduleModal({
 
   useEffect(() => {
     if (isOpen && quiz) {
-      const prefix = quiz.is_scenario
-        ? "Review Scenario"
+      const prefix = quiz.is_question
+        ? "Review Questions"
         : quiz.is_worksheet
           ? "Review Worksheet"
           : "Review Quiz";
@@ -204,8 +204,8 @@ export function ScheduleModal({
     setIsCheckingSchedule(true);
     setError("");
     try {
-      const prefix = quiz.is_scenario
-        ? "Review Scenario"
+      const prefix = quiz.is_question
+        ? "Review Questions"
         : quiz.is_worksheet
           ? "Review Worksheet"
           : "Review Quiz";
@@ -271,8 +271,8 @@ export function ScheduleModal({
     setError("");
 
     try {
-      const extension = quiz.is_scenario
-        ? ".scenario.md"
+      const extension = quiz.is_question
+        ? ".question.md"
         : quiz.is_worksheet
           ? ".worksheet.md"
           : ".md";

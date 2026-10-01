@@ -67,18 +67,38 @@ async fn test_discovery_ignores_file_path() {
 }
 
 #[tokio::test]
-async fn test_discovery_classifies_spiffe_mtls_scenario_filename() {
+async fn test_discovery_classifies_valid_question_filename() {
     let dir = tempdir().unwrap();
-    let scenario_path = dir.path().join("SPIFFE-SPIRE and mTLS.scenario.md");
-    File::create(&scenario_path).unwrap();
+    let question_path = dir.path().join("SPIFFE-SPIRE and mTLS.question.md");
+    let mut file = File::create(&question_path).unwrap();
+    writeln!(
+        file,
+        "## Questions\n\n1. First?\n\n2. Second?\n\n## Suggested Answers\n\n1. One.\n\n2. Two."
+    )
+    .unwrap();
 
     let content = get_all_quizzes_metadata(dir.path().to_str().unwrap()).await;
 
     assert_eq!(content.len(), 1);
     assert_eq!(content[0].title, "SPIFFE-SPIRE and mTLS");
-    assert!(content[0].is_scenario);
+    assert!(content[0].is_question);
     assert!(!content[0].is_worksheet);
-    assert!(get_all_quizzes(dir.path().to_str().unwrap()).await.is_empty());
+    assert!(get_all_quizzes(dir.path().to_str().unwrap())
+        .await
+        .is_empty());
+}
+
+#[tokio::test]
+async fn test_discovery_lists_invalid_question_for_a_clear_load_error() {
+    let dir = tempdir().unwrap();
+    let question_path = dir.path().join("Broken.question.md");
+    File::create(&question_path).unwrap();
+
+    let content = get_all_quizzes_metadata(dir.path().to_str().unwrap()).await;
+
+    assert_eq!(content.len(), 1);
+    assert_eq!(content[0].title, "Broken");
+    assert!(content[0].is_question);
 }
 
 #[tokio::test]

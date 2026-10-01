@@ -161,7 +161,7 @@
 .quiz-question-toolbar > *,
 .quiz-question-content > .questions-container,
 .quiz-question-content > .worksheet-viewer,
-.quiz-question-content > .scenario-viewer,
+.quiz-question-content > .question-document-viewer,
 .quiz-question-content > .quiz-summary {
   width: min(100%, var(--content-max-width));
   margin-inline: auto;

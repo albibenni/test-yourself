@@ -38,15 +38,15 @@ export function Sidebar({
     () => new Set(),
   );
   const [activeTab, setActiveTab] = useState<
-    "quizzes" | "worksheets" | "scenarios"
+    "quizzes" | "worksheets" | "questions"
   >("quizzes");
 
   useEffect(() => {
     if (selectedQuiz) {
       if (selectedQuiz.is_worksheet) {
         setTimeout(() => setActiveTab("worksheets"), 0);
-      } else if (selectedQuiz.is_scenario) {
-        setTimeout(() => setActiveTab("scenarios"), 0);
+      } else if (selectedQuiz.is_question) {
+        setTimeout(() => setActiveTab("questions"), 0);
       } else {
         setTimeout(() => setActiveTab("quizzes"), 0);
       }
@@ -58,8 +58,8 @@ export function Sidebar({
     for (const [topic, quizzes] of Object.entries(groupedQuizzes)) {
       const matching = quizzes.filter((q) => {
         if (activeTab === "worksheets") return q.is_worksheet;
-        if (activeTab === "scenarios") return q.is_scenario;
-        return !q.is_worksheet && !q.is_scenario;
+        if (activeTab === "questions") return q.is_question;
+        return !q.is_worksheet && !q.is_question;
       });
       if (matching.length > 0) {
         filtered[topic] = matching;
@@ -270,14 +270,14 @@ export function Sidebar({
           Worksheets
         </button>
         <button
-          className={clsx("sidebar-tab", activeTab === "scenarios" && "active")}
-          aria-pressed={activeTab === "scenarios"}
+          className={clsx("sidebar-tab", activeTab === "questions" && "active")}
+          aria-pressed={activeTab === "questions"}
           onClick={() => {
-            setActiveTab("scenarios");
+            setActiveTab("questions");
             setFocusedQuizIndex(0);
           }}
         >
-          Scenarios
+          Questions
         </button>
       </div>
       <hr className="sidebar-divider" style={{ marginTop: 0 }} />
@@ -307,8 +307,8 @@ export function Sidebar({
                       ? "worksheet"
                       : "worksheets"
                     : topicQuizzes.length === 1
-                      ? "scenario"
-                      : "scenarios";
+                      ? "question"
+                      : "questions";
 
               return (
                 <div key={topic} className="topic-group">
@@ -371,7 +371,7 @@ export function Sidebar({
             ? "quiz"
             : activeTab === "worksheets"
               ? "worksheet"
-              : "scenario"
+              : "question"
           : activeTab}
       </div>
     </aside>

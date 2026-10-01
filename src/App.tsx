@@ -143,9 +143,12 @@ function App() {
     const match = quizzes.quizzes.find((quiz) => {
       const path = quiz.path.replace(/\\/g, "/").toLowerCase();
       const file = path.split("/").pop() ?? "";
-      const stem = file.replace(/(\.worksheet)?\.md$/, "");
+      const stem = file.replace(/(\.(?:worksheet|question))?\.md$/, "");
       const pendingFile = target.split("/").pop() ?? "";
-      const pendingStem = pendingFile.replace(/(\.worksheet)?\.md$/, "");
+      const pendingStem = pendingFile.replace(
+        /(\.(?:worksheet|question))?\.md$/,
+        "",
+      );
       return (
         path === target ||
         path.endsWith(target) ||
@@ -241,7 +244,7 @@ function App() {
           : null
       }
       activeWorksheet={quizzes.activeWorksheet}
-      activeScenario={quizzes.activeScenario}
+      activeQuestionDocument={quizzes.activeQuestionDocument}
       loadingActiveQuiz={quizzes.loadingActiveQuiz}
       resetKey={resetKey}
       setResetKey={setResetKey}

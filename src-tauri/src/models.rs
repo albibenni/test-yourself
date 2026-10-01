@@ -32,7 +32,7 @@ pub struct QuizMetadata {
     pub topic: String,
     pub last_modified: u64,
     pub is_worksheet: bool,
-    pub is_scenario: bool,
+    pub is_question: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -45,10 +45,17 @@ pub struct Worksheet {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Scenario {
+pub struct QuestionEntry {
+    pub id: u32,
+    pub question: String,
+    pub answer: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QuestionDocument {
     pub title: String,
     pub path: PathBuf,
     pub topic: String,
-    pub content: String,
+    pub questions: Vec<QuestionEntry>,
     pub last_modified: u64,
 }

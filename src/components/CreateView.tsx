@@ -14,7 +14,7 @@ import "./CreateView.css";
 type Note = { name: string; path: string; relative_path: string };
 type Directory = { name: string; path: string; relative_path: string };
 type SearchPage<T> = { items: T[]; has_more: boolean };
-type CreationType = "quiz" | "worksheet" | "scenario";
+type CreationType = "quiz" | "worksheet" | "question";
 type Engine = "agy" | "codex";
 type DropdownOption<T extends string> = {
   value: T;
@@ -25,7 +25,7 @@ type DropdownOption<T extends string> = {
 const labels: Record<CreationType, string> = {
   quiz: "Quiz",
   worksheet: "Worksheet",
-  scenario: "Scenario",
+  question: "Questions",
 };
 
 const cliInstallDetails: Record<
