@@ -1,7 +1,7 @@
 {
   "name": "test-yourself",
   "private": true,
-  "version": "5.0.0",
+  "version": "5.1.0",
   "packageManager": "pnpm@12.4.1",
   "type": "module",
   "scripts": {
