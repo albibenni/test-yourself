@@ -10,11 +10,17 @@ import {
   useState,
 } from "react";
 
+import {
+  CreationSearchPageSchema,
+  CreationStatusSchema,
+  type LibraryEntry,
+  StringSchema,
+} from "../schemas";
+
 import "./CreateView.css";
 
-type Note = { name: string; path: string; relative_path: string };
-type Directory = { name: string; path: string; relative_path: string };
-type SearchPage<T> = { items: T[]; has_more: boolean };
+type Note = LibraryEntry;
+type Directory = LibraryEntry;
 type CreationType = "quiz" | "worksheet" | "question";
 type Engine = "agy" | "codex";
 type DropdownOption<T extends string> = {
@@ -224,7 +230,7 @@ export function CreateView({
   onGenerated,
 }: {
   basePath: string;
-  onGenerated: () => void;
+  onGenerated: () => void | Promise<void>;
 }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [outputDirectories, setOutputDirectories] = useState<Directory[]>([]);
@@ -274,13 +280,10 @@ export function CreateView({
       return;
     }
     creationStatusRequested.current = true;
-    void invoke<{
-      agy_available: boolean;
-      codex_available: boolean;
-      skills: string[];
-    }>("creation_status")
+    void invoke("creation_status")
+      .then((result) => CreationStatusSchema.parse(result))
       .then((creation) => {
-        setSkills(Array.isArray(creation?.skills) ? creation.skills : []);
+        setSkills(creation.skills);
         setAvailable({
           agy: creation?.agy_available ?? false,
           codex: creation?.codex_available ?? false,
@@ -300,15 +303,21 @@ export function CreateView({
     let unlistenComplete: (() => void) | undefined;
 
     void Promise.all([
-      listen<string>("generation-output", ({ payload }) => {
+      listen<unknown>("generation-output", ({ payload }) => {
         if (!active) return;
-        setGenerationOutput((current) => `${current}${payload}`.slice(-50_000));
+        const result = StringSchema.safeParse(payload);
+        if (result.success)
+          setGenerationOutput((current) =>
+            `${current}${result.data}`.slice(-50_000),
+          );
       }),
-      listen<string>("generation-complete", ({ payload }) => {
+      listen<unknown>("generation-complete", ({ payload }) => {
         if (!active) return;
+        const result = StringSchema.safeParse(payload);
+        if (!result.success) return;
         setIsGenerating(false);
-        setStatus(payload);
-        onGenerated();
+        setStatus(result.data);
+        void onGenerated();
       }),
     ]).then(([removeOutput, removeComplete]) => {
       if (active) {
@@ -385,14 +394,16 @@ export function CreateView({
       const requestId = ++noteRequestId.current;
       setNotesLoading(true);
       try {
-        const page = await invoke<SearchPage<Note>>("search_creation_library", {
-          kind: "notes",
-          query: search,
-          offset,
-          limit: SEARCH_PAGE_SIZE,
-        });
+        const page = CreationSearchPageSchema.parse(
+          await invoke("search_creation_library", {
+            kind: "notes",
+            query: search,
+            offset,
+            limit: SEARCH_PAGE_SIZE,
+          }),
+        );
         if (requestId !== noteRequestId.current) return;
-        const items = Array.isArray(page?.items) ? page.items : [];
+        const items = page.items;
         setNotes((current) => (offset === 0 ? items : [...current, ...items]));
         setNotesHasMore(Boolean(page?.has_more));
       } catch {
@@ -411,21 +422,18 @@ export function CreateView({
       const requestId = ++directoryRequestId.current;
       setDirectoriesLoading(true);
       try {
-        const page = await invoke<SearchPage<Directory>>(
-          "search_creation_library",
-          {
+        const page = CreationSearchPageSchema.parse(
+          await invoke("search_creation_library", {
             kind: "directories",
             query: search,
             offset,
             limit: SEARCH_PAGE_SIZE,
-          },
+          }),
         );
         if (requestId !== directoryRequestId.current) return;
-        const items = Array.isArray(page?.items)
-          ? page.items.filter(
-              (directory) => !isHiddenPath(directory.relative_path),
-            )
-          : [];
+        const items = page.items.filter(
+          (directory) => !isHiddenPath(directory.relative_path),
+        );
         setOutputDirectories((current) =>
           offset === 0 ? items : [...current, ...items],
         );

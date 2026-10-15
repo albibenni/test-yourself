@@ -483,9 +483,9 @@ describe("App Component", () => {
     queuedUrl = "test-yourself://open?quiz=%2Fpath%2Freact.md";
     window.dispatchEvent(new Event("focus"));
 
-    await expect(
-      screen.findByRole("heading", { name: "React Basics", level: 1 }),
-    ).resolves.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "React Basics", level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it("opens a quiz when launched through the deep-link plugin", async () => {
@@ -869,9 +869,11 @@ describe("App Component", () => {
         level: 1,
       }),
     ).toBeInTheDocument();
-    expect(invoke).toHaveBeenCalledWith("get_question_content", {
-      path,
-      topic: questionDocument.topic,
+    await waitFor(() => {
+      expect(invoke).toHaveBeenCalledWith("get_question_content", {
+        path,
+        topic: questionDocument.topic,
+      });
     });
   });
 

@@ -62,8 +62,8 @@ describe("TodoistProvider", () => {
       );
       expect(calledUrl).toContain("limit=200");
 
-      const headers = calledOpts.headers as Record<string, string>;
-      expect(headers.Authorization).toBe("Bearer fake_token");
+      const headers = new Headers(calledOpts.headers);
+      expect(headers.get("Authorization")).toBe("Bearer fake_token");
     });
 
     it("should use a default 'Review Quiz' query if sanitization leaves it empty", async () => {
@@ -121,6 +121,17 @@ describe("TodoistProvider", () => {
       expect(tasks[0].content).toBe("Wrapped task");
       expect(tasks[0].due?.date).toBe("2026-08-25");
     });
+
+    it("rejects malformed pagination responses at the API boundary", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ results: "not-an-array", next_cursor: null }),
+      });
+
+      await expect(provider.searchTasks("test")).rejects.toThrow(
+        /expected array/i,
+      );
+    });
   });
 
   describe("getTasks", () => {
@@ -149,12 +160,11 @@ describe("TodoistProvider", () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://api.todoist.com/api/v1/tasks/task-123",
-        expect.objectContaining({
-          method: "DELETE",
-          headers: expect.objectContaining({
-            Authorization: "Bearer fake_token",
-          }),
-        }),
+        expect.objectContaining({ method: "DELETE" }),
+      );
+      const request = mockFetch.mock.calls[0][1] as RequestInit;
+      expect(new Headers(request.headers).get("Authorization")).toBe(
+        "Bearer fake_token",
       );
     });
   });

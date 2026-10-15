@@ -76,11 +76,18 @@ function QuizViewerWithSession({
 }
 
 describe("QuizViewer", () => {
-  const originalScrollIntoView = Element.prototype.scrollIntoView;
+  const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+    Element.prototype,
+    "scrollIntoView",
+  );
 
   afterEach(() => {
     if (originalScrollIntoView) {
-      Element.prototype.scrollIntoView = originalScrollIntoView;
+      Object.defineProperty(
+        Element.prototype,
+        "scrollIntoView",
+        originalScrollIntoView,
+      );
     } else {
       delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     }

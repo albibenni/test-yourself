@@ -9,6 +9,7 @@ import type {
   TaskProvider,
 } from "../providers/TaskProvider";
 import { TodoistProvider } from "../providers/TodoistProvider";
+import { TodoistDefaultsSchema } from "../schemas";
 import { getAuthorizedTodoistToken } from "../todoistOAuth";
 
 export function useTodoist() {
@@ -107,14 +108,11 @@ export function useTodoist() {
 
   const getDefaultSettings = useCallback(async () => {
     const store = await load(STORE_FILENAME, { autoSave: false, defaults: {} });
-    return {
-      defaultDate:
-        (await store.get<string>("default_todoist_date")) || "tomorrow",
-      defaultPriority:
-        (await store.get<number>("default_todoist_priority")) || 4,
-      defaultProject:
-        (await store.get<string>("default_todoist_project")) || "",
-    };
+    return TodoistDefaultsSchema.parse({
+      defaultDate: await store.get("default_todoist_date"),
+      defaultPriority: await store.get("default_todoist_priority"),
+      defaultProject: await store.get("default_todoist_project"),
+    });
   }, []);
 
   return {

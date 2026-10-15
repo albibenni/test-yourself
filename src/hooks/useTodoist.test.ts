@@ -206,4 +206,15 @@ describe("useTodoist hook", () => {
       defaultProject: "proj_123",
     });
   });
+
+  it("falls back when stored Todoist defaults are invalid", async () => {
+    mockStoreGet.mockResolvedValue({ corrupted: true });
+    const { result } = renderHook(() => useTodoist());
+
+    await expect(result.current.getDefaultSettings()).resolves.toEqual({
+      defaultDate: "tomorrow",
+      defaultPriority: 4,
+      defaultProject: "",
+    });
+  });
 });

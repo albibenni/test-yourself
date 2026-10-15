@@ -19,6 +19,12 @@ describe("secureStore", () => {
     });
   });
 
+  it("returns null when native secure storage returns a malformed value", async () => {
+    vi.mocked(invoke).mockResolvedValue({ token: "not-a-string" });
+
+    await expect(getSecureToken("todoist_token")).resolves.toBeNull();
+  });
+
   it("writes and clears the Todoist token through the native credential command", async () => {
     await setSecureToken("todoist_token", "keychain-token");
     await setSecureToken("todoist_token", "");

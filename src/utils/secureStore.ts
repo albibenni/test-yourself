@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
+import { NullableStringSchema } from "../schemas";
+
 export type SecureKey = "todoist_token" | "todoist_oauth_pending";
 
 const isSecureKey = (key: string): key is SecureKey =>
@@ -8,7 +10,9 @@ const isSecureKey = (key: string): key is SecureKey =>
 export async function getSecureToken(key: string): Promise<string | null> {
   try {
     if (!isSecureKey(key)) return null;
-    return await invoke<string | null>("get_secret", { account: key });
+    return NullableStringSchema.parse(
+      await invoke("get_secret", { account: key }),
+    );
   } catch {
     return null;
   }

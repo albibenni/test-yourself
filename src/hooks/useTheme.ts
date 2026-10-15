@@ -2,6 +2,7 @@ import { load } from "@tauri-apps/plugin-store";
 import { useEffect, useState } from "react";
 
 import { STORE_FILENAME } from "../constants";
+import { ThemePreferencesSchema } from "../schemas";
 import type {
   AccentColor,
   ContrastPreference,
@@ -27,24 +28,20 @@ export function useTheme() {
           autoSave: false,
           defaults: {},
         });
-        const storedTheme = (await store.get<Theme>("app_theme")) || "system";
-        const storedAccent =
-          (await store.get<AccentColor>("app_accent")) || "blue";
-        const storedTextColor =
-          (await store.get<TextColor>("app_text_color")) || "slate";
-        const storedTextScale =
-          (await store.get<TextScale>("app_text_scale")) || "default";
-        const storedContrast =
-          (await store.get<ContrastPreference>("app_contrast")) || "system";
-        const storedReducedMotion =
-          (await store.get<ReducedMotionPreference>("app_reduced_motion")) ||
-          "system";
-        setTheme(storedTheme);
-        setAccent(storedAccent);
-        setTextColor(storedTextColor);
-        setTextScale(storedTextScale);
-        setContrast(storedContrast);
-        setReducedMotion(storedReducedMotion);
+        const preferences = ThemePreferencesSchema.parse({
+          theme: await store.get("app_theme"),
+          accent: await store.get("app_accent"),
+          textColor: await store.get("app_text_color"),
+          textScale: await store.get("app_text_scale"),
+          contrast: await store.get("app_contrast"),
+          reducedMotion: await store.get("app_reduced_motion"),
+        });
+        setTheme(preferences.theme);
+        setAccent(preferences.accent);
+        setTextColor(preferences.textColor);
+        setTextScale(preferences.textScale);
+        setContrast(preferences.contrast);
+        setReducedMotion(preferences.reducedMotion);
       } catch (e) {
         console.warn("Could not load theme settings", e);
       }

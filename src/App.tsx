@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
 import { useCallback, useEffect, useState } from "react";
+import { z } from "zod";
 
 import "./styles/Foundation.css";
 import "./components/AppLayout.css";
@@ -17,7 +18,16 @@ import { AppLayout } from "./components/AppLayout";
 import { useQuizSession } from "./hooks/useQuizSession";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
+import { NullableStringSchema } from "./schemas";
 import { completeTodoistAuthorization } from "./todoistOAuth";
+
+const DeepLinkValueSchema = z
+  .union([z.string(), z.array(z.string()).min(1)])
+  .transform((value) => (Array.isArray(value) ? value[0] : value));
+
+function getDeepLinkValue(value: unknown): string {
+  return DeepLinkValueSchema.safeParse(value).data ?? "";
+}
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -54,6 +64,11 @@ function App() {
     window.setTimeout(() => setToastMessage(null), 3000);
   }, []);
   const quizzes = useQuizzes();
+  const {
+    quizzes: quizMetadata,
+    setSelectedQuizMeta,
+    updateBasePath,
+  } = quizzes;
 
   useEffect(() => {
     void check()
@@ -68,9 +83,7 @@ function App() {
 
   useEffect(() => {
     const parse = (value: unknown) => {
-      const raw = Array.isArray(value)
-        ? String(value[0] ?? "")
-        : String(value ?? "");
+      const raw = getDeepLinkValue(value);
       try {
         return new URL(raw).searchParams.get("quiz");
       } catch {
@@ -78,9 +91,7 @@ function App() {
       }
     };
     const handleDeepLink = async (value: unknown) => {
-      const raw = Array.isArray(value)
-        ? String(value[0] ?? "")
-        : String(value ?? "");
+      const raw = getDeepLinkValue(value);
       try {
         if (await completeTodoistAuthorization(raw)) {
           setSettingsOpen(true);
@@ -112,8 +123,7 @@ function App() {
         }
         removeDeepLink = remove;
         const initial =
-          (await getCurrent()) ??
-          (await invoke<string | null>("get_initial_url"));
+          (await getCurrent()) ?? (await invoke("get_initial_url"));
         await handleDeepLink(initial);
       })
       .catch(() => undefined);
@@ -123,7 +133,7 @@ function App() {
       removeEvent = remove;
     });
     const handleWindowFocus = () => {
-      void invoke<string | null>("get_initial_url")
+      void invoke("get_initial_url")
         .then(handleDeepLink)
         .catch(() => undefined);
     };
@@ -137,11 +147,11 @@ function App() {
   }, [showToast]);
 
   useEffect(() => {
-    if (!pendingLink || quizzes.quizzes.length === 0) return;
+    if (!pendingLink || quizMetadata.length === 0) return;
     const target = decodeURIComponent(pendingLink)
       .replace(/\\/g, "/")
       .toLowerCase();
-    const match = quizzes.quizzes.find((quiz) => {
+    const match = quizMetadata.find((quiz) => {
       const path = quiz.path.replace(/\\/g, "/").toLowerCase();
       const file = path.split("/").pop() ?? "";
       const stem = file.replace(/(\.(?:worksheet|question))?\.md$/, "");
@@ -159,7 +169,7 @@ function App() {
       );
     });
     if (match) {
-      quizzes.setSelectedQuizMeta(match);
+      setSelectedQuizMeta(match);
       setPendingLink(null);
       setCreateOpen(false);
       setSettingsOpen(false);
@@ -167,7 +177,7 @@ function App() {
       showToast(`Quiz not found for deep link: ${target}`);
       alert(`Deep link quiz not found in library: ${target}`);
     }
-  }, [pendingLink, quizzes.quizzes, quizzes.setSelectedQuizMeta, showToast]);
+  }, [pendingLink, quizMetadata, setSelectedQuizMeta, showToast]);
 
   const { questions: shuffledQuestions, ...session } = useQuizSession(
     quizzes.selectedQuizMeta
@@ -178,9 +188,11 @@ function App() {
   const selectIosFolder = useCallback(
     async (purpose: "quiz" | "vault") => {
       try {
-        const selected = await invoke<string | null>("pick_ios_folder");
+        const selected = NullableStringSchema.parse(
+          await invoke("pick_ios_folder"),
+        );
         if (!selected) return;
-        await quizzes.updateBasePath(selected);
+        await updateBasePath(selected);
         if (purpose === "vault")
           setSelectedVaultFolder(
             selected.split("/").filter(Boolean).pop() ?? "Obsidian",
@@ -190,7 +202,7 @@ function App() {
         showToast(`Unable to open the iOS folder picker: ${String(error)}`);
       }
     },
-    [quizzes.updateBasePath, showToast],
+    [updateBasePath, showToast],
   );
 
   return (

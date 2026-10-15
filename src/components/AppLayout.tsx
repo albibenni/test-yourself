@@ -305,10 +305,7 @@ export function AppLayout(props: AppLayoutProps) {
               </div>
             )}
             {createOpen && !settingsOpen && basePath && (
-              <CreateView
-                basePath={basePath}
-                onGenerated={() => void handleSync()}
-              />
+              <CreateView basePath={basePath} onGenerated={handleSync} />
             )}
             {settingsOpen && (
               <Suspense

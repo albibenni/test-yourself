@@ -10,6 +10,7 @@ import {
   TAURI_COMMAND_GET_QUIZZES,
 } from "../constants";
 import {
+  NullableStringSchema,
   type QuestionDocument,
   QuestionDocumentSchema,
   type Quiz,
@@ -50,7 +51,9 @@ export function useQuizzes() {
         setStoreInstance(store);
 
         const localPath = window.localStorage.getItem(STORE_KEY_BASE_PATH);
-        const savedPath = await store.get<string>(STORE_KEY_BASE_PATH);
+        const savedPath = NullableStringSchema.parse(
+          await store.get(STORE_KEY_BASE_PATH),
+        );
 
         if (savedPath) {
           setBasePath(savedPath);

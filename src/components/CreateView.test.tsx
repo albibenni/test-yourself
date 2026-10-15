@@ -58,6 +58,46 @@ function searchPage(
 describe("CreateView", () => {
   afterEach(() => vi.clearAllMocks());
 
+  it("rejects malformed creation status responses", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockResolvedValue({
+      agy_available: "yes",
+      codex_available: false,
+      skills: [],
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "AI tool" }));
+
+    expect(
+      await screen.findByText("Unable to load AI tools."),
+    ).toBeInTheDocument();
+  });
+
+  it("rejects malformed creation-library pages", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockImplementation((command: string) => {
+      if (command === "creation_status") {
+        return Promise.resolve({
+          agy_available: true,
+          codex_available: false,
+          skills: [],
+        });
+      }
+      if (command === "search_creation_library") {
+        return Promise.resolve({ items: "not-an-array", has_more: false });
+      }
+      return Promise.resolve(undefined);
+    });
+
+    render(<CreateView basePath="/SecondBrain" onGenerated={vi.fn()} />);
+    fireEvent.focus(screen.getByRole("combobox", { name: /search notes/i }));
+
+    expect(
+      await screen.findByText("Unable to search the selected directory."),
+    ).toBeInTheDocument();
+  });
+
   it("loads AI tools and skills when either selector is opened", async () => {
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(invoke).mockImplementation((command: string) => {

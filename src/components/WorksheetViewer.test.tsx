@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { WorksheetViewer } from "./WorksheetViewer";
 
 describe("WorksheetViewer", () => {
-  const originalScrollIntoView = Element.prototype.scrollIntoView;
+  const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+    Element.prototype,
+    "scrollIntoView",
+  );
   const mockWorksheet = {
     title: "Test Worksheet",
     path: "/path/to/worksheet",
@@ -15,7 +18,11 @@ describe("WorksheetViewer", () => {
 
   afterEach(() => {
     if (originalScrollIntoView) {
-      Element.prototype.scrollIntoView = originalScrollIntoView;
+      Object.defineProperty(
+        Element.prototype,
+        "scrollIntoView",
+        originalScrollIntoView,
+      );
     } else {
       delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     }

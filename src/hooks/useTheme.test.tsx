@@ -37,6 +37,27 @@ describe("useTheme text scale", () => {
     );
   });
 
+  it("falls back to safe defaults when stored preferences are invalid", async () => {
+    const store = {
+      get: vi.fn().mockResolvedValue("invalid-preference"),
+      set: vi.fn(),
+      save: vi.fn(),
+    };
+    loadMock.mockResolvedValue(store);
+
+    const { result } = renderHook(() => useTheme());
+
+    await waitFor(() =>
+      expect(store.get).toHaveBeenCalledWith("app_reduced_motion"),
+    );
+    expect(result.current.theme).toBe("system");
+    expect(result.current.accent).toBe("blue");
+    expect(result.current.textColor).toBe("slate");
+    expect(result.current.textScale).toBe("default");
+    expect(result.current.contrast).toBe("system");
+    expect(result.current.reducedMotion).toBe("system");
+  });
+
   it("saves and applies a new text-size preference", async () => {
     const store = {
       get: vi.fn().mockResolvedValue(null),

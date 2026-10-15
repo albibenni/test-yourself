@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 
 import { STORE_FILENAME } from "../constants";
 import { TodoistProvider } from "../providers/TodoistProvider";
+import { BooleanSchema, StoredSettingsSchema } from "../schemas";
 import {
   beginTodoistAuthorization,
   getAuthorizedTodoistToken,
@@ -50,8 +51,8 @@ interface SettingsViewProps {
   onSaveError?: (message: string) => void;
   onDirtyChange?: (isDirty: boolean) => void;
   basePath?: string | null;
-  onSelectFolder?: () => void;
-  onSelectVaultFolder?: () => void;
+  onSelectFolder?: () => void | Promise<void>;
+  onSelectVaultFolder?: () => void | Promise<void>;
   selectedVaultFolder?: string | null;
   onUpdateBasePath?: (newPath: string) => void;
 }
@@ -181,7 +182,7 @@ export function SettingsView({
         const version = await getVersion();
         setAppVersion(version);
         try {
-          const isArch = await invoke<boolean>("is_arch_linux");
+          const isArch = BooleanSchema.parse(await invoke("is_arch_linux"));
           setIsArchLinux(isArch);
         } catch (err) {
           console.warn("is_arch_linux command not found or failed", err);
@@ -201,7 +202,9 @@ export function SettingsView({
         setUpdateStatus(`Downloading update v${update.version}...`);
         await update.downloadAndInstall();
         setUpdateStatus("Update installed. Restarting...");
-        const handledByLinux = await invoke<boolean>("custom_linux_relaunch");
+        const handledByLinux = BooleanSchema.parse(
+          await invoke("custom_linux_relaunch"),
+        );
         if (!handledByLinux) {
           await relaunch();
         }
@@ -224,30 +227,24 @@ export function SettingsView({
         defaults: {},
       });
       const secureToken = await getSecureToken("todoist_token");
-      const vault = await store.get<string>("obsidian_vault");
+      const vault = await store.get("obsidian_vault");
 
       const isOAuth = isTodoistOAuthSecret(secureToken);
       setTodoistAuthStatus(isOAuth ? "connected" : "disconnected");
-      const loadedVault =
-        vault || window.localStorage.getItem("obsidian_vault") || "";
-      setVaultName(loadedVault);
-      setInitialVaultName(loadedVault);
-
-      const defDate = await store.get<string>("default_todoist_date");
-      const defPri = await store.get<number>("default_todoist_priority");
-      const defProj = await store.get<string>("default_todoist_project");
-      if (defDate) {
-        setDefaultDate(defDate);
-        setInitialDefaultDate(defDate);
-      }
-      if (defPri !== undefined) {
-        setDefaultPriority(defPri);
-        setInitialDefaultPriority(defPri);
-      }
-      if (defProj !== undefined && defProj !== null) {
-        setDefaultProject(defProj);
-        setInitialDefaultProject(defProj);
-      }
+      const settings = StoredSettingsSchema.parse({
+        vaultName: vault ?? window.localStorage.getItem("obsidian_vault") ?? "",
+        defaultDate: await store.get("default_todoist_date"),
+        defaultPriority: await store.get("default_todoist_priority"),
+        defaultProject: await store.get("default_todoist_project"),
+      });
+      setVaultName(settings.vaultName);
+      setInitialVaultName(settings.vaultName);
+      setDefaultDate(settings.defaultDate);
+      setInitialDefaultDate(settings.defaultDate);
+      setDefaultPriority(settings.defaultPriority);
+      setInitialDefaultPriority(settings.defaultPriority);
+      setDefaultProject(settings.defaultProject);
+      setInitialDefaultProject(settings.defaultProject);
     }
     void fetchSettings();
   }, []);

@@ -184,4 +184,24 @@ describe("FolderBrowserModal Component (iOS Directory Search & Navigation)", () 
       expect(screen.getByText("Cannot access directory")).toBeInTheDocument();
     });
   });
+
+  it("rejects malformed directory listings", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({
+      current_path: "/Users/benni",
+      parent_path: null,
+      items: "not-an-array",
+    });
+
+    render(
+      <FolderBrowserModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSelectFolder={vi.fn()}
+      />,
+    );
+
+    expect(
+      await screen.findByText("Failed to load directory"),
+    ).toBeInTheDocument();
+  });
 });

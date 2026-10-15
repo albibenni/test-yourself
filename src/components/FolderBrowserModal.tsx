@@ -1,18 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
 
-interface FolderItem {
-  name: string;
-  path: string;
-  is_dir: boolean;
-  md_count: number;
-}
-
-interface DirectoryListing {
-  current_path: string;
-  parent_path: string | null;
-  items: FolderItem[];
-}
+import { type DirectoryListing, DirectoryListingSchema } from "../schemas";
 
 interface FolderBrowserModalProps {
   isOpen: boolean;
@@ -86,9 +75,9 @@ export function FolderBrowserModal({
       setLoading(true);
       setError(null);
       try {
-        const result = await invoke<DirectoryListing>("browse_directory", {
-          path: currentPath,
-        });
+        const result = DirectoryListingSchema.parse(
+          await invoke("browse_directory", { path: currentPath }),
+        );
         if (isMounted && requestId === requestIdRef.current) {
           setListing(result);
           setCurrentPath(result.current_path);
