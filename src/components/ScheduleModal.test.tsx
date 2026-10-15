@@ -162,6 +162,38 @@ describe("ScheduleModal", () => {
     });
   });
 
+  it("prefills but leaves editable a recommended review-set schedule", async () => {
+    render(
+      <ScheduleModal
+        {...defaultProps}
+        recommendation={{
+          id: "review-123",
+          quizPath: mockQuiz.path,
+          contentKind: "quiz",
+          scope: "incorrect",
+          questionIds: ["2", "4"],
+          dueDate: "2026-10-16",
+          intervalDays: 1,
+          createdAt: "2026-10-15T10:00:00.000Z",
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(mockGetDefaultSettings).toHaveBeenCalled());
+    expect(screen.getByText(/2 incorrect questions/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
+
+    await waitFor(() => {
+      expect(mockAddTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dueString: "2026-10-16",
+          description: "[Open Review](test-yourself://review?set=review-123)",
+        }),
+      );
+    });
+  });
+
   it("does not reset the date when typing '1w' and then hitting Enter", async () => {
     // To properly simulate the bug where useTodoist might return a new instance of getDefaultSettings on re-render
     // we could dynamically return a new mock, but the main goal is to test the '1w' parsing and submit.

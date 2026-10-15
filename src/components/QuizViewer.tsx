@@ -9,6 +9,10 @@ import {
 } from "react";
 
 import { DEFAULT_TOPIC } from "../constants";
+import type {
+  Assessment,
+  ReviewRecommendation,
+} from "../learning/reviewProgress";
 import type { QuestionDocument, Quiz, QuizMetadata, Worksheet } from "../types";
 import { focusAndCenter } from "../utils/focusAndCenter";
 import { QuestionCard } from "./QuestionCard";
@@ -40,6 +44,8 @@ interface QuizViewerProps extends QuizSessionState {
   resetKey: number;
   onReset: () => void;
   onSchedule: () => void;
+  onSessionComplete?: (assessments: Record<string, Assessment>) => void;
+  recommendation?: ReviewRecommendation;
 }
 
 export function QuizViewer({
@@ -51,6 +57,8 @@ export function QuizViewer({
   resetKey,
   onReset,
   onSchedule,
+  onSessionComplete,
+  recommendation,
   answers,
   setAnswers,
   visibleCount,
@@ -162,6 +170,7 @@ export function QuizViewer({
           <QuestionViewer
             key={`${activeQuestionDocument.path}-${resetKey}`}
             document={activeQuestionDocument}
+            onComplete={onSessionComplete}
           />
         ) : activeQuiz ? (
           <QuizQuestions
@@ -175,6 +184,7 @@ export function QuizViewer({
             isAllAnswered={isAllAnswered}
             correctCount={correctCount}
             totalQuestions={totalQuestions}
+            onComplete={onSessionComplete}
           />
         ) : (
           <StatusView compact kind="error">
@@ -182,6 +192,21 @@ export function QuizViewer({
           </StatusView>
         )}
       </div>
+      {recommendation && (
+        <div className="review-recommendation" role="status">
+          <div>
+            <strong>Recommended next review: {recommendation.dueDate}</strong>
+            <span>
+              {recommendation.scope === "incorrect"
+                ? `Incorrect questions only (${recommendation.questionIds.length})`
+                : `All questions (${recommendation.questionIds.length})`}
+            </span>
+          </div>
+          <button className="button-primary" onClick={onSchedule} type="button">
+            Schedule in Todoist
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -199,6 +224,7 @@ interface QuizQuestionsProps {
   isAllAnswered: boolean;
   correctCount: number;
   totalQuestions: number;
+  onComplete?: (assessments: Record<string, Assessment>) => void;
 }
 
 function QuizQuestions({
@@ -212,11 +238,35 @@ function QuizQuestions({
   isAllAnswered,
   correctCount,
   totalQuestions,
+  onComplete,
 }: QuizQuestionsProps) {
   const [navigationTargetIndex, setNavigationTargetIndex] = useState<
     number | null
   >(null);
   const questionCardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const didComplete = useRef(false);
+  const questionSetKey = quiz.questions
+    .map((question) => question.id)
+    .join(",");
+
+  useEffect(() => {
+    didComplete.current = false;
+  }, [questionSetKey, quiz.path, resetKey]);
+
+  useEffect(() => {
+    if (!isAllAnswered || didComplete.current) return;
+    didComplete.current = true;
+    onComplete?.(
+      Object.fromEntries(
+        quiz.questions.map((question) => [
+          question.id,
+          answers[question.id] === question.correct_answer
+            ? "correct"
+            : "incorrect",
+        ]),
+      ) as Record<string, Assessment>,
+    );
+  }, [answers, isAllAnswered, onComplete, quiz.questions]);
 
   useEffect(() => {
     if (navigationTargetIndex === null) return;

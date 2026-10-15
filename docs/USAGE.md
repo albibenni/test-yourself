@@ -43,7 +43,18 @@ Once your settings are configured, you can use the **Schedule** button inside an
 4. Select a **Priority** and **Project** (e.g., `#Inbox`).
 5. Click **Add Task**.
 
-This will instantly create a task in your Todoist! The task description will automatically contain a deep link to your Obsidian vault (`obsidian://open?vault=...&file=...`), so when the task is due, clicking the link in Todoist will immediately open the exact markdown file in Obsidian for review.
+This will instantly create a task in Todoist. The task description contains a `test-yourself://` deep link, so clicking it when the task is due opens the quiz or focused review directly in Test Yourself.
+
+### Recommended and focused reviews
+
+After a quiz is completed, Test Yourself stores question-level performance locally and suggests a review date. The suggestion is only a starting point: the Todoist scheduling dialog still lets you freely change the date, priority, project, title, and description.
+
+- An initial mistake produces an incorrect-only review suggestion for tomorrow.
+- Completing that focused review produces a full-quiz suggestion in 3 days.
+- Successful full reviews advance through 7, 14, and 30-day intervals.
+- A failed longer review first schedules its incorrect questions for tomorrow, then shortens the following full review according to the previous interval.
+
+Focused Todoist tasks contain a `test-yourself://review?set=...` deep link. Opening the task launches Test Yourself with only the questions saved in that review set. A later full-review task still contains the complete question suite.
 
 ## Mobile status
 
@@ -95,6 +106,8 @@ To authorize a user in OAuth2 using PKCE, the client first generates a {{code_ve
 Question documents require at least two consecutively numbered questions and exactly one matching suggested answer for each. The section headings may independently use English or Italian, case-insensitively: `Questions` or `Domande`, followed by `Suggested Answers` or `Risposte suggerite`.
 
 Each numbered entry can contain multiline Markdown, including nested lists and fenced code blocks. In the app, write a response and reveal suggested answers one at a time.
+
+The response field is optional: you may answer aloud, mentally, or in writing. After revealing the suggested answer, assess your own expressed knowledge as **Got it**, **Partially**, or **Didn't know**. The app does not automatically grade or compare your wording. Partial and unknown responses are included in the next focused review.
 
 ```markdown
 # Authentication Review

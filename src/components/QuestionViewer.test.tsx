@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { QuestionViewer } from "./QuestionViewer";
 
@@ -75,5 +75,38 @@ describe("QuestionViewer", () => {
       "",
     );
     expect(screen.queryByText(/workload identity/i)).not.toBeInTheDocument();
+  });
+
+  it("lets the learner self-assess expressed knowledge without grading the text", () => {
+    const onComplete = vi.fn();
+    render(<QuestionViewer document={document} onComplete={onComplete} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /reveal suggested answer 1/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
+
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(screen.getByText("Self-assessed: Got it")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /reveal suggested answer 2/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Partially" }));
+
+    expect(onComplete).toHaveBeenCalledWith({
+      "1": "correct",
+      "2": "partial",
+    });
+  });
+
+  it("accepts a spoken or mental answer without requiring textarea input", () => {
+    render(<QuestionViewer document={document} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /reveal suggested answer 1/i }),
+    );
+
+    expect(screen.getByRole("button", { name: "Didn't know" })).toBeEnabled();
   });
 });

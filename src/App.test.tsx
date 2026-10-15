@@ -9,7 +9,14 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vite-plus/test";
 
 import App from "./App";
 
@@ -89,10 +96,16 @@ const mockQuizzes = [
     questions: [],
   },
 ];
+const localStorageMock = window.localStorage as unknown as {
+  getItem: Mock;
+  setItem: Mock;
+};
 
 describe("App Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock.setItem.mockImplementation(() => undefined);
     vi.mocked(getCurrent).mockResolvedValue(null);
     vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
       if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
@@ -911,5 +924,72 @@ describe("App Component", () => {
         screen.getByRole("heading", { name: "React Basics", level: 1 }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("records question-level performance and recommends incorrect-only review", async () => {
+    let savedLearningData = "";
+    localStorageMock.setItem.mockImplementation((_key, value) => {
+      savedLearningData = value;
+    });
+    render(<App />);
+
+    await screen.findByText("React Basics");
+    fireEvent.click(screen.getByText("React Basics"));
+    await screen.findByText("1. What is React?");
+
+    fireEvent.click(screen.getByText("A library"));
+    fireEvent.click(screen.getByText("Google"));
+
+    expect(
+      await screen.findByText(/incorrect questions only \(1\)/i),
+    ).toBeInTheDocument();
+    const saved = JSON.parse(savedLearningData) as {
+      records: Array<{
+        attempts: Array<{ assessments: Record<string, string> }>;
+      }>;
+    };
+    expect(saved.records[0]?.attempts[0]?.assessments).toEqual({
+      "1": "correct",
+      "2": "incorrect",
+    });
+  });
+
+  it("opens only the questions saved in a Todoist review-set link", async () => {
+    localStorageMock.getItem.mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        records: [],
+        reviewSets: [
+          {
+            id: "review-123",
+            quizPath: "/path/react.md",
+            contentKind: "quiz",
+            scope: "incorrect",
+            questionIds: ["2"],
+            dueDate: "2026-10-16",
+            intervalDays: 1,
+            createdAt: "2026-10-15T10:00:00.000Z",
+          },
+        ],
+      }),
+    );
+    vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") {
+        const path = (args as { path?: string })?.path;
+        return Promise.resolve(
+          mockQuizzes.find((quiz) => quiz.path === path) || null,
+        );
+      }
+      if (cmd === "get_initial_url")
+        return Promise.resolve("test-yourself://review?set=review-123");
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText("2. Who made React?")).toBeInTheDocument();
+    expect(screen.queryByText("1. What is React?")).not.toBeInTheDocument();
+    expect(screen.getByText("0 of 1 answered")).toBeInTheDocument();
   });
 });

@@ -260,3 +260,31 @@
 .cal-day {
   min-height: 44px;
 }
+
+.review-recommendation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.5rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+}
+
+.review-recommendation > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.review-recommendation span {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  .review-recommendation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

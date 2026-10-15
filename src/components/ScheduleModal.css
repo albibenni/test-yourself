@@ -11,6 +11,15 @@
   height: auto !important;
 }
 
+.review-schedule-context {
+  margin: 0 1rem 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  font-size: 0.875rem;
+}
+
 .schedule-management-dialog {
   width: min(440px, 90vw);
   max-height: min(620px, 85vh);

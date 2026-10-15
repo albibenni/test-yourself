@@ -40,6 +40,8 @@ The application connects to Todoist exclusively through OAuth 2.0 with PKCE. Whe
    - `dueString`: The selected ISO date string (e.g., `YYYY-MM-DD`).
    - `priority`: Mapped correctly to the Todoist API priority levels.
 
+When a quiz or open-question session has been completed, the dialog is prefilled with the app's recommended date while every Todoist field remains editable. The task link points to a locally saved review set, allowing Todoist to reopen either the incorrect questions or the complete suite. Todoist remains the scheduling authority; Test Yourself records performance and calculates only the recommendation.
+
 ### Security
 
 Todoist OAuth credentials are stored in the operating system's native credential store (macOS Keychain, Windows Credential Manager, or the available Linux Secret Service). Disconnecting removes the credential. There is no fallback to plaintext browser storage or the Tauri store.

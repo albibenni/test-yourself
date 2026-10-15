@@ -439,6 +439,7 @@ export function AppLayout(props: AppLayoutProps) {
               isOpen={scheduleOpen}
               onClose={() => setScheduleOpen(false)}
               quiz={selectedQuiz}
+              recommendation={session.recommendation}
               onSuccess={(date) => showToast(`Task scheduled for ${date}!`)}
               onCheckResult={showToast}
             />

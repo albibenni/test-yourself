@@ -1,11 +1,13 @@
-import { Fragment, type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 
+import type { Assessment } from "../learning/reviewProgress";
 import type { QuestionDocument } from "../types";
 
 import "./QuestionViewer.css";
 
 interface QuestionViewerProps {
   document: QuestionDocument;
+  onComplete?: (assessments: Record<string, Assessment>) => void;
 }
 
 const renderInline = (text: string): ReactNode[] =>
@@ -94,15 +96,35 @@ function MarkdownContent({ content }: { content: string }) {
   return <>{blocks}</>;
 }
 
-export function QuestionViewer({ document }: QuestionViewerProps) {
-  return <QuestionBody document={document} key={document.path} />;
+export function QuestionViewer({ document, onComplete }: QuestionViewerProps) {
+  return (
+    <QuestionBody
+      document={document}
+      key={`${document.path}:${document.questions.map((question) => question.id).join(",")}`}
+      onComplete={onComplete}
+    />
+  );
 }
 
-function QuestionBody({ document }: QuestionViewerProps) {
+function QuestionBody({ document, onComplete }: QuestionViewerProps) {
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [revealedAnswers, setRevealedAnswers] = useState<Set<number>>(
     () => new Set(),
   );
+  const [assessments, setAssessments] = useState<Record<string, Assessment>>(
+    {},
+  );
+  const didComplete = useRef(false);
+
+  useEffect(() => {
+    if (
+      !didComplete.current &&
+      Object.keys(assessments).length === document.questions.length
+    ) {
+      didComplete.current = true;
+      onComplete?.(assessments);
+    }
+  }, [assessments, document.questions.length, onComplete]);
 
   const toggleAnswer = (id: number) => {
     setRevealedAnswers((previous) => {
@@ -116,11 +138,12 @@ function QuestionBody({ document }: QuestionViewerProps) {
   return (
     <div className="question-document-viewer">
       <p className="question-document-intro">
-        Write your response, then reveal each suggested answer when you are
-        ready.
+        Explain the answer in your own words—aloud, mentally, or optionally in
+        writing. Then compare it with the suggested answer and assess yourself.
       </p>
       {document.questions.map((entry) => {
         const isRevealed = revealedAnswers.has(entry.id);
+        const assessment = assessments[String(entry.id)];
         return (
           <section className="question-document-card" key={entry.id}>
             <h2>Question {entry.id}</h2>
@@ -128,7 +151,7 @@ function QuestionBody({ document }: QuestionViewerProps) {
               <MarkdownContent content={entry.question} />
             </div>
             <label className="question-response-label">
-              Your response
+              Your response (optional)
               <textarea
                 aria-label={`Response to question ${entry.id}`}
                 className="question-document-response"
@@ -158,6 +181,57 @@ function QuestionBody({ document }: QuestionViewerProps) {
                 <div className="question-document-content">
                   <MarkdownContent content={entry.answer} />
                 </div>
+                {assessment ? (
+                  <p className="question-self-assessment-result">
+                    Self-assessed: {assessmentLabel(assessment)}
+                  </p>
+                ) : (
+                  <div
+                    aria-label={`Assess response to question ${entry.id}`}
+                    className="question-self-assessment"
+                    role="group"
+                  >
+                    <span>How well did you express the knowledge?</span>
+                    <div className="question-self-assessment-actions">
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          setAssessments((current) => ({
+                            ...current,
+                            [String(entry.id)]: "incorrect",
+                          }))
+                        }
+                        type="button"
+                      >
+                        Didn&apos;t know
+                      </button>
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          setAssessments((current) => ({
+                            ...current,
+                            [String(entry.id)]: "partial",
+                          }))
+                        }
+                        type="button"
+                      >
+                        Partially
+                      </button>
+                      <button
+                        className="button-primary"
+                        onClick={() =>
+                          setAssessments((current) => ({
+                            ...current,
+                            [String(entry.id)]: "correct",
+                          }))
+                        }
+                        type="button"
+                      >
+                        Got it
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -166,3 +240,9 @@ function QuestionBody({ document }: QuestionViewerProps) {
     </div>
   );
 }
+
+const assessmentLabel = (assessment: Assessment) => {
+  if (assessment === "correct") return "Got it";
+  if (assessment === "partial") return "Partially";
+  return "Didn't know";
+};

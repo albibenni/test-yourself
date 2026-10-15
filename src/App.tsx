@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 import "./styles/Foundation.css";
@@ -18,7 +18,13 @@ import { AppLayout } from "./components/AppLayout";
 import { useQuizSession } from "./hooks/useQuizSession";
 import { useQuizzes } from "./hooks/useQuizzes";
 import { useTheme } from "./hooks/useTheme";
-import { NullableStringSchema } from "./schemas";
+import {
+  type Assessment,
+  completeAndSaveReview,
+  getReviewSet,
+  type ReviewRecommendation,
+} from "./learning/reviewProgress";
+import { NullableStringSchema, type QuizMetadata } from "./schemas";
 import { completeTodoistAuthorization } from "./todoistOAuth";
 
 const DeepLinkValueSchema = z
@@ -44,6 +50,10 @@ function App() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [pendingLink, setPendingLink] = useState<string | null>(null);
+  const [activeReviewSet, setActiveReviewSet] =
+    useState<ReviewRecommendation | null>(null);
+  const [recommendation, setRecommendation] =
+    useState<ReviewRecommendation | null>(null);
   const isIOS = osType() === "ios";
   const {
     theme,
@@ -63,6 +73,9 @@ function App() {
     setToastMessage(message);
     window.setTimeout(() => setToastMessage(null), 3000);
   }, []);
+  useEffect(() => {
+    setRecommendation(null);
+  }, [resetKey]);
   const quizzes = useQuizzes();
   const {
     quizzes: quizMetadata,
@@ -85,9 +98,18 @@ function App() {
     const parse = (value: unknown) => {
       const raw = getDeepLinkValue(value);
       try {
-        return new URL(raw).searchParams.get("quiz");
+        const url = new URL(raw);
+        const reviewSetId = url.searchParams.get("set");
+        if (reviewSetId) {
+          const reviewSet = getReviewSet(reviewSetId);
+          if (reviewSet) return { path: reviewSet.quizPath, reviewSet };
+          return null;
+        }
+        const path = url.searchParams.get("quiz");
+        return path ? { path, reviewSet: null } : null;
       } catch {
-        return raw.match(/quiz=([^&]+)/)?.[1] ?? null;
+        const path = raw.match(/quiz=([^&]+)/)?.[1];
+        return path ? { path, reviewSet: null } : null;
       }
     };
     const handleDeepLink = async (value: unknown) => {
@@ -106,8 +128,14 @@ function App() {
         );
         return;
       }
-      const path = parse(raw);
-      if (path) setPendingLink(path);
+      const target = parse(raw);
+      if (target) {
+        setActiveReviewSet(target.reviewSet);
+        setRecommendation(null);
+        setPendingLink(target.path);
+      } else if (raw.includes("set=")) {
+        showToast("This saved review set is no longer available.");
+      }
     };
     let disposed = false;
     let removeDeepLink: (() => void) | undefined;
@@ -179,11 +207,70 @@ function App() {
     }
   }, [pendingLink, quizMetadata, setSelectedQuizMeta, showToast]);
 
-  const { questions: shuffledQuestions, ...session } = useQuizSession(
+  const filteredQuiz = useMemo(() => {
+    if (!quizzes.activeQuiz || !activeReviewSet) return quizzes.activeQuiz;
+    if (activeReviewSet.quizPath !== quizzes.activeQuiz.path)
+      return quizzes.activeQuiz;
+    const ids = new Set(activeReviewSet.questionIds);
+    return {
+      ...quizzes.activeQuiz,
+      questions: quizzes.activeQuiz.questions.filter((question) =>
+        ids.has(question.id),
+      ),
+    };
+  }, [activeReviewSet, quizzes.activeQuiz]);
+  const filteredQuestionDocument = useMemo(() => {
+    if (!quizzes.activeQuestionDocument || !activeReviewSet)
+      return quizzes.activeQuestionDocument;
+    if (activeReviewSet.quizPath !== quizzes.activeQuestionDocument.path)
+      return quizzes.activeQuestionDocument;
+    const ids = new Set(activeReviewSet.questionIds);
+    return {
+      ...quizzes.activeQuestionDocument,
+      questions: quizzes.activeQuestionDocument.questions.filter((question) =>
+        ids.has(String(question.id)),
+      ),
+    };
+  }, [activeReviewSet, quizzes.activeQuestionDocument]);
+  const { questions: shuffledQuestions, ...quizSession } = useQuizSession(
     quizzes.selectedQuizMeta
-      ? `${quizzes.selectedQuizMeta.path}:${resetKey}`
+      ? `${quizzes.selectedQuizMeta.path}:${activeReviewSet?.id ?? "full"}:${resetKey}`
       : undefined,
-    quizzes.activeQuiz?.questions,
+    filteredQuiz?.questions,
+  );
+  const handleSessionComplete = useCallback(
+    (assessments: Record<string, Assessment>) => {
+      const selected = quizzes.selectedQuizMeta;
+      if (!selected || selected.is_worksheet) return;
+      const allQuestionIds = selected.is_question
+        ? (quizzes.activeQuestionDocument?.questions.map((question) =>
+            String(question.id),
+          ) ?? [])
+        : (quizzes.activeQuiz?.questions.map((question) => question.id) ?? []);
+      if (allQuestionIds.length === 0) return;
+      const nextRecommendation = completeAndSaveReview({
+        allQuestionIds,
+        assessments,
+        contentKind: selected.is_question ? "question" : "quiz",
+        quizPath: selected.path,
+        scope: activeReviewSet?.scope ?? "full",
+      });
+      setRecommendation(nextRecommendation);
+    },
+    [
+      activeReviewSet?.scope,
+      quizzes.activeQuestionDocument?.questions,
+      quizzes.activeQuiz?.questions,
+      quizzes.selectedQuizMeta,
+    ],
+  );
+  const selectQuiz = useCallback(
+    (quiz: QuizMetadata) => {
+      setActiveReviewSet(null);
+      setRecommendation(null);
+      setSelectedQuizMeta(quiz);
+    },
+    [setSelectedQuizMeta],
   );
   const selectIosFolder = useCallback(
     async (purpose: "quiz" | "vault") => {
@@ -248,20 +335,22 @@ function App() {
       groupedQuizzes={quizzes.groupedQuizzes}
       quizzes={quizzes.quizzes}
       selectedQuiz={quizzes.selectedQuizMeta}
-      setSelectedQuiz={quizzes.setSelectedQuizMeta}
+      setSelectedQuiz={selectQuiz}
       handleSync={() => void quizzes.handleSync()}
       isSyncing={quizzes.isSyncing}
       activeQuiz={
-        quizzes.activeQuiz
-          ? { ...quizzes.activeQuiz, questions: shuffledQuestions }
-          : null
+        filteredQuiz ? { ...filteredQuiz, questions: shuffledQuestions } : null
       }
       activeWorksheet={quizzes.activeWorksheet}
-      activeQuestionDocument={quizzes.activeQuestionDocument}
+      activeQuestionDocument={filteredQuestionDocument}
       loadingActiveQuiz={quizzes.loadingActiveQuiz}
       resetKey={resetKey}
       setResetKey={setResetKey}
-      session={session}
+      session={{
+        ...quizSession,
+        onSessionComplete: handleSessionComplete,
+        recommendation: recommendation ?? undefined,
+      }}
     />
   );
 }

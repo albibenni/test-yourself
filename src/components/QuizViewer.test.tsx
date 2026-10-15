@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
+import type { ReviewRecommendation } from "../learning/reviewProgress";
 import type { Quiz, QuizMetadata } from "../types";
 import { QuizViewer } from "./QuizViewer";
 
@@ -31,9 +32,15 @@ const quiz: Quiz = {
 function QuizViewerWithSession({
   sessionQuiz = quiz,
   initialVisibleCount = sessionQuiz.questions.length,
+  onSessionComplete,
+  recommendation,
 }: {
   sessionQuiz?: Quiz;
   initialVisibleCount?: number;
+  onSessionComplete?: React.ComponentProps<
+    typeof QuizViewer
+  >["onSessionComplete"];
+  recommendation?: ReviewRecommendation;
 } = {}) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
@@ -56,6 +63,8 @@ function QuizViewerWithSession({
       resetKey={0}
       onReset={() => undefined}
       onSchedule={() => undefined}
+      onSessionComplete={onSessionComplete}
+      recommendation={recommendation}
       answers={answers}
       setAnswers={setAnswers}
       visibleCount={visibleCount}
@@ -208,5 +217,55 @@ describe("QuizViewer", () => {
     fireEvent.click(screen.getByText("Last answer"));
 
     expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("reports question-level performance when a quiz is completed", () => {
+    const onSessionComplete = vi.fn();
+    const mixedQuiz: Quiz = {
+      ...quiz,
+      questions: [
+        {
+          ...quiz.questions[0],
+          options: [
+            { letter: "A", text: "First answer" },
+            { letter: "B", text: "Wrong answer" },
+          ],
+        },
+        quiz.questions[1],
+      ],
+    };
+    render(
+      <QuizViewerWithSession
+        onSessionComplete={onSessionComplete}
+        sessionQuiz={mixedQuiz}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Wrong answer"));
+    fireEvent.click(screen.getByText("Last answer"));
+
+    expect(onSessionComplete).toHaveBeenCalledWith({
+      "1": "incorrect",
+      "2": "correct",
+    });
+  });
+
+  it("shows the editable scheduling recommendation after completion", () => {
+    const recommendation: ReviewRecommendation = {
+      id: "review-1",
+      quizPath: quiz.path,
+      contentKind: "quiz",
+      scope: "incorrect",
+      questionIds: ["1"],
+      dueDate: "2026-10-16",
+      intervalDays: 1,
+      createdAt: "2026-10-15T10:00:00.000Z",
+    };
+    render(<QuizViewerWithSession recommendation={recommendation} />);
+
+    expect(
+      screen.getByText(/recommended next review: 2026-10-16/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/incorrect questions only/i)).toBeInTheDocument();
   });
 });

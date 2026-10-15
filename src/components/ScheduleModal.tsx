@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useTodoist } from "../hooks/useTodoist";
+import type { ReviewRecommendation } from "../learning/reviewProgress";
 import type { Project, QuizMetadata, Task } from "../types";
 import { ScheduleManagementDialog } from "./ScheduleManagementDialog";
 
@@ -10,6 +11,7 @@ interface ScheduleModalProps {
   quiz: QuizMetadata | null;
   onSuccess?: (dateText: string) => void;
   onCheckResult?: (message: string) => void;
+  recommendation?: ReviewRecommendation;
 }
 
 interface TaskCountMap {
@@ -22,6 +24,7 @@ export function ScheduleModal({
   quiz,
   onSuccess,
   onCheckResult,
+  recommendation,
 }: ScheduleModalProps) {
   const [taskContent, setTaskContent] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -161,13 +164,21 @@ export function ScheduleModal({
             exactDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           }
 
+          if (recommendation) exactDate = recommendation.dueDate;
           setDueDateString(exactDate);
           setPriority(defaultPriority);
           if (defaultProject) {
             setSelectedProjectId(defaultProject);
           }
 
-          if (defaultDate === "today") setDueDateText("Today");
+          if (recommendation) {
+            setDueDateText(
+              new Date(`${recommendation.dueDate}T00:00:00`).toLocaleDateString(
+                undefined,
+                { month: "short", day: "numeric" },
+              ),
+            );
+          } else if (defaultDate === "today") setDueDateText("Today");
           else if (defaultDate === "tomorrow") setDueDateText("Tomorrow");
           else if (defaultDate === "in 7 days" || defaultDate === "next week")
             setDueDateText("Next Week");
@@ -183,7 +194,7 @@ export function ScheduleModal({
         },
       );
     }
-  }, [isOpen, quiz, getDefaultSettings]);
+  }, [isOpen, quiz, getDefaultSettings, recommendation]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -280,10 +291,13 @@ export function ScheduleModal({
       const relativePath = quiz.topic
         ? `${quiz.topic}/${quiz.title}${extension}`
         : `${quiz.title}${extension}`;
-      const deepLink = `test-yourself://open?quiz=${encodeURIComponent(relativePath)}`;
+      const deepLink = recommendation
+        ? `test-yourself://review?set=${encodeURIComponent(recommendation.id)}`
+        : `test-yourself://open?quiz=${encodeURIComponent(relativePath)}`;
+      const linkLabel = recommendation ? "Open Review" : "Open Quiz";
       const finalDescription = taskDescription.trim()
-        ? `${taskDescription}\n\n[Open Quiz](${deepLink})`
-        : `[Open Quiz](${deepLink})`;
+        ? `${taskDescription}\n\n[${linkLabel}](${deepLink})`
+        : `[${linkLabel}](${deepLink})`;
 
       await addTask({
         content: taskContent,
@@ -615,6 +629,16 @@ export function ScheduleModal({
         {error && (
           <div className="error-message" role="alert" aria-live="assertive">
             {error}
+          </div>
+        )}
+
+        {recommendation && (
+          <div className="review-schedule-context">
+            Recommended {recommendation.dueDate} for{" "}
+            {recommendation.scope === "incorrect"
+              ? `${recommendation.questionIds.length} incorrect questions`
+              : `all ${recommendation.questionIds.length} questions`}
+            . You can change the date and every Todoist option below.
           </div>
         )}
 
