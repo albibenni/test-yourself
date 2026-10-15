@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import { useTodoist } from "../hooks/useTodoist";
 import type { Project, QuizMetadata, Task } from "../types";
 import { ScheduleManagementDialog } from "./ScheduleManagementDialog";
@@ -552,7 +553,7 @@ export function ScheduleModal({
     p.name.toLowerCase().includes(projectSearchQuery),
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: stable keyboard listener
+  // oxlint-disable react-hooks/exhaustive-deps -- stable keyboard listener
   useEffect(() => {
     if (!isOpen) return;
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -574,6 +575,7 @@ export function ScheduleModal({
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [isOpen, isScheduling, matchingTasks, onClose]);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (inputRef.current) {

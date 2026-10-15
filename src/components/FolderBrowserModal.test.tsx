@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+
 import { FolderBrowserModal } from "./FolderBrowserModal";
 
 vi.mock("@tauri-apps/api/core", () => ({

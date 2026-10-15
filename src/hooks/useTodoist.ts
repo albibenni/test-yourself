@@ -1,5 +1,6 @@
 import { load } from "@tauri-apps/plugin-store";
 import { useCallback, useState } from "react";
+
 import { STORE_FILENAME } from "../constants";
 import type {
   AddTaskArgs,

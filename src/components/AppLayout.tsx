@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { useMiddleClickScroll } from "../hooks/useMiddleClickScroll";
 import type {
   AccentColor,
@@ -395,9 +396,8 @@ export function AppLayout(props: AppLayoutProps) {
                       className="button-primary"
                       onClick={async () => {
                         if (isIOS) return selectIosFolder("quiz");
-                        const { open } = await import(
-                          "@tauri-apps/plugin-dialog"
-                        );
+                        const { open } =
+                          await import("@tauri-apps/plugin-dialog");
                         const selected = await open({
                           directory: true,
                           multiple: false,

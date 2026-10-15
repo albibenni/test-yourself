@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
 import type { Quiz, QuizMetadata } from "../types";
 import { QuizViewer } from "./QuizViewer";
 

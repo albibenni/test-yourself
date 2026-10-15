@@ -1,6 +1,7 @@
 import type { InvokeArgs } from "@tauri-apps/api/core";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
 import { CreateView } from "./CreateView";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));

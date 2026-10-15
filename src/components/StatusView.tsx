@@ -1,5 +1,6 @@
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
+
 import { StatusIcon, type StatusIconKind } from "./StatusIcon";
 
 export function StatusView({

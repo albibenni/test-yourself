@@ -16,27 +16,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install pnpm
-        uses: pnpm/setup@v2
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
+          node-version: "24"
+          cache: true
+          run-install: true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios
 
-      - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Check frontend
+        run: vp check
 
       - name: Run frontend tests
-        run: pnpm test
+        run: vp test run src
 
       - name: Prepare App Store Connect API key
         env:

@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react";
 import { useRef } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
 import { useMiddleClickScroll } from "./useMiddleClickScroll";
 
 function ScrollArea() {

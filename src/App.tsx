@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { type as osType } from "@tauri-apps/plugin-os";
 import { check } from "@tauri-apps/plugin-updater";
 import { useCallback, useEffect, useState } from "react";
+
 import "./styles/Foundation.css";
 import "./components/AppLayout.css";
 import "./components/Sidebar.css";

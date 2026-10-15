@@ -7,6 +7,7 @@ import {
   useState,
   type WheelEvent,
 } from "react";
+
 import { shouldReduceMotion } from "../utils/motionPreference";
 
 const DEAD_ZONE_PX = 10;

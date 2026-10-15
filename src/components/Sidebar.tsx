@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { APP_TITLE, DEFAULT_TOPIC } from "../constants";
 import type { QuizMetadata } from "../types";
 import { StatusView } from "./StatusView";
@@ -120,7 +121,7 @@ export function Sidebar({
     }
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: setIsSidebarOpen is a stable setState dispatch
+  // oxlint-disable react-hooks/exhaustive-deps -- setIsSidebarOpen is a stable setState dispatch
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
@@ -136,6 +137,7 @@ export function Sidebar({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+  // oxlint-enable react-hooks/exhaustive-deps
 
   return (
     <aside className={clsx("sidebar", !isSidebarOpen && "closed")}>

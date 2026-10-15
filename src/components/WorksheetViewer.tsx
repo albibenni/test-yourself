@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+
 import type { Worksheet } from "../types";
 import { focusAndCenter } from "../utils/focusAndCenter";
+
 import "./WorksheetViewer.css";
 
 const normalizeAnswer = (ans: string | undefined) => {

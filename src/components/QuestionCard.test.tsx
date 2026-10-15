@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
+
 import type { QuizQuestion } from "../types";
 import { shuffleQuizQuestions } from "../utils/quizShuffle";
 import { QuestionCard } from "./QuestionCard";

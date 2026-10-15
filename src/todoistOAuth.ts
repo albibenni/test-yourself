@@ -1,5 +1,6 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { z } from "zod";
+
 import { getSecureToken, setSecureToken } from "./utils/secureStore";
 
 export const TODOIST_OAUTH_CLIENT_ID =

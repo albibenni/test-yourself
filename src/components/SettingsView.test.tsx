@@ -3,7 +3,8 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { load } from "@tauri-apps/plugin-store";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
 import { SettingsView } from "./SettingsView";
 
@@ -44,10 +45,10 @@ vi.mock("@tauri-apps/plugin-updater", () => ({
 
 describe("SettingsView", () => {
   let mockStore: {
-    get: import("vitest").Mock;
-    set: import("vitest").Mock;
-    save: import("vitest").Mock;
-    delete: import("vitest").Mock;
+    get: import("vite-plus/test").Mock;
+    set: import("vite-plus/test").Mock;
+    save: import("vite-plus/test").Mock;
+    delete: import("vite-plus/test").Mock;
   };
 
   beforeEach(() => {

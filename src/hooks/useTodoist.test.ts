@@ -2,7 +2,8 @@
 
 import { load } from "@tauri-apps/plugin-store";
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+
 import { TodoistProvider } from "../providers/TodoistProvider";
 import { getSecureToken } from "../utils/secureStore";
 import { useTodoist } from "./useTodoist";
@@ -32,7 +33,7 @@ vi.mock("../providers/TodoistProvider", () => {
 });
 
 describe("useTodoist hook", () => {
-  let mockStoreGet: import("vitest").Mock;
+  let mockStoreGet: import("vite-plus/test").Mock;
   const oauthSession = () =>
     JSON.stringify({
       access_token: "oauth-access-token",

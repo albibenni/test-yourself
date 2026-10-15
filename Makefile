@@ -127,11 +127,11 @@ test-ui:
 test-rust:
 	cd src-tauri && cargo test
 
-# Run ESLint to check for code issues
+# Run Vite+ lint checks
 lint:
 	pnpm lint
 
-# Run Prettier and rustfmt to format all files
+# Run Oxfmt and rustfmt on all files
 format:
 	pnpm indent:write
 	cd src-tauri && cargo fmt
@@ -154,7 +154,7 @@ coverage-rust:
 coverage-ui:
 	@command -v jq >/dev/null 2>&1 || (echo "jq is required. Install it with your package manager."; exit 1)
 	@command -v column >/dev/null 2>&1 || (echo "column is required."; exit 1)
-	@pnpm vitest run --coverage.enabled --coverage.reporter=json-summary >/dev/null 2>&1; \
+	@pnpm exec vp test run --coverage.enabled --coverage.reporter=json-summary >/dev/null 2>&1; \
 	jq -r '"File\tLines %\tBranches %\tFunctions %", (to_entries | .[] | select(.key != "total") | "\(.key | sub("^.*/src/"; "src/"))\t\(.value.lines.pct // 0)\t\(.value.branches.pct // 0)\t\(.value.functions.pct // 0)"), "TOTAL\t\(.total.lines.pct // 0)\t\(.total.branches.pct // 0)\t\(.total.functions.pct // 0)"' coverage/coverage-summary.json | column -t -s "$$(printf '\t')"
 
 # Run combined coverage summary
@@ -169,7 +169,7 @@ coverage:
 	backend_funcs=$$(jq -r '.data[0].totals.functions.percent | if type == "number" then (.*100|round)/100 else 0 end' "$$tmp_file"); \
 	rm -f "$$tmp_file"; \
 	echo "Running Frontend coverage..."; \
-	cd .. && pnpm vitest run --coverage.enabled --coverage.reporter=json-summary >/dev/null 2>&1; \
+	cd .. && pnpm exec vp test run --coverage.enabled --coverage.reporter=json-summary >/dev/null 2>&1; \
 	frontend_lines=$$(jq -r '.total.lines.pct | if type == "number" then . else 0 end' coverage/coverage-summary.json); \
 	frontend_funcs=$$(jq -r '.total.functions.pct | if type == "number" then . else 0 end' coverage/coverage-summary.json); \
 	echo ""; \

@@ -3,10 +3,7 @@ set -eu
 
 echo "Running pre-commit checks..."
 
-# Type-check the frontend without emitting build files.
-pnpm exec tsc --noEmit
-
-# Biome checks both lint rules and formatting without changing or re-staging files.
-pnpm biome check .
+# Vite+ checks formatting, lint rules, and TypeScript types.
+pnpm exec vp check
 
 echo "Pre-commit checks passed!"

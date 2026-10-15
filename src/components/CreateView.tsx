@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+
 import "./CreateView.css";
 
 type Note = { name: string; path: string; relative_path: string };

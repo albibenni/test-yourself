@@ -1,17 +1,22 @@
 {
   "name": "test-yourself",
-  "private": true,
   "version": "5.1.0",
-  "packageManager": "pnpm@12.4.1",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview",
     "tauri": "tauri",
-    "test": "vitest run src",
-    "lint": "biome check .",
-    "indent:write": "biome format --write .",
+    "test": "vp test run src",
+    "test:watch": "vp test",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "ci": "vp check && vp test run src && vp run build",
+    "lint": "vp lint",
+    "format": "vp fmt . --write",
+    "format:check": "vp fmt . --check",
+    "indent:write": "vp fmt . --write",
     "prepare": "husky"
   },
   "dependencies": {
@@ -30,19 +35,21 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.6",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/node": "^26.6.5",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "catalog:",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "typescript": "~7.0.2",
-    "vite": "^7.0.4",
+    "vite": "catalog:",
     "vite-plugin-css-injected-by-js": "^5.0.2",
-    "vitest": "^4.1.10"
-  }
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@12.4.1"
 }

@@ -5,6 +5,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { load } from "@tauri-apps/plugin-store";
 import { check } from "@tauri-apps/plugin-updater";
 import React, { useEffect, useState } from "react";
+
 import { STORE_FILENAME } from "../constants";
 import { TodoistProvider } from "../providers/TodoistProvider";
 import {
@@ -22,6 +23,7 @@ import type {
   ThemeType,
 } from "../types";
 import { getSecureToken, setSecureToken } from "../utils/secureStore";
+
 import "./SettingsView.css";
 
 interface Project {
