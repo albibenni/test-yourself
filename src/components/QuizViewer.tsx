@@ -185,6 +185,8 @@ export function QuizViewer({
             correctCount={correctCount}
             totalQuestions={totalQuestions}
             onComplete={onSessionComplete}
+            recommendation={recommendation}
+            onSchedule={onSchedule}
           />
         ) : (
           <StatusView compact kind="error">
@@ -192,20 +194,11 @@ export function QuizViewer({
           </StatusView>
         )}
       </div>
-      {recommendation && (
-        <div className="review-recommendation" role="status">
-          <div>
-            <strong>Recommended next review: {recommendation.dueDate}</strong>
-            <span>
-              {recommendation.scope === "incorrect"
-                ? `Incorrect questions only (${recommendation.questionIds.length})`
-                : `All questions (${recommendation.questionIds.length})`}
-            </span>
-          </div>
-          <button className="button-primary" onClick={onSchedule} type="button">
-            Schedule in Todoist
-          </button>
-        </div>
+      {recommendation && !activeQuiz && (
+        <ReviewRecommendationBanner
+          recommendation={recommendation}
+          onSchedule={onSchedule}
+        />
       )}
     </div>
   );
@@ -225,6 +218,8 @@ interface QuizQuestionsProps {
   correctCount: number;
   totalQuestions: number;
   onComplete?: (assessments: Record<string, Assessment>) => void;
+  recommendation?: ReviewRecommendation;
+  onSchedule: () => void;
 }
 
 function QuizQuestions({
@@ -239,6 +234,8 @@ function QuizQuestions({
   correctCount,
   totalQuestions,
   onComplete,
+  recommendation,
+  onSchedule,
 }: QuizQuestionsProps) {
   const [navigationTargetIndex, setNavigationTargetIndex] = useState<
     number | null
@@ -329,6 +326,12 @@ function QuizQuestions({
           );
         })}
       </div>
+      {recommendation && (
+        <ReviewRecommendationBanner
+          recommendation={recommendation}
+          onSchedule={onSchedule}
+        />
+      )}
       {isAllAnswered && (
         <QuizReview
           quiz={quiz}
@@ -338,6 +341,30 @@ function QuizQuestions({
         />
       )}
     </>
+  );
+}
+
+function ReviewRecommendationBanner({
+  recommendation,
+  onSchedule,
+}: {
+  recommendation: ReviewRecommendation;
+  onSchedule: () => void;
+}) {
+  return (
+    <div className="review-recommendation" role="status">
+      <div>
+        <strong>Recommended next review: {recommendation.dueDate}</strong>
+        <span>
+          {recommendation.scope === "incorrect"
+            ? `Incorrect questions only (${recommendation.questionIds.length})`
+            : `All questions (${recommendation.questionIds.length})`}
+        </span>
+      </div>
+      <button className="button-primary" onClick={onSchedule} type="button">
+        Schedule in Todoist
+      </button>
+    </div>
   );
 }
 
@@ -354,6 +381,8 @@ function QuizReview({
   | "resetKey"
   | "lastQuestionElementRef"
   | "isAllAnswered"
+  | "recommendation"
+  | "onSchedule"
 >) {
   return (
     <div className="quiz-summary">

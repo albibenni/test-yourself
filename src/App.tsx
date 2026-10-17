@@ -23,6 +23,7 @@ import {
   completeAndSaveReview,
   getReviewSet,
   type ReviewRecommendation,
+  updateReviewSchedule,
 } from "./learning/reviewProgress";
 import { NullableStringSchema, type QuizMetadata } from "./schemas";
 import { completeTodoistAuthorization } from "./todoistOAuth";
@@ -272,6 +273,14 @@ function App() {
     },
     [setSelectedQuizMeta],
   );
+  const handleReviewScheduled = useCallback(
+    (dueDate: string) => {
+      if (!recommendation) return;
+      const updated = updateReviewSchedule(recommendation.id, dueDate);
+      if (updated) setRecommendation(updated);
+    },
+    [recommendation],
+  );
   const selectIosFolder = useCallback(
     async (purpose: "quiz" | "vault") => {
       try {
@@ -346,6 +355,7 @@ function App() {
       loadingActiveQuiz={quizzes.loadingActiveQuiz}
       resetKey={resetKey}
       setResetKey={setResetKey}
+      onReviewScheduled={handleReviewScheduled}
       session={{
         ...quizSession,
         onSessionComplete: handleSessionComplete,

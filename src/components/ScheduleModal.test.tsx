@@ -163,9 +163,11 @@ describe("ScheduleModal", () => {
   });
 
   it("prefills but leaves editable a recommended review-set schedule", async () => {
+    const onSuccess = vi.fn();
     render(
       <ScheduleModal
         {...defaultProps}
+        onSuccess={onSuccess}
         recommendation={{
           id: "review-123",
           quizPath: mockQuiz.path,
@@ -191,6 +193,7 @@ describe("ScheduleModal", () => {
           description: "[Open Review](test-yourself://review?set=review-123)",
         }),
       );
+      expect(onSuccess).toHaveBeenCalledWith("October 16th", "2026-10-16");
     });
   });
 

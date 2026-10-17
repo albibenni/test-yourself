@@ -268,4 +268,27 @@ describe("QuizViewer", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/incorrect questions only/i)).toBeInTheDocument();
   });
+
+  it("places the recommendation immediately before the quiz review", () => {
+    const recommendation: ReviewRecommendation = {
+      id: "review-1",
+      quizPath: quiz.path,
+      contentKind: "quiz",
+      scope: "full",
+      questionIds: ["1", "2"],
+      dueDate: "2026-10-18",
+      intervalDays: 3,
+      createdAt: "2026-10-15T10:00:00.000Z",
+    };
+    render(<QuizViewerWithSession recommendation={recommendation} />);
+
+    fireEvent.click(screen.getByText("First answer"));
+    fireEvent.click(screen.getByText("Last answer"));
+
+    const banner = screen
+      .getByText(/recommended next review: 2026-10-18/i)
+      .closest(".review-recommendation")!;
+    const review = screen.getByText("Quiz Review").closest(".quiz-summary");
+    expect(banner.nextElementSibling).toBe(review);
+  });
 });

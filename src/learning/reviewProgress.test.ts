@@ -6,6 +6,7 @@ import {
   getReviewSet,
   LearningDataSchema,
   loadLearningData,
+  updateReviewSchedule,
 } from "./reviewProgress";
 
 const allQuestionIds = ["1", "2", "3"];
@@ -165,6 +166,60 @@ describe("LearningDataSchema", () => {
     expect(recommendation.id).toBe("review-123");
     expect(getReviewSet("review-123", storage)).toEqual(recommendation);
     expect(loadLearningData(storage).records[0]?.attempts).toHaveLength(1);
+  });
+
+  it("updates the saved review date and full-review interval after scheduling", () => {
+    const storage = new MemoryStorage();
+    completeAndSaveReview(
+      {
+        allQuestionIds,
+        assessments: { "1": "correct", "2": "correct", "3": "correct" },
+        contentKind: "quiz",
+        now,
+        quizPath: "/vault/security.md",
+        scope: "full",
+      },
+      storage,
+      () => "review-123",
+    );
+
+    const updated = updateReviewSchedule("review-123", "2026-12-14", storage);
+
+    expect(updated).toMatchObject({
+      dueDate: "2026-12-14",
+      intervalDays: 60,
+    });
+    expect(
+      loadLearningData(storage).records[0]?.state.currentIntervalDays,
+    ).toBe(60);
+    expect(getReviewSet("review-123", storage)).toEqual(updated);
+  });
+
+  it("keeps the resumed full-review interval when rescheduling remediation", () => {
+    const storage = new MemoryStorage();
+    completeAndSaveReview(
+      {
+        allQuestionIds,
+        assessments: { "1": "incorrect", "2": "correct", "3": "correct" },
+        contentKind: "quiz",
+        now,
+        quizPath: "/vault/security.md",
+        scope: "full",
+      },
+      storage,
+      () => "review-123",
+    );
+
+    updateReviewSchedule("review-123", "2026-10-22", storage);
+
+    expect(loadLearningData(storage).records[0]?.state).toMatchObject({
+      currentIntervalDays: null,
+      resumeIntervalDays: 3,
+    });
+    expect(getReviewSet("review-123", storage)).toMatchObject({
+      dueDate: "2026-10-22",
+      intervalDays: 7,
+    });
   });
 });
 

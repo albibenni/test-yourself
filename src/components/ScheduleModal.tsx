@@ -9,7 +9,7 @@ interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   quiz: QuizMetadata | null;
-  onSuccess?: (dateText: string) => void;
+  onSuccess?: (dateText: string, dueDate: string) => void;
   onCheckResult?: (message: string) => void;
   recommendation?: ReviewRecommendation;
 }
@@ -318,12 +318,12 @@ export function ScheduleModal({
             const v = n % 100;
             return n + (s[(v - 20) % 10] || s[v] || s[0]);
           };
-          onSuccess?.(`${month} ${getOrdinal(dayNum)}`);
+          onSuccess?.(`${month} ${getOrdinal(dayNum)}`, dueDateString);
         } else {
-          onSuccess?.(dueDateString);
+          onSuccess?.(dueDateString, dueDateString);
         }
       } else {
-        onSuccess?.(dueDateString);
+        onSuccess?.(dueDateString, dueDateString);
       }
       onClose();
     } catch (err: unknown) {
@@ -638,7 +638,7 @@ export function ScheduleModal({
             {recommendation.scope === "incorrect"
               ? `${recommendation.questionIds.length} incorrect questions`
               : `all ${recommendation.questionIds.length} questions`}
-            . You can change the date and every Todoist option below.
+            . Changing the date also updates this quiz's learning interval.
           </div>
         )}
 

@@ -162,7 +162,8 @@
 .quiz-question-content > .questions-container,
 .quiz-question-content > .worksheet-viewer,
 .quiz-question-content > .question-document-viewer,
-.quiz-question-content > .quiz-summary {
+.quiz-question-content > .quiz-summary,
+.quiz-question-content > .review-recommendation {
   width: min(100%, var(--content-max-width));
   margin-inline: auto;
 }
@@ -266,7 +267,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin: 1.5rem;
+  margin-block: 1.5rem;
+  margin-inline: auto;
   padding: 1rem;
   border: 1px solid color-mix(in srgb, var(--accent-color) 45%, transparent);
   border-radius: 12px;

@@ -6,12 +6,7 @@ export type Assessment = z.infer<typeof AssessmentSchema>;
 export const ReviewScopeSchema = z.enum(["full", "incorrect"]);
 export type ReviewScope = z.infer<typeof ReviewScopeSchema>;
 
-export const ReviewIntervalSchema = z.union([
-  z.literal(3),
-  z.literal(7),
-  z.literal(14),
-  z.literal(30),
-]);
+export const ReviewIntervalSchema = z.number().int().positive();
 export type ReviewInterval = z.infer<typeof ReviewIntervalSchema>;
 
 export const QuizLearningStateSchema = z.object({
@@ -29,7 +24,7 @@ export const ReviewRecommendationSchema = z.object({
   scope: ReviewScopeSchema,
   questionIds: z.array(z.string()),
   dueDate: z.string().date(),
-  intervalDays: z.union([z.literal(1), ReviewIntervalSchema]),
+  intervalDays: ReviewIntervalSchema,
   createdAt: z.string().datetime(),
 });
 export type ReviewRecommendation = z.infer<typeof ReviewRecommendationSchema>;
@@ -74,17 +69,19 @@ interface CompletionResult {
 const nextSuccessfulInterval = (
   current: ReviewInterval | null | undefined,
 ): ReviewInterval => {
-  if (current === 3) return 7;
-  if (current === 7) return 14;
-  if (current === 14 || current === 30) return 30;
-  return 3;
+  if (!current || current < 3) return 3;
+  if (current < 7) return 7;
+  if (current < 14) return 14;
+  if (current < 30) return 30;
+  return current;
 };
 
 const recoveryInterval = (
   current: ReviewInterval | null | undefined,
 ): ReviewInterval => {
+  if (current && current > 30) return Math.max(14, Math.round(current / 2));
   if (current === 30) return 14;
-  if (current === 14) return 7;
+  if (current && current >= 14) return 7;
   return 3;
 };
 
@@ -248,4 +245,52 @@ export function getReviewSet(
   return loadLearningData(storage).reviewSets.find(
     (reviewSet) => reviewSet.id === id,
   );
+}
+
+const daysBetween = (now: Date, dueDate: string): number => {
+  const [year, month, day] = dueDate.split("-").map(Number);
+  const start = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = Date.UTC(year, month - 1, day);
+  return Math.max(1, Math.round((end - start) / 86_400_000));
+};
+
+export function updateReviewSchedule(
+  id: string,
+  dueDate: string,
+  storage: Storage = window.localStorage,
+): ReviewRecommendation | undefined {
+  const data = loadLearningData(storage);
+  const reviewSetIndex = data.reviewSets.findIndex(
+    (reviewSet) => reviewSet.id === id,
+  );
+  if (reviewSetIndex === -1) return undefined;
+
+  const intervalDays = daysBetween(
+    new Date(data.reviewSets[reviewSetIndex].createdAt),
+    dueDate,
+  );
+  const updatedReviewSet = ReviewRecommendationSchema.parse({
+    ...data.reviewSets[reviewSetIndex],
+    dueDate,
+    intervalDays,
+  });
+  const reviewSets = [...data.reviewSets];
+  reviewSets[reviewSetIndex] = updatedReviewSet;
+  const records = data.records.map((record) => {
+    if (
+      record.quizPath !== updatedReviewSet.quizPath ||
+      updatedReviewSet.scope !== "full"
+    )
+      return record;
+    return LearningRecordSchema.parse({
+      ...record,
+      state: { ...record.state, currentIntervalDays: intervalDays },
+    });
+  });
+
+  saveLearningData(
+    LearningDataSchema.parse({ ...data, records, reviewSets }),
+    storage,
+  );
+  return updatedReviewSet;
 }

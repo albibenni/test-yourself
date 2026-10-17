@@ -90,6 +90,7 @@ interface AppLayoutProps {
   loadingActiveQuiz: boolean;
   resetKey: number;
   setResetKey: Dispatch<SetStateAction<number>>;
+  onReviewScheduled: (dueDate: string) => void;
   session: Omit<
     React.ComponentProps<typeof QuizViewer>,
     | "selectedQuiz"
@@ -163,6 +164,7 @@ export function AppLayout(props: AppLayoutProps) {
     loadingActiveQuiz,
     resetKey,
     setResetKey,
+    onReviewScheduled,
     session,
   } = props;
 
@@ -440,7 +442,10 @@ export function AppLayout(props: AppLayoutProps) {
               onClose={() => setScheduleOpen(false)}
               quiz={selectedQuiz}
               recommendation={session.recommendation}
-              onSuccess={(date) => showToast(`Task scheduled for ${date}!`)}
+              onSuccess={(date, dueDate) => {
+                if (session.recommendation) onReviewScheduled(dueDate);
+                showToast(`Task scheduled for ${date}!`);
+              }}
               onCheckResult={showToast}
             />
           </Suspense>
