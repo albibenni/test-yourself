@@ -992,4 +992,58 @@ describe("App Component", () => {
     expect(screen.queryByText("1. What is React?")).not.toBeInTheDocument();
     expect(screen.getByText("0 of 1 answered")).toBeInTheDocument();
   });
+
+  it("suggests the next full review after a focused review succeeds", async () => {
+    localStorageMock.getItem.mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        records: [
+          {
+            quizPath: "/path/react.md",
+            contentKind: "quiz",
+            state: {
+              currentIntervalDays: null,
+              pendingIncorrectIds: ["2"],
+              resumeIntervalDays: 3,
+              status: "remediation",
+            },
+            attempts: [],
+          },
+        ],
+        reviewSets: [
+          {
+            id: "focused-review",
+            quizPath: "/path/react.md",
+            contentKind: "quiz",
+            scope: "incorrect",
+            questionIds: ["2"],
+            dueDate: "2026-10-18",
+            intervalDays: 1,
+            createdAt: "2026-10-17T10:00:00.000Z",
+          },
+        ],
+      }),
+    );
+    vi.mocked(invoke).mockImplementation((cmd: string, args?: unknown) => {
+      if (cmd === "get_quizzes") return Promise.resolve(mockQuizzes);
+      if (cmd === "get_quiz_content") {
+        const path = (args as { path?: string })?.path;
+        return Promise.resolve(
+          mockQuizzes.find((quiz) => quiz.path === path) || null,
+        );
+      }
+      if (cmd === "get_initial_url")
+        return Promise.resolve("test-yourself://review?set=focused-review");
+      return Promise.resolve(null);
+    });
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("Facebook"));
+
+    expect(
+      await screen.findByText(/recommended next review:/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/all questions \(2\)/i)).toBeInTheDocument();
+  });
 });

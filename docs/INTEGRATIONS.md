@@ -40,7 +40,11 @@ The application connects to Todoist exclusively through OAuth 2.0 with PKCE. Whe
    - `dueString`: The selected ISO date string (e.g., `YYYY-MM-DD`).
    - `priority`: Mapped correctly to the Todoist API priority levels.
 
-When a quiz or open-question session has been completed, the dialog is prefilled with the app's recommended date while every Todoist field remains editable. The task link points to a locally saved review set, allowing Todoist to reopen either the incorrect questions or the complete suite. Todoist remains the scheduling authority; Test Yourself records performance and calculates only the recommendation.
+When a quiz or open-question session has been completed, the dialog is prefilled with the app's recommended date while every Todoist field remains editable. The task link points to a review set saved under `.test-yourself/events/` in the selected quiz folder, allowing Todoist to reopen either the incorrect questions or the complete suite on any device that has the synchronized folder. Todoist remains the scheduling authority; Test Yourself records performance and calculates only the recommendation.
+
+### Git-synced review state
+
+Test Yourself is Git-agnostic: it reads and writes vault files but never commits, pulls, pushes, or stores Git credentials. Review changes use uniquely named, append-only event files so independent device changes normally merge without touching the same file. Documents receive a stable `test-yourself-id` in YAML frontmatter, while event files retain the relative vault path needed to locate the document on each device. Deterministic reconciliation events preserve concurrent attempts and choose the more conservative learning interval.
 
 ### Security
 

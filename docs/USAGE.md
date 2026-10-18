@@ -47,7 +47,7 @@ This will instantly create a task in Todoist. The task description contains a `t
 
 ### Recommended and focused reviews
 
-After a quiz is completed, Test Yourself stores question-level performance locally and suggests a review date. The suggestion is only a starting point: the Todoist scheduling dialog still lets you freely change the date, priority, project, title, and description.
+After a quiz is completed, Test Yourself stores question-level performance in the selected quiz folder and suggests a review date. The suggestion is only a starting point: the Todoist scheduling dialog still lets you freely change the date, priority, project, title, and description.
 
 - An initial mistake produces an incorrect-only review suggestion for tomorrow.
 - Completing that focused review produces a full-quiz suggestion in 3 days.
@@ -55,6 +55,10 @@ After a quiz is completed, Test Yourself stores question-level performance local
 - A failed longer review first schedules its incorrect questions for tomorrow, then shortens the following full review according to the previous interval.
 
 Focused Todoist tasks contain a `test-yourself://review?set=...` deep link. Opening the task launches Test Yourself with only the questions saved in that review set. A later full-review task still contains the complete question suite.
+
+Review history is written as immutable JSON events under `.test-yourself/events/`. Test Yourself also adds a stable `test-yourself-id` to a document's YAML frontmatter when that document is first reviewed. Keep both the Markdown documents and `.test-yourself/` in the same Git-synced Obsidian vault to make review links and learning progress available on another device. Test Yourself never runs Git commands; commit, push, pull, and conflict handling remain part of your existing Git workflow.
+
+Existing browser-local progress is migrated automatically the first time this version opens the quiz folder. The original local copy is retained as a fallback. If two devices complete the same review before synchronizing, both attempts are retained and the merged learning state uses the more conservative interval.
 
 ## Mobile status
 

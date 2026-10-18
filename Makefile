@@ -1,18 +1,5 @@
 .PHONY: i dev dev-ios dev-ios-open dev-ios-device sim-ios open-ios build windows-test test test-ui test-rust coverage coverage-rust coverage-ui lint format clean release releasewin install-app uninstall-app remove-aur build-aur install-aur
 
-# Use sccache for Make-driven Rust builds when it is installed locally. CI uses
-# its own GitHub Actions cache and does not require this executable.
-ifeq ($(OS),Windows_NT)
-SCCACHE := $(shell where sccache 2>NUL)
-ifneq ($(strip $(SCCACHE)),)
-export RUSTC_WRAPPER := $(firstword $(SCCACHE))
-endif
-else
-ifneq ($(shell command -v sccache 2>/dev/null),)
-export RUSTC_WRAPPER := $(shell command -v sccache)
-endif
-endif
-
 # Install dependencies
 i:
 	pnpm install
@@ -204,7 +191,7 @@ release:
 	node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const conf = JSON.parse(fs.readFileSync(file)); conf.version = '$$new_version'; fs.writeFileSync(file, JSON.stringify(conf, null, 2) + '\n');"; \
 	node -e "const fs = require('fs'); const file = 'src-tauri/Cargo.toml'; let toml = fs.readFileSync(file, 'utf8'); toml = toml.replace(/^version = \".*\"$$/m, 'version = \"$$new_version\"'); fs.writeFileSync(file, toml);"; \
 	node -e "const fs = require('fs'); const file = 'aur/PKGBUILD'; let pkg = fs.readFileSync(file, 'utf8'); pkg = pkg.replace(/^pkgver=.*$$/m, 'pkgver=' + '$$new_version'); fs.writeFileSync(file, pkg);"; \
-	pnpm tauri build --no-bundle; \
+	CARGO_BUILD_RUSTC_WRAPPER= pnpm tauri build --no-bundle; \
 	pnpm run indent:write; \
 	git add -A; \
 	git commit -m "chore: release v$$new_version"; \

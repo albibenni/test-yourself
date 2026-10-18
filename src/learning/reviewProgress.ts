@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { z } from "zod";
 
 export const AssessmentSchema = z.enum(["correct", "partial", "incorrect"]);
@@ -149,6 +150,7 @@ export function calculateReviewCompletion({
 }
 
 const LEARNING_STORAGE_KEY = "learning_progress_v1";
+const LEARNING_BACKUP_STORAGE_KEY = "learning_progress_v1_backup";
 const EMPTY_LEARNING_DATA: LearningData = {
   version: 1,
   records: [],
@@ -169,6 +171,23 @@ export function loadLearningData(storage: Storage = window.localStorage) {
 const saveLearningData = (data: LearningData, storage: Storage) => {
   storage.setItem(LEARNING_STORAGE_KEY, JSON.stringify(data));
 };
+
+export async function syncLearningProgress(
+  storage: Storage = window.localStorage,
+): Promise<LearningData> {
+  const localData = loadLearningData(storage);
+  if (
+    localData.records.length > 0 &&
+    storage.getItem(LEARNING_BACKUP_STORAGE_KEY) === null
+  ) {
+    storage.setItem(LEARNING_BACKUP_STORAGE_KEY, JSON.stringify(localData));
+  }
+  const synced = LearningDataSchema.parse(
+    await invoke("sync_learning_progress", { localData }),
+  );
+  saveLearningData(synced, storage);
+  return synced;
+}
 
 interface SaveCompletionInput {
   allQuestionIds: string[];

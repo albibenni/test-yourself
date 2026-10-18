@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vite-plus/test";
+import { invoke } from "@tauri-apps/api/core";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import {
   calculateReviewCompletion,
@@ -6,8 +7,11 @@ import {
   getReviewSet,
   LearningDataSchema,
   loadLearningData,
+  syncLearningProgress,
   updateReviewSchedule,
 } from "./reviewProgress";
+
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
 const allQuestionIds = ["1", "2", "3"];
 const now = new Date(2026, 9, 15, 12);
@@ -221,36 +225,89 @@ describe("LearningDataSchema", () => {
       intervalDays: 7,
     });
   });
+
+  it("replaces device-local progress with the validated vault result", async () => {
+    const storage = new MemoryStorage();
+    const synced = {
+      version: 1 as const,
+      records: [],
+      reviewSets: [
+        {
+          id: "review-from-another-device",
+          quizPath: "/this-device/security.md",
+          contentKind: "quiz" as const,
+          scope: "full" as const,
+          questionIds: ["1"],
+          dueDate: "2026-10-21",
+          intervalDays: 3,
+          createdAt: "2026-10-18T10:00:00.000Z",
+        },
+      ],
+    };
+    vi.mocked(invoke).mockResolvedValueOnce(synced);
+
+    await expect(syncLearningProgress(storage)).resolves.toEqual(synced);
+    expect(loadLearningData(storage)).toEqual(synced);
+    expect(invoke).toHaveBeenCalledWith("sync_learning_progress", {
+      localData: { version: 1, records: [], reviewSets: [] },
+    });
+  });
+
+  it("keeps an untouched backup before migrating local progress", async () => {
+    const storage = new MemoryStorage();
+    completeAndSaveReview(
+      {
+        allQuestionIds,
+        assessments: { "1": "correct", "2": "correct", "3": "correct" },
+        contentKind: "quiz",
+        now,
+        quizPath: "/old-clone/security.md",
+        scope: "full",
+      },
+      storage,
+      () => "legacy-review",
+    );
+    const original = storage.getItem("learning_progress_v1");
+    vi.mocked(invoke).mockResolvedValueOnce({
+      version: 1,
+      records: [],
+      reviewSets: [],
+    });
+
+    await syncLearningProgress(storage);
+
+    expect(storage.getItem("learning_progress_v1_backup")).toBe(original);
+  });
 });
 
 class MemoryStorage implements Storage {
-  private value: string | null;
+  private values = new Map<string, string>();
 
   constructor(value: string | null = null) {
-    this.value = value;
+    if (value !== null) this.values.set("learning_progress_v1", value);
   }
 
   get length() {
-    return this.value === null ? 0 : 1;
+    return this.values.size;
   }
 
   clear() {
-    this.value = null;
+    this.values.clear();
   }
 
-  getItem() {
-    return this.value;
+  getItem(key: string) {
+    return this.values.get(key) ?? null;
   }
 
-  key() {
-    return this.value === null ? null : "learning_progress_v1";
+  key(index: number) {
+    return [...this.values.keys()][index] ?? null;
   }
 
-  removeItem() {
-    this.value = null;
+  removeItem(key: string) {
+    this.values.delete(key);
   }
 
-  setItem(_key: string, value: string) {
-    this.value = value;
+  setItem(key: string, value: string) {
+    this.values.set(key, value);
   }
 }

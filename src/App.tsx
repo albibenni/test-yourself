@@ -23,6 +23,7 @@ import {
   completeAndSaveReview,
   getReviewSet,
   type ReviewRecommendation,
+  syncLearningProgress,
   updateReviewSchedule,
 } from "./learning/reviewProgress";
 import { NullableStringSchema, type QuizMetadata } from "./schemas";
@@ -128,6 +129,14 @@ function App() {
             : "Todoist authorization failed.",
         );
         return;
+      }
+      try {
+        await syncLearningProgress();
+      } catch (error) {
+        console.warn(
+          "Unable to sync learning progress from the quiz folder:",
+          error,
+        );
       }
       const target = parse(raw);
       if (target) {
@@ -257,6 +266,16 @@ function App() {
         scope: activeReviewSet?.scope ?? "full",
       });
       setRecommendation(nextRecommendation);
+      void syncLearningProgress()
+        .then((data) => {
+          const synced = data.reviewSets.find(
+            (reviewSet) => reviewSet.id === nextRecommendation.id,
+          );
+          if (synced) setRecommendation(synced);
+        })
+        .catch((error) =>
+          console.warn("Unable to sync completed review:", error),
+        );
     },
     [
       activeReviewSet?.scope,
@@ -278,6 +297,9 @@ function App() {
       if (!recommendation) return;
       const updated = updateReviewSchedule(recommendation.id, dueDate);
       if (updated) setRecommendation(updated);
+      void syncLearningProgress().catch((error) =>
+        console.warn("Unable to sync the updated review schedule:", error),
+      );
     },
     [recommendation],
   );
@@ -345,7 +367,11 @@ function App() {
       quizzes={quizzes.quizzes}
       selectedQuiz={quizzes.selectedQuizMeta}
       setSelectedQuiz={selectQuiz}
-      handleSync={() => void quizzes.handleSync()}
+      handleSync={() => {
+        void Promise.all([quizzes.handleSync(), syncLearningProgress()]).catch(
+          (error) => console.warn("Unable to sync learning progress:", error),
+        );
+      }}
       isSyncing={quizzes.isSyncing}
       activeQuiz={
         filteredQuiz ? { ...filteredQuiz, questions: shuffledQuestions } : null

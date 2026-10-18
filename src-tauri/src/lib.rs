@@ -1,3 +1,4 @@
+mod learning_store;
 pub mod models;
 pub mod parser;
 use std::io::{Read, Write};
@@ -434,8 +435,12 @@ mod credential_tests {
 }
 
 #[tauri::command]
-fn get_initial_url(state: tauri::State<InitialUrl>) -> Option<String> {
-    state.0.lock().unwrap().take()
+fn get_initial_url(state: tauri::State<InitialUrl>) -> Result<Option<String>, String> {
+    state
+        .0
+        .lock()
+        .map_err(|_| "Initial deep-link state is unavailable".to_string())
+        .map(|mut pending_url| pending_url.take())
 }
 
 #[tauri::command]
@@ -745,9 +750,13 @@ pub fn run() {
             creation_status,
             generate_material,
             send_generation_input,
+            learning_store::sync_learning_progress,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|error| {
+            eprintln!("Test Yourself could not start: {error}");
+            std::process::exit(1);
+        });
 }
 
 #[tauri::command]
