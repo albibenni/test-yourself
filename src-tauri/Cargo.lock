@@ -4472,7 +4472,7 @@ dependencies = [
 
 [[package]]
 name = "test-yourself"
-version = "5.2.2"
+version = "5.3.0"
 dependencies = [
  "apple-native-keyring-store",
  "keyring",
